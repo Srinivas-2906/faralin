@@ -25,7 +25,8 @@ WORKDIR /repo
 COPY . .
 
 # Build only the Next.js app
-RUN pnpm --filter web build
+# Use turbo so workspace deps (types/utils/db) build first
+RUN pnpm turbo build --filter=web
 
 FROM node:22-slim AS runner
 WORKDIR /app
