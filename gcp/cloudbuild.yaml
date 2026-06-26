@@ -1,0 +1,94 @@
+steps:
+  - id: build-web
+    name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -f
+      - Dockerfile.web
+      - -t
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_REPO}/${_WEB_IMAGE}:$BUILD_ID
+      - -t
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_REPO}/${_WEB_IMAGE}:latest
+      - .
+
+  - id: push-web
+    name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - --all-tags
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_REPO}/${_WEB_IMAGE}
+
+  - id: deploy-web
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        set -euo pipefail
+        IMAGE="${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_REPO}/${_WEB_IMAGE}:$BUILD_ID"
+        gcloud run deploy "${_WEB_SERVICE}" \
+          --image "$$IMAGE" \
+          --region "${_REGION}" \
+          --platform managed \
+          --allow-unauthenticated \
+          --port 8080 \
+          --min-instances 0 \
+          --max-instances 5 \
+          --memory 512Mi \
+          --cpu 1
+
+  - id: build-api
+    name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -f
+      - Dockerfile.api
+      - -t
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_REPO}/${_API_IMAGE}:$BUILD_ID
+      - -t
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_REPO}/${_API_IMAGE}:latest
+      - .
+
+  - id: push-api
+    name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - --all-tags
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_REPO}/${_API_IMAGE}
+
+  - id: deploy-api
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        set -euo pipefail
+        IMAGE="${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_REPO}/${_API_IMAGE}:$BUILD_ID"
+        gcloud run deploy "${_API_SERVICE}" \
+          --image "$$IMAGE" \
+          --region "${_REGION}" \
+          --platform managed \
+          --allow-unauthenticated \
+          --port 8080 \
+          --min-instances 0 \
+          --max-instances 5 \
+          --memory 512Mi \
+          --cpu 1
+
+substitutions:
+  _REGION: asia-south1
+  _ARTIFACT_REPO: kaana
+  _WEB_IMAGE: faralin-web
+  _WEB_SERVICE: faralin-web
+  _API_IMAGE: faralin-api
+  _API_SERVICE: faralin-api
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+images:
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_REPO}/${_WEB_IMAGE}:$BUILD_ID
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_REPO}/${_WEB_IMAGE}:latest
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_REPO}/${_API_IMAGE}:$BUILD_ID
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_REPO}/${_API_IMAGE}:latest
+

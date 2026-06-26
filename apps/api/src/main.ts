@@ -20,7 +20,8 @@ async function bootstrap() {
 
   app.setGlobalPrefix('api');
 
-  const port = process.env.API_PORT ?? 3001;
+  // Cloud Run provides PORT; keep API_PORT for local dev compatibility
+  const port = process.env.PORT ?? process.env.API_PORT ?? 3001;
   await app.listen(port);
   console.log(`Faralin API running on http://localhost:${port}`);
 }
