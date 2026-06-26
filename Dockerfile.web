@@ -4,6 +4,8 @@ FROM node:22-slim AS base
 WORKDIR /repo
 ENV NEXT_TELEMETRY_DISABLED=1
 
+# Needed for Prisma engines during install/build
+RUN apt-get update -y && apt-get install -y openssl ca-certificates && rm -rf /var/lib/apt/lists/*
 # pnpm via corepack (works inside container)
 RUN corepack enable
 
@@ -26,6 +28,7 @@ COPY . .
 
 # Build only the Next.js app
 # Use turbo so workspace deps (types/utils/db) build first
+RUN pnpm --filter @faralin/db run generate:ci
 RUN pnpm turbo build --filter=web
 
 FROM node:22-slim AS runner
