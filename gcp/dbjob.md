@@ -7,12 +7,12 @@ This creates/updates the schema and seeds universities in Cloud SQL using a Clou
 ```bash
 PROJECT=kaana-prod
 REGION=asia-south1
-REPO=kaana
 JOB=faralin-dbjob
-IMAGE="${REGION}-docker.pkg.dev/${PROJECT}/${REPO}/faralin-dbjob:latest"
 CONN="$(gcloud sql instances describe faralin-pg --project ${PROJECT} --format='value(connectionName)')"
 
-gcloud builds submit --project ${PROJECT} --tag "${IMAGE}" --file Dockerfile.dbjob .
+gcloud builds submit --project ${PROJECT} --config gcp/cloudbuild.dbjob.yaml .
+
+IMAGE="${REGION}-docker.pkg.dev/${PROJECT}/kaana/faralin-dbjob:latest"
 
 gcloud run jobs create ${JOB} \
   --project ${PROJECT} \
