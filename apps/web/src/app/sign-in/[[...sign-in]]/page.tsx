@@ -1,5 +1,5 @@
 import { SignIn } from '@clerk/nextjs';
-import { authAppearance, authLocalization } from '@/lib/clerk-appearance';
+import { authAppearance } from '@/lib/clerk-appearance';
 
 export default function SignInPage() {
   return (
@@ -21,7 +21,6 @@ export default function SignInPage() {
           signUpUrl="/sign-up"
           forceRedirectUrl="/dashboard"
           appearance={authAppearance}
-          localization={authLocalization}
         />
       </div>
     </div>
