@@ -27,9 +27,13 @@ RUN pnpm --filter @faralin/db run generate:ci
 RUN pnpm turbo build --filter=api
 
 RUN pnpm --filter api --prod deploy /out
-# prisma generate needs to run against the *deployed* node_modules so runtime has .prisma client
-RUN mkdir -p /out/prisma && cp /repo/packages/db/prisma/schema.prisma /out/prisma/schema.prisma
-RUN cd /out && node /repo/node_modules/prisma/build/index.js generate --schema prisma/schema.prisma
+# Prisma client is already generated in /repo/node_modules by generate:ci.
+# pnpm deploy creates a new isolated node_modules in /out, so copy the generated `.prisma` folder over.
+RUN set -e; \
+  SRC_PKG="$(ls -d /repo/node_modules/.pnpm/@prisma+client@*/node_modules)"; \
+  DST_PKG="$(ls -d /out/node_modules/.pnpm/@prisma+client@*/node_modules)"; \
+  rm -rf "$DST_PKG/.prisma"; \
+  cp -R "$SRC_PKG/.prisma" "$DST_PKG/"
 
 FROM node:22-slim AS runner
 WORKDIR /app
