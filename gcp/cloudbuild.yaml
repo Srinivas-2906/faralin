@@ -70,6 +70,9 @@ steps:
           --platform managed \
           --allow-unauthenticated \
           --port 8080 \
+          --add-cloudsql-instances "kaana-prod:asia-south1:faralin-pg" \
+          --set-secrets "DATABASE_URL=faralin_database_url:latest,CLERK_SECRET_KEY=faralin_clerk_secret_key:latest,CLERK_WEBHOOK_SECRET=faralin_clerk_webhook_secret:latest" \
+          --set-env-vars "WEB_URL=https://faralin.kaana.in" \
           --min-instances 0 \
           --max-instances 5 \
           --memory 512Mi \
