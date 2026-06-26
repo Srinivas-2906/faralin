@@ -1,0 +1,21 @@
+{
+  "name": "@faralin/ui",
+  "version": "0.0.0",
+  "private": true,
+  "exports": {
+    "./globals.css": "./src/globals.css",
+    "./clerk-overrides.css": "./src/clerk-overrides.css",
+    "./auth-overrides.css": "./src/auth-overrides.css",
+    "./assets/education-pattern.svg": "./src/assets/education-pattern.svg",
+    ".": "./src/index.ts",
+    "./components/*": "./src/components/*.tsx"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0 || ^19.0.0",
+    "react-dom": "^18.0.0 || ^19.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.1.6",
+    "typescript": "^5.8.3"
+  }
+}

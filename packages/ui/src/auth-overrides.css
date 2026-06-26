@@ -1,0 +1,223 @@
+/* Faralin auth theme — force light mode and hide third-party branding */
+
+:root,
+html {
+  color-scheme: only light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root,
+  html {
+    color-scheme: only light;
+  }
+}
+
+:root {
+  --clerk-color-primary: var(--faralin-copper);
+  --clerk-color-primary-foreground: var(--faralin-ivory);
+  --clerk-color-background: var(--faralin-ivory);
+  --clerk-color-foreground: var(--faralin-ink);
+  --clerk-color-muted-foreground: var(--faralin-muted);
+  --clerk-color-input: var(--faralin-ivory);
+  --clerk-color-input-foreground: var(--faralin-ink);
+  --clerk-color-border: var(--faralin-border);
+  --clerk-color-muted: var(--faralin-surface-muted);
+  --clerk-color-ring: var(--faralin-copper);
+  --clerk-color-danger: var(--faralin-crimson);
+  --clerk-color-modal-backdrop: rgba(0, 33, 71, 0.45);
+  --clerk-border-radius: 4px;
+  --clerk-font-family: var(--font-sans), 'Roboto', system-ui, sans-serif;
+}
+
+/* Hide third-party branding, dev chrome, and powered-by links */
+.cl-footerPages,
+.cl-footerPagesLink,
+.cl-lastAuthenticationStrategyBadge,
+.cl-badge,
+.cl-devBar,
+.cl-poweredBy,
+.cl-userButtonPopoverFooter,
+[class*='powered'],
+[data-localization-key='userButtonPopoverFooter'] {
+  display: none !important;
+}
+
+.cl-modalBackdrop {
+  background: rgba(0, 33, 71, 0.45) !important;
+}
+
+.cl-modalContent,
+.cl-card,
+.cl-cardBox,
+.cl-main,
+.cl-userButtonPopoverCard,
+.cl-navbar,
+.cl-scrollBox {
+  background: var(--faralin-ivory) !important;
+  color: var(--faralin-ink) !important;
+  border-color: var(--faralin-border) !important;
+  border-radius: var(--clerk-border-radius) !important;
+  overflow: hidden;
+}
+
+.cl-headerTitle,
+.cl-formHeaderTitle,
+.cl-headerSubtitle,
+.cl-formHeaderSubtitle,
+.cl-formFieldLabel,
+.cl-identityPreviewText,
+.cl-userPreviewMainIdentifier,
+.cl-alertText,
+.cl-formFieldAction,
+.cl-navbarButton,
+.cl-userButtonPopoverActionButton,
+.cl-userButtonPopoverActionButtonText,
+.cl-socialButtonsBlockButtonText,
+.cl-formFieldInput,
+.cl-otpCodeFieldInput,
+.cl-footerActionText,
+.cl-backLink,
+.cl-modalCloseButton {
+  color: var(--faralin-ink) !important;
+}
+
+.cl-headerSubtitle,
+.cl-formHeaderSubtitle,
+.cl-userPreviewSecondaryIdentifier,
+.cl-dividerText,
+.cl-formFieldHintText,
+.cl-formFieldSuccessText,
+.cl-formButtonReset {
+  color: var(--faralin-muted) !important;
+}
+
+.cl-formFieldInput,
+.cl-otpCodeFieldInput,
+.cl-selectButton,
+.cl-formFieldInput__input,
+.cl-phoneInputBox input {
+  background: var(--faralin-ivory) !important;
+  color: var(--faralin-ink) !important;
+  border: 1px solid var(--faralin-border) !important;
+  box-shadow: none !important;
+}
+
+.cl-formFieldInput::placeholder,
+.cl-otpCodeFieldInput::placeholder,
+.cl-formFieldInput__input::placeholder,
+.cl-phoneInputBox input::placeholder {
+  color: var(--faralin-muted) !important;
+  opacity: 1 !important;
+}
+
+.cl-formFieldInput:focus,
+.cl-otpCodeFieldInput:focus,
+.cl-formFieldInput__input:focus,
+.cl-phoneInputBox input:focus {
+  border-color: var(--faralin-copper) !important;
+  box-shadow: 0 0 0 2px rgba(197, 160, 89, 0.25) !important;
+}
+
+.cl-formButtonPrimary {
+  background: var(--faralin-copper) !important;
+  color: var(--faralin-ivory) !important;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600 !important;
+}
+
+.cl-formButtonPrimary:hover,
+.cl-formButtonPrimary:focus {
+  background: #b38b4d !important;
+  color: var(--faralin-ivory) !important;
+}
+
+.cl-socialButtonsBlockButton,
+.cl-alternativeMethodsBlockButton {
+  background: var(--faralin-ivory) !important;
+  color: var(--faralin-ink) !important;
+  border: 1px solid var(--faralin-border) !important;
+  box-shadow: none !important;
+}
+
+.cl-socialButtonsBlockButton:hover,
+.cl-alternativeMethodsBlockButton:hover {
+  background: var(--faralin-surface-muted) !important;
+  border-color: var(--faralin-copper) !important;
+}
+
+.cl-dividerLine {
+  background: var(--faralin-border) !important;
+}
+
+.cl-formFieldAction,
+.cl-formResendCodeLink,
+.cl-identityPreviewEditButton,
+.cl-footerActionLink,
+.cl-backLink {
+  color: var(--faralin-copper) !important;
+}
+
+.cl-formFieldAction:hover,
+.cl-formResendCodeLink:hover,
+.cl-identityPreviewEditButton:hover,
+.cl-footerActionLink:hover,
+.cl-backLink:hover {
+  color: #b38b4d !important;
+}
+
+.cl-footerAction {
+  justify-content: center;
+  gap: 0.35rem;
+  padding-top: 0.25rem;
+}
+
+.cl-footerActionText {
+  color: var(--faralin-muted) !important;
+}
+
+/* Keep sign-in/up footer links; hide Clerk secured-by / dev chrome in footer */
+.cl-footer > :not(.cl-footerAction) {
+  display: none !important;
+}
+
+.cl-userButtonPopoverActionButton:hover {
+  background: var(--faralin-surface-muted) !important;
+}
+
+.cl-formFieldErrorText,
+.cl-alert[data-variant='danger'] .cl-alertText {
+  color: var(--faralin-crimson) !important;
+}
+
+.cl-internal-icon,
+.cl-socialButtonsProviderIcon {
+  opacity: 1;
+}
+
+/* Force light palette on internal wrappers that may inherit dark theme */
+[class*='cl-internal']:not(.cl-formButtonPrimary):not(.cl-socialButtonsBlockButton):not(.cl-alternativeMethodsBlockButton) {
+  --clerk-color-background: var(--faralin-ivory);
+  --clerk-color-foreground: var(--faralin-ink);
+  --clerk-color-input: var(--faralin-ivory);
+  --clerk-color-input-foreground: var(--faralin-ink);
+}
+
+.cl-modalContent [class*='cl-internal'],
+.cl-card [class*='cl-internal'],
+.cl-userButtonPopoverCard [class*='cl-internal'] {
+  color: inherit;
+}
+
+/* Sign-up page: names collected in onboarding, not at registration */
+.auth-split-form .cl-formField__firstName,
+.auth-split-form .cl-formField__lastName,
+.auth-split-form .cl-formFieldRow__firstName,
+.auth-split-form .cl-formFieldRow__lastName {
+  display: none !important;
+}
+
+.auth-split-form .cl-card,
+.auth-split-form .cl-cardBox {
+  border-top: 1px solid var(--faralin-crimson) !important;
+}

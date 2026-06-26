@@ -1,0 +1,25 @@
+{
+  "name": "faralin",
+  "private": true,
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "dev:web": "pnpm --filter web dev",
+    "dev:api": "pnpm --filter api dev",
+    "dev:admin": "pnpm --filter admin dev",
+    "db:generate": "pnpm --filter @faralin/db generate",
+    "db:migrate": "pnpm --filter @faralin/db migrate",
+    "db:push": "pnpm --filter @faralin/db push",
+    "db:seed": "pnpm --filter @faralin/db seed",
+    "db:studio": "pnpm --filter @faralin/db studio"
+  },
+  "devDependencies": {
+    "turbo": "^2.5.4",
+    "typescript": "^5.8.3"
+  },
+  "packageManager": "pnpm@9.15.0",
+  "engines": {
+    "node": ">=20"
+  }
+}

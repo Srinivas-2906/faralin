@@ -1,0 +1,514 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  STUDENT
+  UNIVERSITY_STAFF
+  ADMIN
+}
+
+enum ProfileRevealLevel {
+  ANONYMOUS
+  PARTIAL
+  FULL
+}
+
+enum AssessmentDifficulty {
+  FOUNDATION
+  STANDARD
+  ADVANCED
+}
+
+enum FaralinTrustLevel {
+  PRACTICE
+  VERIFIED
+  PARTNER_VERIFIED
+}
+
+enum FaralinTransactionType {
+  EARNED
+  BONUS
+  ADJUSTMENT
+  CONVERSION
+  FORFEIT
+}
+
+enum FaralinTransactionStatus {
+  CONDITIONAL
+  CONFIRMED
+  CONVERTED
+  FORFEITED
+}
+
+enum ApplicationStatus {
+  FOLLOWER
+  REFERRAL_CLICKED
+  APPLIED
+  OFFER_RECEIVED
+  OFFER_ACCEPTED
+  ENROLLED
+  WITHDRAWN
+  REJECTED
+}
+
+enum ArticleType {
+  NEWS
+  BLOG
+  SCHOLARSHIP
+  ADVICE
+  STUDENT_STORY
+  COURSE_GUIDE
+  CHALLENGE_BRIEF
+}
+
+enum CourseLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum EventType {
+  WEBINAR
+  OPEN_DAY
+  TASTER
+  CHALLENGE
+}
+
+enum NotificationType {
+  FARALIN_EARNED
+  ASSESSMENT_REMINDER
+  UNIVERSITY_UPDATE
+  EVENT_REMINDER
+  APPLICATION_UPDATE
+  SYSTEM
+}
+
+model User {
+  id          String   @id @default(cuid())
+  clerkUserId String   @unique
+  email       String   @unique
+  role        UserRole
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  studentProfile         StudentProfile?
+  universityStaffProfile UniversityStaffProfile?
+  adminProfile           AdminProfile?
+  notifications          Notification[]
+}
+
+model StudentProfile {
+  id                 String             @id @default(cuid())
+  userId             String             @unique
+  anonymousId        String             @unique
+  revealLevel        ProfileRevealLevel @default(ANONYMOUS)
+  firstName          String?
+  lastName           String?
+  dateOfBirth        DateTime?
+  schoolName         String?
+  yearGroup          Int?
+  onboardingComplete Boolean            @default(false)
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  user                 User                         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  universitySelections StudentUniversitySelection[]
+  subjects             StudentSubject[]
+  assessmentAttempts   AssessmentAttempt[]
+  faralinTransactions  FaralinTransaction[]
+  applications         Application[]
+  eventRegistrations   EventRegistration[]
+  courseLessonProgress CourseLessonProgress[]
+}
+
+model University {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  shortName   String?
+  logoUrl     String?
+  description String?
+  websiteUrl  String?
+  applyUrl    String?
+  isDemo      Boolean  @default(false)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  selections          StudentUniversitySelection[]
+  faralinRules        FaralinRule[]
+  conversionRule      UniversityConversionRule?
+  faralinTransactions FaralinTransaction[]
+  articles            Article[]
+  events              Event[]
+  applications        Application[]
+  staff               UniversityStaffProfile[]
+  partnership         UniversityPartnership?
+}
+
+model StudentUniversitySelection {
+  id               String   @id @default(cuid())
+  studentProfileId String
+  universityId     String
+  priority         Int
+  selectedAt       DateTime @default(now())
+
+  studentProfile StudentProfile @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+  university     University     @relation(fields: [universityId], references: [id], onDelete: Cascade)
+
+  @@unique([studentProfileId, universityId])
+  @@index([studentProfileId])
+  @@index([universityId])
+}
+
+model Subject {
+  id       String  @id @default(cuid())
+  slug     String  @unique
+  name     String
+  isActive Boolean @default(true)
+
+  studentSubjects StudentSubject[]
+  assessments     Assessment[]
+  faralinRules    FaralinRule[]
+}
+
+model StudentSubject {
+  id               String   @id @default(cuid())
+  studentProfileId String
+  subjectId        String
+  addedAt          DateTime @default(now())
+
+  studentProfile StudentProfile @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+  subject        Subject        @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+
+  @@unique([studentProfileId, subjectId])
+}
+
+model Assessment {
+  id                  String               @id @default(cuid())
+  slug                String               @unique
+  title               String
+  description         String?
+  subjectId           String
+  difficulty          AssessmentDifficulty
+  trustLevel          FaralinTrustLevel    @default(PRACTICE)
+  durationMinutes     Int?
+  isTimed             Boolean              @default(false)
+  isActive            Boolean              @default(true)
+  estimatedFaralinMin Int
+  estimatedFaralinMax Int
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+
+  subject   Subject              @relation(fields: [subjectId], references: [id])
+  questions AssessmentQuestion[]
+  attempts  AssessmentAttempt[]
+  faralinRules FaralinRule[]
+}
+
+model AssessmentQuestion {
+  id            String @id @default(cuid())
+  assessmentId  String
+  sortOrder     Int
+  prompt        String
+  questionType  String
+  options       Json?
+  correctAnswer Json?
+  points        Int    @default(1)
+
+  assessment Assessment         @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  answers    AssessmentAnswer[]
+
+  @@index([assessmentId])
+}
+
+model AssessmentAttempt {
+  id                String            @id @default(cuid())
+  assessmentId      String
+  studentProfileId  String
+  startedAt         DateTime          @default(now())
+  completedAt       DateTime?
+  score             Decimal?          @db.Decimal(5, 2)
+  maxScore          Decimal?          @db.Decimal(5, 2)
+  accuracyPercent   Decimal?          @db.Decimal(5, 2)
+  improvementDelta  Decimal?          @db.Decimal(5, 2)
+  trustLevel        FaralinTrustLevel
+  verificationFlags Json?
+  isVoided          Boolean           @default(false)
+
+  assessment          Assessment           @relation(fields: [assessmentId], references: [id])
+  studentProfile      StudentProfile       @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+  answers             AssessmentAnswer[]
+  faralinTransactions FaralinTransaction[]
+
+  @@index([studentProfileId, completedAt])
+  @@index([assessmentId])
+}
+
+model AssessmentAnswer {
+  id                  String   @id @default(cuid())
+  assessmentAttemptId String
+  questionId          String
+  response            Json
+  isCorrect           Boolean?
+  pointsAwarded       Decimal? @db.Decimal(5, 2)
+  writtenExplanation  String?
+
+  attempt  AssessmentAttempt  @relation(fields: [assessmentAttemptId], references: [id], onDelete: Cascade)
+  question AssessmentQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+}
+
+model FaralinRule {
+  id                   String                @id @default(cuid())
+  universityId         String
+  assessmentId         String?
+  subjectId            String?
+  trustLevel           FaralinTrustLevel?
+  difficulty           AssessmentDifficulty?
+  baseAmount           Int
+  scoreMultiplier      Decimal               @default(1.0) @db.Decimal(4, 2)
+  improvementBonus     Int                   @default(0)
+  consistencyBonus     Int                   @default(0)
+  difficultyMultiplier Decimal               @default(1.0) @db.Decimal(4, 2)
+  effectiveFrom        DateTime              @default(now())
+  effectiveTo          DateTime?
+  isActive             Boolean               @default(true)
+
+  university University  @relation(fields: [universityId], references: [id], onDelete: Cascade)
+  assessment Assessment? @relation(fields: [assessmentId], references: [id])
+  subject    Subject?    @relation(fields: [subjectId], references: [id])
+
+  @@index([universityId, isActive])
+}
+
+model FaralinTransaction {
+  id                  String                   @id @default(cuid())
+  studentProfileId    String
+  universityId        String
+  assessmentAttemptId String?
+  type                FaralinTransactionType
+  status              FaralinTransactionStatus @default(CONDITIONAL)
+  trustLevel          FaralinTrustLevel
+  amount              Int
+  balanceAfter        Int?
+  reason              String?
+  metadata            Json?
+  createdAt           DateTime                 @default(now())
+
+  studentProfile    StudentProfile     @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+  university        University         @relation(fields: [universityId], references: [id])
+  assessmentAttempt AssessmentAttempt? @relation(fields: [assessmentAttemptId], references: [id])
+
+  @@index([studentProfileId, universityId])
+  @@index([studentProfileId, createdAt])
+  @@index([universityId, createdAt])
+}
+
+model UniversityConversionRule {
+  id                 String   @id @default(cuid())
+  universityId       String   @unique
+  faralinsPerGbp     Int
+  minVerifiedPercent Int      @default(70)
+  disclaimerText     String
+  effectiveFrom      DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  university University @relation(fields: [universityId], references: [id], onDelete: Cascade)
+}
+
+model Article {
+  id           String      @id @default(cuid())
+  universityId String
+  type         ArticleType
+  title        String
+  slug         String
+  excerpt      String?
+  content      String
+  subjectTags  String[]
+  isPublished  Boolean     @default(false)
+  publishedAt  DateTime?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  university University @relation(fields: [universityId], references: [id], onDelete: Cascade)
+
+  @@unique([universityId, slug])
+  @@index([slug])
+  @@index([type, isPublished])
+}
+
+model Course {
+  id               String      @id @default(cuid())
+  slug             String      @unique
+  title            String
+  subtitle         String?
+  description      String
+  learningOutcomes String[]
+  thumbnailUrl     String?
+  instructorName   String
+  level            CourseLevel @default(BEGINNER)
+  durationMinutes  Int
+  subjectTags      String[]
+  isPublished      Boolean     @default(false)
+  publishedAt      DateTime?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  sections CourseSection[]
+}
+
+model CourseSection {
+  id        String @id @default(cuid())
+  courseId  String
+  title     String
+  sortOrder Int
+
+  course  Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lessons CourseLesson[]
+
+  @@index([courseId, sortOrder])
+}
+
+model CourseLesson {
+  id              String @id @default(cuid())
+  sectionId       String
+  title           String
+  sortOrder       Int
+  durationSeconds Int
+  videoUrl        String
+  isPreviewFree   Boolean @default(false)
+
+  section  CourseSection          @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  progress CourseLessonProgress[]
+
+  @@index([sectionId, sortOrder])
+}
+
+model CourseLessonProgress {
+  id                   String    @id @default(cuid())
+  studentProfileId     String
+  lessonId             String
+  completedAt          DateTime?
+  lastPositionSeconds  Int       @default(0)
+  updatedAt            DateTime  @updatedAt
+
+  studentProfile StudentProfile @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+  lesson         CourseLesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@unique([studentProfileId, lessonId])
+  @@index([studentProfileId])
+}
+
+model Event {
+  id           String    @id @default(cuid())
+  universityId String
+  type         EventType
+  title        String
+  description  String?
+  startsAt     DateTime
+  endsAt       DateTime?
+  externalUrl  String?
+  capacity     Int?
+  isPublished  Boolean   @default(false)
+  createdAt    DateTime  @default(now())
+
+  university    University          @relation(fields: [universityId], references: [id], onDelete: Cascade)
+  registrations EventRegistration[]
+}
+
+model EventRegistration {
+  id               String   @id @default(cuid())
+  eventId          String
+  studentProfileId String
+  registeredAt     DateTime @default(now())
+
+  event          Event          @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  studentProfile StudentProfile @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, studentProfileId])
+}
+
+model Application {
+  id                String            @id @default(cuid())
+  studentProfileId  String
+  universityId      String
+  status            ApplicationStatus @default(FOLLOWER)
+  referralClickedAt DateTime?
+  appliedAt         DateTime?
+  offerReceivedAt   DateTime?
+  offerAcceptedAt   DateTime?
+  enrolledAt        DateTime?
+  externalUrl       String?
+  notes             String?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  studentProfile StudentProfile @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+  university     University     @relation(fields: [universityId], references: [id])
+
+  @@unique([studentProfileId, universityId])
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  body      String
+  metadata  Json?
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt])
+}
+
+model UniversityStaffProfile {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  universityId String
+  jobTitle     String?
+  createdAt    DateTime @default(now())
+
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  university University @relation(fields: [universityId], references: [id], onDelete: Cascade)
+}
+
+model AdminProfile {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model UniversityPartnership {
+  id               String    @id @default(cuid())
+  universityId     String    @unique
+  paymentModel     String
+  annualBudgetGbp  Decimal?  @db.Decimal(12, 2)
+  subscriptionTier String?
+  contractStart    DateTime?
+  contractEnd      DateTime?
+  isActive         Boolean   @default(false)
+
+  university University @relation(fields: [universityId], references: [id], onDelete: Cascade)
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  actorUserId String?
+  action      String
+  entityType  String
+  entityId    String
+  metadata    Json?
+  createdAt   DateTime @default(now())
+}
