@@ -80,7 +80,6 @@ body {
 
 body {
   font-family: var(--font-sans), 'Roboto', system-ui, -apple-system, sans-serif;
-  font-size: var(--text-body);
   color: var(--faralin-text);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
@@ -265,7 +264,7 @@ select:focus {
 }
 
 .hero-title {
-  font-size: var(--text-display-lg);
+  font-size: clamp(2.5rem, 6vw, 3.5rem);
   margin-bottom: 1.5rem;
   color: var(--faralin-ink);
   font-family: var(--font-serif), 'Raleway', system-ui, sans-serif;
@@ -273,7 +272,7 @@ select:focus {
 }
 
 .hero-lead {
-  font-size: var(--text-2xl);
+  font-size: var(--text-xl);
   max-width: 600px;
   margin: 0 auto 2.5rem;
   color: var(--faralin-muted);
@@ -3912,6 +3911,7 @@ button.dashboard-section-link {
   grid-template-columns: 1fr;
   gap: clamp(1.25rem, 3vw, 1.75rem);
   align-items: stretch;
+  min-width: 0;
 }
 
 @media (min-width: 1024px) {
@@ -3919,7 +3919,7 @@ button.dashboard-section-link {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: 0.5rem;
     align-items: stretch;
-    min-height: clamp(20rem, 46vh, 26rem);
+    min-height: 0;
   }
 }
 
@@ -3929,6 +3929,7 @@ button.dashboard-section-link {
   justify-content: center;
   text-align: left;
   width: 100%;
+  min-width: 0;
   min-height: 0;
   padding: 0.75rem 0;
 }
@@ -3948,12 +3949,26 @@ button.dashboard-section-link {
 
 .home-hero-title {
   font-family: var(--font-serif), 'Raleway', system-ui, sans-serif;
-  font-size: var(--text-display-lg);
+  font-size: clamp(2.375rem, 4.25vw, 3.375rem);
   font-weight: 400;
   letter-spacing: -0.025em;
   line-height: 1.08;
   margin-bottom: 1rem;
   color: var(--faralin-ink);
+  max-width: 100%;
+  overflow-wrap: break-word;
+}
+
+@media (max-width: 639px) {
+  .home-hero-title {
+    font-size: clamp(1.875rem, 6.5vw, 2.375rem);
+    line-height: 1.12;
+  }
+
+  .home-hero {
+    padding-top: clamp(2rem, 6vh, 3rem);
+    padding-bottom: clamp(2rem, 5vh, 3rem);
+  }
 }
 
 .home-hero-lead {
@@ -3968,7 +3983,7 @@ button.dashboard-section-link {
   display: block;
 }
 
-@media (min-width: 640px) {
+@media (min-width: 1280px) {
   .home-hero-title-line {
     white-space: nowrap;
   }
@@ -4057,6 +4072,7 @@ button.dashboard-section-link {
 .home-hero-nav {
   display: flex;
   align-items: stretch;
+  min-width: 0;
   min-height: 0;
 }
 
@@ -4739,7 +4755,7 @@ button.dashboard-section-link {
 }
 
 .home-section-title {
-  font-size: var(--text-display);
+  font-size: clamp(2rem, 4vw, 2.75rem);
   font-family: var(--font-serif), 'Raleway', system-ui, sans-serif;
   font-weight: var(--font-weight-heading);
   letter-spacing: -0.01em;

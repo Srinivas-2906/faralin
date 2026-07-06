@@ -221,3 +221,31 @@ html {
 .auth-split-form .cl-cardBox {
   border-top: 1px solid var(--faralin-crimson) !important;
 }
+
+/* Typography — align Clerk with fluid scale */
+.cl-headerTitle,
+.cl-formHeaderTitle {
+  font-size: var(--text-2xl) !important;
+}
+
+.cl-formFieldLabel,
+.cl-formFieldInput,
+.cl-otpCodeFieldInput,
+.cl-formFieldInput__input,
+.cl-phoneInputBox input,
+.cl-selectButton,
+.cl-socialButtonsBlockButtonText,
+.cl-formButtonPrimary,
+.cl-formButtonReset {
+  font-size: var(--text-base) !important;
+}
+
+.cl-headerSubtitle,
+.cl-formHeaderSubtitle,
+.cl-formFieldHintText,
+.cl-formFieldSuccessText,
+.cl-dividerText,
+.cl-footerActionText,
+.cl-userPreviewSecondaryIdentifier {
+  font-size: var(--text-sm) !important;
+}

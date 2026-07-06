@@ -75,7 +75,7 @@ export default async function UniversityPortalPage() {
             ].map((step) => (
               <div key={step.label}>
                 <div className="stat-label">{step.label}</div>
-                <div className="stat-value" style={{ fontSize: '1.5rem' }}>
+                <div className="stat-value stat-value--compact">
                   {step.value}
                 </div>
               </div>

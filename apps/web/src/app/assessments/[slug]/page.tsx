@@ -369,7 +369,7 @@ export default function AssessmentDetailPage() {
             <p className="text-muted" style={{ marginBottom: '1.5rem' }}>
               Your recognition has been recorded across your selected universities.
             </p>
-            <div className="stat-value copper" style={{ fontSize: '2.5rem', marginBottom: '0.25rem' }}>
+            <div className="stat-value copper stat-value--hero" style={{ marginBottom: '0.25rem' }}>
               {result.accuracyPercent.toFixed(0)}%
             </div>
             <p className="text-muted" style={{ marginBottom: '1.5rem' }}>
