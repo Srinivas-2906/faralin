@@ -15,6 +15,7 @@ export interface ProblemTrackListItem {
   timeCapHours: number;
   yearLevels: string[];
   partnerUniversityCategories: string[];
+  skills?: string[];
   subject: { name: string; slug: string };
   secondarySubjectSlug?: string | null;
 }
@@ -30,11 +31,12 @@ export function ProblemTrackCard({
 }) {
   const compactClass = compact || variant === 'dashboard' ? ' assessment-card-split--compact' : '';
   const trackClass = variant === 'dashboard' ? ' track-card--dashboard' : ' track-card--catalog';
+  const subjectClass = ` track-card--${track.subject.slug}`;
 
   return (
     <a
       href={`/tracks/${track.slug}`}
-      className={`media-card assessment-card-split track-card${compactClass}${trackClass}`}
+      className={`media-card assessment-card-split track-card${compactClass}${trackClass}${variant === 'catalog' ? subjectClass : ''}`}
       style={{ textDecoration: 'none', color: 'inherit' }}
     >
       <div className="assessment-card-visual">
@@ -59,10 +61,22 @@ export function ProblemTrackCard({
           {track.secondarySubjectSlug ? ` · ${track.secondarySubjectSlug}` : ''}
         </div>
         <div className="media-card-title">{track.title}</div>
+        {variant === 'catalog' && track.subtitle ? (
+          <p className="track-card__subtitle">{track.subtitle}</p>
+        ) : null}
         <div className="media-card-meta">
           Up to {track.maxFaralins.toLocaleString()} Faralins · {track.estimatedHoursMin}–
           {track.estimatedHoursMax}h
         </div>
+        {variant === 'catalog' && track.skills?.length ? (
+          <div className="track-card__skills">
+            {track.skills.slice(0, 3).map((skill) => (
+              <span key={skill} className="track-card__skill-chip">
+                {skill}
+              </span>
+            ))}
+          </div>
+        ) : null}
       </div>
     </a>
   );

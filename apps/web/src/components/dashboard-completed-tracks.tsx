@@ -33,7 +33,7 @@ export function DashboardCompletedTracks({
         ) : (
           <div className="portfolio-artifact-list">
             {artifacts.map((artifact) => (
-              <Card key={artifact.id} className="portfolio-artifact-card">
+              <Card key={artifact.id} className="portfolio-artifact-card portfolio-artifact-card--polished">
                 <div className="portfolio-artifact-head">
                   <Badge>
                     {TRACK_DIFFICULTY_LABELS[

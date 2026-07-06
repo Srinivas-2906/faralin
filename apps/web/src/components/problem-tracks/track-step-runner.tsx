@@ -10,8 +10,10 @@ import {
   TRACK_DIFFICULTY_LABELS,
 } from '@faralin/types';
 import type { ProblemTrackInputField, ProblemTrackSection } from '@faralin/types';
-import { Alert, Badge, Button, Card, Skeleton } from '@faralin/ui';
+import { Alert, Badge, Button, Card, MediaImage, Skeleton } from '@faralin/ui';
 import { apiFetch } from '@faralin/utils';
+import { getSubjectImage, getAssessmentImageFallback } from '@/lib/media';
+import { renderTrackMarkdown } from '@/lib/track-markdown';
 
 interface AttemptState {
   attemptId: string;
@@ -316,47 +318,66 @@ export function TrackStepRunner({ slug }: { slug: string }) {
 
   const aiFeedback = state.stepResponses.find((r) => r.sectionId === activeSection.id)?.aiFeedback;
   const sectionIndex = state.fullSections.findIndex((s) => s.id === activeSection.id);
+  const completedCount = state.sections.filter((s) => s.complete).length;
+  const progressPct = Math.round((completedCount / state.fullSections.length) * 100);
+  const urgentTime = msRemaining > 0 && msRemaining < 24 * 60 * 60 * 1000;
 
   return (
     <div className="track-runner">
-      <header className="track-runner-header">
+      <header className="track-runner-header track-runner-header--sticky">
         <div>
           <div className="media-card-eyebrow">{state.track.subject?.name ?? 'Problem Track'}</div>
           <h1 className="track-runner-title">{state.track.title}</h1>
         </div>
         <div className="track-runner-meta">
-          <Badge>{formatTime(msRemaining)} left</Badge>
+          <Badge className={urgentTime ? 'track-time-badge track-time-badge--urgent' : 'track-time-badge'}>
+            {formatTime(msRemaining)} left
+          </Badge>
           <span className="text-muted">
             Step {sectionIndex + 1} of {state.fullSections.length}
           </span>
         </div>
       </header>
 
+      <div className="track-progress-bar" aria-label="Track progress">
+        <div className="track-progress-fill" style={{ width: `${progressPct}%` }} />
+        <span className="track-progress-label">
+          {completedCount} of {state.fullSections.length} steps complete
+        </span>
+      </div>
+
       <div className="track-runner-layout">
         <nav className="track-curriculum" aria-label="Track progress">
-          {state.sections.map((s, i) => (
-            <div
-              key={s.id}
-              className={`track-curriculum-item${s.id === activeSection.id ? ' track-curriculum-item--active' : ''}${s.complete ? ' track-curriculum-item--done' : ''}${!s.unlocked ? ' track-curriculum-item--locked' : ''}`}
-            >
-              <span className="track-curriculum-num">{i + 1}</span>
-              <span className="track-curriculum-label">
-                {PROBLEM_SECTION_TYPE_LABELS[s.type as keyof typeof PROBLEM_SECTION_TYPE_LABELS] ??
-                  s.title}
-              </span>
-            </div>
-          ))}
+          {state.sections.map((s, i) => {
+            const typeLabel =
+              PROBLEM_SECTION_TYPE_LABELS[s.type as keyof typeof PROBLEM_SECTION_TYPE_LABELS] ??
+              s.title;
+            return (
+              <div
+                key={s.id}
+                className={`track-curriculum-item${s.id === activeSection.id ? ' track-curriculum-item--active' : ''}${s.complete ? ' track-curriculum-item--done' : ''}${!s.unlocked ? ' track-curriculum-item--locked' : ''}`}
+              >
+                <span className="track-curriculum-num" aria-hidden="true">
+                  {s.complete ? '✓' : !s.unlocked ? '🔒' : i + 1}
+                </span>
+                <span className="track-curriculum-copy">
+                  <span className="track-curriculum-type">{typeLabel}</span>
+                  <span className="track-curriculum-label">{s.title}</span>
+                </span>
+              </div>
+            );
+          })}
         </nav>
 
-        <Card className="track-step-card">
+        <Card
+          className={`track-step-card track-step-card--${activeSection.type.toLowerCase().replace(/_/g, '-')}`}
+        >
           <Badge>{PROBLEM_SECTION_TYPE_LABELS[activeSection.type]}</Badge>
           <h2 className="track-step-title">{activeSection.title}</h2>
           <div
             className="track-step-content prose"
             dangerouslySetInnerHTML={{
-              __html: activeSection.content
-                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                .replace(/\n/g, '<br />'),
+              __html: renderTrackMarkdown(activeSection.content),
             }}
           />
 
@@ -373,9 +394,10 @@ export function TrackStepRunner({ slug }: { slug: string }) {
           ))}
 
           {aiFeedback?.message ? (
-            <Alert variant="info" className="track-ai-feedback">
-              <strong>AI tutor:</strong> {aiFeedback.message}
-            </Alert>
+            <div className="track-ai-callout" role="status">
+              <strong>AI tutor</strong>
+              <p>{aiFeedback.message}</p>
+            </div>
           ) : null}
 
           {error ? <Alert variant="error">{error}</Alert> : null}
@@ -435,13 +457,16 @@ export function TrackResultView({ slug, attemptId }: { slug: string; attemptId: 
   return (
     <div className="track-result">
       <header className="track-result-header">
-        <Badge>{result.awardBandLabel}</Badge>
+        <div className="track-result-score-block">
+          <p className="track-result-score-value">{Number(result.rubricScore).toFixed(0)}%</p>
+          <Badge className="track-result-band">{result.awardBandLabel}</Badge>
+        </div>
         <h1>{state.track.title}</h1>
-        <p className="track-result-score">Rubric score: {Number(result.rubricScore).toFixed(0)}%</p>
-        <p className="track-result-faralins">
-          {result.faralinsEarned.toLocaleString()} Faralins earned
-        </p>
-        <p className="text-muted">
+        <Card className="track-result-faralins-card">
+          <p className="track-result-faralins-label">Faralins earned</p>
+          <p className="track-result-faralins">{result.faralinsEarned.toLocaleString()}</p>
+        </Card>
+        <p className="text-muted track-result-meta">
           Trust: {SUBMISSION_TRUST_LABELS[result.trustLevel as keyof typeof SUBMISSION_TRUST_LABELS]}{' '}
           · {result.moderationStatus.replace(/_/g, ' ').toLowerCase()}
         </p>
@@ -449,14 +474,20 @@ export function TrackResultView({ slug, attemptId }: { slug: string; attemptId: 
 
       <Card>
         <h2>Rubric breakdown</h2>
-        <ul className="track-rubric-list">
+        <div className="track-rubric-bars">
           {result.rubricBreakdown?.map((item) => (
-            <li key={item.name}>
-              <strong>{item.name}</strong> — {item.score}%<br />
-              <span className="text-muted">{item.feedback}</span>
-            </li>
+            <div key={item.name} className="track-rubric-bar-row">
+              <div className="track-rubric-bar-head">
+                <span className="track-rubric-bar-name">{item.name}</span>
+                <span className="track-rubric-bar-score">{item.score}%</span>
+              </div>
+              <div className="track-rubric-bar" aria-hidden="true">
+                <div className="track-rubric-bar-fill" style={{ width: `${item.score}%` }} />
+              </div>
+              <p className="track-rubric-bar-feedback text-muted">{item.feedback}</p>
+            </div>
           ))}
-        </ul>
+        </div>
       </Card>
 
       {result.feedbackSummary?.strengths?.length ? (
@@ -510,8 +541,21 @@ export function TrackHero({
     sectionOutline?: Array<{ id: string; type: string; title: string }>;
   };
 }) {
+  const sectionOutline = track.sectionOutline ?? [];
+
   return (
-    <div className="track-hero">
+    <div className="track-hero-split">
+      <div className="track-hero-visual">
+        <MediaImage
+          src={getSubjectImage(track.subject.slug)}
+          alt={track.title}
+          aspect="16x9"
+          frameClassName="media-frame--fill track-hero-visual-frame"
+          fallbackSrc={getAssessmentImageFallback(track.subject.slug)}
+        />
+        <div className="track-hero-visual-scrim" aria-hidden="true" />
+      </div>
+
       <div className="track-hero-content">
         <Badge>{TRACK_DIFFICULTY_LABELS[track.difficultyBand]}</Badge>
         <h1 className="track-hero-title">{track.title}</h1>
@@ -526,35 +570,46 @@ export function TrackHero({
           ))}
         </div>
 
-        <dl className="track-hero-stats">
-          <div>
-            <dt>Time cap</dt>
-            <dd>{Math.round(track.timeCapHours / 24)} days</dd>
+        <div className="track-hero-stat-grid">
+          <div className="track-stat-card">
+            <span className="track-stat-card__value">{Math.round(track.timeCapHours / 24)} days</span>
+            <span className="track-stat-card__label">Time cap</span>
           </div>
-          <div>
-            <dt>Estimated effort</dt>
-            <dd>
-              {track.estimatedHoursMin}–{track.estimatedHoursMax} focused hours
-            </dd>
+          <div className="track-stat-card">
+            <span className="track-stat-card__value">
+              {track.estimatedHoursMin}–{track.estimatedHoursMax}h
+            </span>
+            <span className="track-stat-card__label">Estimated effort</span>
           </div>
-          <div>
-            <dt>Recognition</dt>
-            <dd>Up to {track.maxFaralins.toLocaleString()} Faralins</dd>
+          <div className="track-stat-card">
+            <span className="track-stat-card__value">{track.maxFaralins.toLocaleString()}</span>
+            <span className="track-stat-card__label">Max Faralins</span>
           </div>
-          <div>
-            <dt>Est. bursary</dt>
-            <dd>£{track.bursaryValueApproxGbp}</dd>
+          <div className="track-stat-card">
+            <span className="track-stat-card__value">£{track.bursaryValueApproxGbp}</span>
+            <span className="track-stat-card__label">Est. bursary</span>
           </div>
-          <div>
-            <dt>Best for</dt>
-            <dd>{track.yearLevels.join(', ')}</dd>
+          <div className="track-stat-card track-stat-card--wide">
+            <span className="track-stat-card__value">{track.yearLevels.join(', ')}</span>
+            <span className="track-stat-card__label">Best for</span>
           </div>
-        </dl>
+        </div>
 
         {track.partnerUniversityCategories.length ? (
           <p className="track-hero-partners text-muted">
             Partner recognition: {track.partnerUniversityCategories.join(', ')}
           </p>
+        ) : null}
+
+        {sectionOutline.length ? (
+          <ol className="track-hero-outline">
+            {sectionOutline.map((section, index) => (
+              <li key={section.id}>
+                <span className="track-hero-outline-num">{index + 1}</span>
+                <span className="track-hero-outline-title">{section.title}</span>
+              </li>
+            ))}
+          </ol>
         ) : null}
 
         <Link href={`/tracks/${track.slug}/attempt`}>

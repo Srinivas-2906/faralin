@@ -86,6 +86,25 @@ function DashboardCard() {
   );
 }
 
+function ProblemTracksCard() {
+  return (
+    <Link href="/tracks" className="hero-tile hero-tile--photo">
+      <span
+        className="hero-tile__photo"
+        style={{ backgroundImage: "url('/images/subjects/biology.jpg')" }}
+        aria-hidden="true"
+      />
+      <span className="hero-tile__photo-scrim" aria-hidden="true" />
+      <span className="hero-tile__photo-accent" aria-hidden="true" />
+      <span className="hero-tile__photo-copy">
+        <span className="hero-tile__eyebrow">Guided challenges</span>
+        <span className="hero-tile__label">Problem Tracks</span>
+        <span className="hero-tile__hint">Learn, solve, reflect</span>
+      </span>
+    </Link>
+  );
+}
+
 export function HomeHeroNav() {
   return (
     <nav className="home-hero-nav" aria-label="Explore Faralin">
@@ -98,6 +117,9 @@ export function HomeHeroNav() {
         </li>
         <li className="home-hero-nav-item home-hero-nav-item--dashboard">
           <DashboardCard />
+        </li>
+        <li className="home-hero-nav-item home-hero-nav-item--tracks">
+          <ProblemTracksCard />
         </li>
       </ul>
     </nav>
