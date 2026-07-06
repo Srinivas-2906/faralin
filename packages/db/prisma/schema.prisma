@@ -87,6 +87,50 @@ enum NotificationType {
   EVENT_REMINDER
   APPLICATION_UPDATE
   SYSTEM
+  TRACK_REMINDER
+}
+
+enum ProblemTrackDifficultyBand {
+  FOUNDATION
+  CORE
+  ADVANCED
+  SCHOLAR
+  FELLOWSHIP
+}
+
+enum ProblemSectionType {
+  ORIENTATION
+  STORY
+  CORE_QUESTION
+  LEARN
+  PRACTICE
+  SOLVE
+  PERSONALISE
+  REFLECT
+  FINAL_BUILDER
+  REVIEW
+  SUBMIT
+}
+
+enum ProblemTrackAttemptStatus {
+  IN_PROGRESS
+  SUBMITTED
+  SCORED
+  MODERATION_PENDING
+  APPROVED
+  REJECTED
+}
+
+enum SubmissionTrustLevel {
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum ModerationStatus {
+  AUTO_APPROVED
+  NEEDS_REVIEW
+  REJECTED
 }
 
 model User {
@@ -125,7 +169,9 @@ model StudentProfile {
   faralinTransactions  FaralinTransaction[]
   applications         Application[]
   eventRegistrations   EventRegistration[]
-  courseLessonProgress CourseLessonProgress[]
+  courseLessonProgress   CourseLessonProgress[]
+  problemTrackAttempts   ProblemTrackAttempt[]
+  portfolioArtifacts     PortfolioArtifact[]
 }
 
 model University {
@@ -177,6 +223,7 @@ model Subject {
   studentSubjects StudentSubject[]
   assessments     Assessment[]
   faralinRules    FaralinRule[]
+  problemTracks   ProblemTrack[]
 }
 
 model StudentSubject {
@@ -265,10 +312,127 @@ model AssessmentAnswer {
   question AssessmentQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
 }
 
+model ProblemTrack {
+  id                          String                     @id @default(cuid())
+  trackId                     String                     @unique
+  slug                        String                     @unique
+  title                       String
+  subtitle                    String?
+  subjectId                   String
+  secondarySubjectSlug        String?
+  difficultyBand              ProblemTrackDifficultyBand
+  yearLevels                  String[]
+  timeCapHours                Int
+  estimatedHoursMin           Int
+  estimatedHoursMax           Int
+  maxFaralins                 Int
+  bursaryValueApproxGbp       Int                        @default(0)
+  outputType                  String
+  assessmentType              String                     @default("AI + rubric + moderation")
+  partnerUniversityCategories String[]
+  skills                      String[]
+  prerequisites               String[]
+  regionCompatibility         String[]
+  languageLevel               String                     @default("Plain English, CEFR B1–B2")
+  aiAssistanceLevel           String                     @default("Guided, non-answer-giving")
+  trustLevel                  FaralinTrustLevel          @default(VERIFIED)
+  sections                    Json
+  rubric                      Json
+  awardBands                  Json
+  moderationRules             Json?
+  isActive                    Boolean                    @default(true)
+  createdAt                   DateTime                   @default(now())
+  updatedAt                   DateTime                   @updatedAt
+
+  subject  Subject               @relation(fields: [subjectId], references: [id])
+  attempts ProblemTrackAttempt[]
+  faralinRules FaralinRule[]
+
+  @@index([subjectId, difficultyBand])
+}
+
+model ProblemTrackAttempt {
+  id                 String                    @id @default(cuid())
+  problemTrackId     String
+  studentProfileId   String
+  status             ProblemTrackAttemptStatus @default(IN_PROGRESS)
+  startedAt          DateTime                  @default(now())
+  expiresAt          DateTime
+  completedAt        DateTime?
+  currentSectionId   String?
+  rubricScore        Decimal?                  @db.Decimal(5, 2)
+  rubricBreakdown    Json?
+  faralinsEarned     Int?
+  awardBandLabel     String?
+  trustLevel         SubmissionTrustLevel?
+  moderationStatus   ModerationStatus?
+  verificationFlags  Json?
+  finalSubmission    String?
+  feedbackSummary    Json?
+  isVoided           Boolean                   @default(false)
+  createdAt          DateTime                  @default(now())
+  updatedAt          DateTime                  @updatedAt
+
+  problemTrack        ProblemTrack              @relation(fields: [problemTrackId], references: [id])
+  studentProfile      StudentProfile            @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+  stepResponses       ProblemTrackStepResponse[]
+  portfolioArtifact   PortfolioArtifact?
+  faralinTransactions FaralinTransaction[]
+
+  @@index([studentProfileId, status])
+  @@index([problemTrackId])
+}
+
+model ProblemTrackStepResponse {
+  id              String   @id @default(cuid())
+  attemptId       String
+  sectionId       String
+  sectionType     ProblemSectionType
+  sortOrder       Int
+  response        Json
+  aiFeedback      Json?
+  timeSpentMs     Int      @default(0)
+  copyPasteCount  Int      @default(0)
+  isComplete      Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  attempt ProblemTrackAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+
+  @@unique([attemptId, sectionId])
+  @@index([attemptId])
+}
+
+model PortfolioArtifact {
+  id                 String   @id @default(cuid())
+  studentProfileId   String
+  attemptId          String   @unique
+  problemTrackId     String
+  title              String
+  slug               String
+  subjectName        String
+  difficultyBand     ProblemTrackDifficultyBand
+  rubricScore        Decimal  @db.Decimal(5, 2)
+  faralinsEarned     Int
+  skillsDemonstrated String[]
+  trustLevel         SubmissionTrustLevel
+  moderationStatus   ModerationStatus
+  finalSubmission    String
+  recognitionSummary Json?
+  completedAt        DateTime
+  createdAt          DateTime @default(now())
+
+  studentProfile StudentProfile      @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+  attempt        ProblemTrackAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+
+  @@index([studentProfileId, completedAt])
+}
+
 model FaralinRule {
   id                   String                @id @default(cuid())
   universityId         String
   assessmentId         String?
+  problemTrackId       String?
   subjectId            String?
   trustLevel           FaralinTrustLevel?
   difficulty           AssessmentDifficulty?
@@ -281,30 +445,33 @@ model FaralinRule {
   effectiveTo          DateTime?
   isActive             Boolean               @default(true)
 
-  university University  @relation(fields: [universityId], references: [id], onDelete: Cascade)
-  assessment Assessment? @relation(fields: [assessmentId], references: [id])
-  subject    Subject?    @relation(fields: [subjectId], references: [id])
+  university   University    @relation(fields: [universityId], references: [id], onDelete: Cascade)
+  assessment   Assessment?   @relation(fields: [assessmentId], references: [id])
+  problemTrack ProblemTrack? @relation(fields: [problemTrackId], references: [id])
+  subject      Subject?      @relation(fields: [subjectId], references: [id])
 
   @@index([universityId, isActive])
 }
 
 model FaralinTransaction {
-  id                  String                   @id @default(cuid())
-  studentProfileId    String
-  universityId        String
-  assessmentAttemptId String?
-  type                FaralinTransactionType
-  status              FaralinTransactionStatus @default(CONDITIONAL)
-  trustLevel          FaralinTrustLevel
-  amount              Int
-  balanceAfter        Int?
-  reason              String?
-  metadata            Json?
-  createdAt           DateTime                 @default(now())
+  id                    String                   @id @default(cuid())
+  studentProfileId      String
+  universityId          String
+  assessmentAttemptId   String?
+  problemTrackAttemptId String?
+  type                  FaralinTransactionType
+  status                FaralinTransactionStatus @default(CONDITIONAL)
+  trustLevel            FaralinTrustLevel
+  amount                Int
+  balanceAfter          Int?
+  reason                String?
+  metadata              Json?
+  createdAt             DateTime                 @default(now())
 
-  studentProfile    StudentProfile     @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
-  university        University         @relation(fields: [universityId], references: [id])
-  assessmentAttempt AssessmentAttempt? @relation(fields: [assessmentAttemptId], references: [id])
+  studentProfile        StudentProfile         @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+  university            University             @relation(fields: [universityId], references: [id])
+  assessmentAttempt     AssessmentAttempt?     @relation(fields: [assessmentAttemptId], references: [id])
+  problemTrackAttempt   ProblemTrackAttempt?   @relation(fields: [problemTrackAttemptId], references: [id])
 
   @@index([studentProfileId, universityId])
   @@index([studentProfileId, createdAt])

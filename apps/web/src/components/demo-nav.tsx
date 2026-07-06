@@ -8,6 +8,7 @@ import { SiteHeaderShell } from './site-header-shell';
 
 const demoLinks = [
   { href: '/dashboard', label: 'Dashboard' },
+  { href: '/tracks', label: 'Problem Tracks' },
   { href: '/assessments', label: 'Assessments' },
   { href: '/universities', label: 'Universities' },
 ];

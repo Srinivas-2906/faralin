@@ -2349,6 +2349,39 @@ a.nav-sign-in {
   font-size: 1.0625rem;
 }
 
+/* Compact split cards (dashboard carousel, track cards) */
+.assessment-card-split--compact .assessment-card-visual {
+  aspect-ratio: 16 / 8.5;
+  max-height: 9rem;
+}
+
+.assessment-card-split--compact .assessment-card-details {
+  padding-top: 0.375rem;
+  gap: 0.1rem;
+}
+
+.assessment-card-split--compact .media-card-eyebrow {
+  font-size: 0.625rem;
+}
+
+.assessment-card-split--compact .media-card-title {
+  font-size: 0.9375rem;
+  line-height: 1.25;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.assessment-card-split--compact .media-card-meta {
+  font-size: 0.75rem;
+}
+
+.assessment-card-split--compact .assessment-card-badges .badge {
+  padding: 0.0625rem 0.3rem;
+  font-size: 0.5rem;
+}
+
 .assessment-card-badges-overlay {
   position: absolute;
   bottom: 0;
@@ -3390,7 +3423,7 @@ a.nav-sign-in {
 }
 
 .dashboard-greeting {
-  margin: 0 0 1rem;
+  margin: 0 0 0.75rem;
   font-family: var(--font-serif), 'Raleway', system-ui, sans-serif;
   font-size: clamp(1.375rem, 2.5vw, 1.75rem);
   font-weight: 500;
@@ -3430,12 +3463,32 @@ a.nav-sign-in {
 }
 
 .dashboard-stats-row .assessments-stats {
-  grid-template-columns: repeat(6, 1fr);
+  grid-template-columns: repeat(5, 1fr);
+}
+
+.dashboard-stats-row .assessments-stats--compact .assessments-stat {
+  padding: 0.4rem 0.35rem;
+  gap: 0.05rem;
+}
+
+.dashboard-stats-row .assessments-stats--compact .assessments-stat-value {
+  font-size: clamp(0.95rem, 1.5vw, 1.125rem);
+}
+
+.dashboard-stats-row .assessments-stats--compact .assessments-stat-label {
+  font-size: 0.5rem;
+  letter-spacing: 0.06em;
 }
 
 @media (max-width: 639px) {
   .dashboard-stats-row .assessments-stats {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  .dashboard-stats-row .assessments-stats .assessments-stat:nth-child(5) {
+    grid-column: 1 / -1;
+    border-right: none;
+    border-bottom: none;
   }
 }
 
@@ -6225,4 +6278,291 @@ button.dashboard-section-link {
   width: 100%;
   min-height: 220px;
   border-radius: 0;
+}
+
+/* Problem Tracks */
+.track-hero {
+  padding: 1.5rem 0;
+}
+
+.track-hero-title {
+  font-family: var(--font-serif);
+  font-size: clamp(1.5rem, 3.5vw, 2.125rem);
+  margin: 0.5rem 0;
+}
+
+.track-hero-subtitle {
+  font-size: 1rem;
+  color: var(--faralin-text-muted);
+  margin-bottom: 0.875rem;
+}
+
+.track-hero-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.track-hero-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 0.75rem;
+  margin: 1rem 0;
+}
+
+.track-hero-stats dt {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--faralin-text-muted);
+}
+
+.track-hero-stats dd {
+  margin: 0.25rem 0 0;
+  font-weight: 600;
+}
+
+.track-runner-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.track-runner-title {
+  font-family: var(--font-serif);
+  font-size: 1.5rem;
+  margin: 0.25rem 0 0;
+}
+
+.track-runner-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.track-runner-layout {
+  display: grid;
+  gap: 1.5rem;
+}
+
+@media (min-width: 960px) {
+  .track-runner-layout {
+    grid-template-columns: 240px 1fr;
+  }
+}
+
+.track-curriculum {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.track-curriculum-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  opacity: 0.55;
+}
+
+.track-curriculum-item--active {
+  background: var(--faralin-surface-alt);
+  opacity: 1;
+  font-weight: 600;
+}
+
+.track-curriculum-item--done {
+  opacity: 0.85;
+}
+
+.track-curriculum-item--locked {
+  opacity: 0.35;
+}
+
+.track-curriculum-num {
+  width: 1.5rem;
+  height: 1.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--faralin-border);
+  font-size: 0.75rem;
+}
+
+.track-step-card {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.track-step-title {
+  font-family: var(--font-serif);
+  font-size: 1.25rem;
+  margin: 0;
+}
+
+.track-step-content {
+  line-height: 1.6;
+  color: var(--faralin-text);
+}
+
+.track-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.track-field-label {
+  font-weight: 600;
+  font-size: 0.9375rem;
+}
+
+.track-input,
+.track-textarea {
+  width: 100%;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid var(--faralin-border);
+  border-radius: var(--radius-sm);
+  font: inherit;
+}
+
+.track-textarea {
+  min-height: 8rem;
+  resize: vertical;
+}
+
+.track-input-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.track-input-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.track-step-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.track-result-header {
+  margin-bottom: 1.5rem;
+}
+
+.track-result-score {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.track-result-faralins {
+  font-size: 1.5rem;
+  font-family: var(--font-serif);
+  color: var(--faralin-copper);
+}
+
+.track-rubric-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.track-result-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.dashboard-tracks-section {
+  margin-bottom: var(--dashboard-section-gap);
+}
+
+.dashboard-completed-tracks-panel {
+  padding: clamp(1rem, 2vw, 1.25rem);
+}
+
+.dashboard-completed-tracks .portfolio-artifact-list {
+  margin-top: 0.25rem;
+}
+
+.tracks-catalog-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
+}
+
+@media (min-width: 640px) {
+  .tracks-catalog-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .tracks-catalog-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.track-card--catalog .assessment-card-visual {
+  aspect-ratio: 16 / 9;
+  max-height: 11rem;
+}
+
+.track-card--dashboard .media-card-title {
+  -webkit-line-clamp: 2;
+}
+
+.portfolio-artifact-list {
+  display: grid;
+  gap: 1rem;
+}
+
+@media (min-width: 720px) {
+  .portfolio-artifact-list {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.portfolio-artifact-card h3 {
+  margin: 0.5rem 0 0.25rem;
+  font-family: var(--font-serif);
+}
+
+.portfolio-artifact-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.portfolio-artifact-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  margin: 1rem 0;
+}
+
+.portfolio-artifact-stats dt {
+  font-size: 0.75rem;
+  color: var(--faralin-text-muted);
+}
+
+.portfolio-artifact-stats dd {
+  margin: 0;
+  font-weight: 600;
 }

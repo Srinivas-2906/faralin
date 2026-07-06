@@ -73,11 +73,10 @@ export function OnboardingWizard() {
     async function load() {
       try {
         const token = await getToken();
-        const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
         const [profile, subjectsData, unisData] = await Promise.all([
           apiFetch<StudentProfile>('/students/me', { token: token ?? undefined }),
-          fetch(`${apiBase}/api/content/subjects`).then((r) => r.json()),
+          apiFetch<Subject[]>('/content/subjects'),
           apiFetch<University[]>('/students/universities', { token: token ?? undefined }),
         ]);
 

@@ -68,4 +68,22 @@ export class AdminController {
   createSubject(@Body() body: Parameters<AdminService['createSubject']>[0]) {
     return this.admin.createSubject(body);
   }
+
+  @Get('problem-tracks')
+  listProblemTracks() {
+    return this.admin.listProblemTracks();
+  }
+
+  @Post('problem-tracks')
+  createProblemTrack(@Body() body: Parameters<AdminService['createProblemTrack']>[0]) {
+    return this.admin.createProblemTrack(body);
+  }
+
+  @Patch('problem-tracks/:id')
+  updateProblemTrack(
+    @Param('id') id: string,
+    @Body() body: Parameters<AdminService['updateProblemTrack']>[1],
+  ) {
+    return this.admin.updateProblemTrack(id, body);
+  }
 }

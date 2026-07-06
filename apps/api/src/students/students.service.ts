@@ -120,10 +120,20 @@ export class StudentsService {
   }
 
   async getDashboard(studentProfileId: string) {
-    const [profile, portfolio, assessments, articles, events] = await Promise.all([
+    const [profile, portfolio, portfolioArtifacts, assessments, problemTracks, articles, events] =
+      await Promise.all([
       this.getProfile(studentProfileId),
       this.getPortfolio(studentProfileId),
+      this.prisma.portfolioArtifact.findMany({
+        where: { studentProfileId },
+        orderBy: { completedAt: 'desc' },
+      }),
       this.prisma.assessment.findMany({
+        where: { isActive: true },
+        include: { subject: true },
+        orderBy: { title: 'asc' },
+      }),
+      this.prisma.problemTrack.findMany({
         where: { isActive: true },
         include: { subject: true },
         orderBy: { title: 'asc' },
@@ -134,6 +144,7 @@ export class StudentsService {
 
     const subjectIds = profile.subjects.map((s) => s.subjectId);
     const recommendedAssessments = assessments.filter((a) => subjectIds.includes(a.subjectId));
+    const recommendedProblemTracks = problemTracks.filter((t) => subjectIds.includes(t.subjectId));
 
     return {
       profile: {
@@ -144,9 +155,23 @@ export class StudentsService {
         revealLevel: profile.revealLevel,
       },
       portfolio,
+      portfolioArtifacts: portfolioArtifacts.map((a) => ({
+        id: a.id,
+        title: a.title,
+        slug: a.slug,
+        subjectName: a.subjectName,
+        difficultyBand: a.difficultyBand,
+        rubricScore: Number(a.rubricScore),
+        faralinsEarned: a.faralinsEarned,
+        skillsDemonstrated: a.skillsDemonstrated,
+        trustLevel: a.trustLevel,
+        moderationStatus: a.moderationStatus,
+        completedAt: a.completedAt.toISOString(),
+      })),
       selectedUniversities: profile.universitySelections,
       subjects: profile.subjects,
       recommendedAssessments,
+      recommendedProblemTracks,
       articles,
       events,
     };

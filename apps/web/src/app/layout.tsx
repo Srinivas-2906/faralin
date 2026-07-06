@@ -27,14 +27,21 @@ export const metadata: Metadata = {
 export const dynamic = 'force-dynamic';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const publishableKey =
+    process.env.CLERK_PUBLISHABLE_KEY ??
+    process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ??
+    '';
+  const hasClerk =
+    publishableKey.length > 0 && !publishableKey.includes('placeholder');
+
   return (
     <html lang="en" className={`${raleway.variable} ${roboto.variable}`}>
       <body style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-        <AuthProvider>
+        <AuthProvider publishableKey={publishableKey}>
           <a href="#main-content" className="skip-link">
             Skip to content
           </a>
-          <Nav />
+          <Nav hasClerk={hasClerk} />
           <main id="main-content" className="page-main" style={{ flex: 1 }}>
             {children}
           </main>

@@ -2,9 +2,12 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { auth, currentUser } from '@clerk/nextjs/server';
 import { Card, EmptyState } from '@faralin/ui';
+import type { PortfolioArtifactSummary } from '@faralin/types';
 import type { AssessmentListItem } from '@/components/assessment-card';
 import { DashboardPartnerCard } from '@/components/dashboard-partner-card';
-import { DashboardRecommendedSection } from '@/components/dashboard-recommended-section';
+import { DashboardCompletedTracks } from '@/components/dashboard-completed-tracks';
+import { DashboardCombinedRecommended } from '@/components/dashboard-problem-tracks';
+import type { ProblemTrackListItem } from '@/components/problem-tracks/track-card';
 import { DashboardUpdateItem } from '@/components/dashboard-update-item';
 import { getUserDisplayName } from '@/lib/user-display-name';
 
@@ -66,6 +69,14 @@ export default async function DashboardPage() {
     ? dashboard.recommendedAssessments.map(toAssessmentListItem)
     : [];
 
+  const allRecommendedProblemTracks: ProblemTrackListItem[] = dashboard
+    ? (dashboard.recommendedProblemTracks ?? []).map(
+        (t: ProblemTrackListItem) => t,
+      )
+    : [];
+
+  const portfolioArtifacts: PortfolioArtifactSummary[] = dashboard?.portfolioArtifacts ?? [];
+
   const previewUniversities = dashboard
     ? dashboard.portfolio.byUniversity.slice(0, 2)
     : [];
@@ -84,7 +95,10 @@ export default async function DashboardPage() {
             <span className="dashboard-greeting-name">{displayName}</span>
           </h1>
           {dashboard ? (
-            <div className="assessments-stats" aria-label="Dashboard statistics">
+            <div
+              className="assessments-stats assessments-stats--compact"
+              aria-label="Dashboard statistics"
+            >
               <div className="assessments-stat">
                 <span className="assessments-stat-value">
                   {dashboard.portfolio.totalFaralins.toLocaleString()}
@@ -99,21 +113,15 @@ export default async function DashboardPage() {
               </div>
               <div className="assessments-stat">
                 <span className="assessments-stat-value">
-                  {dashboard.portfolio.faralinsThisMonth.toLocaleString()}
+                  {dashboard.portfolio.tracksCompleted ?? 0}
                 </span>
-                <span className="assessments-stat-label">This month</span>
+                <span className="assessments-stat-label">Problem Tracks</span>
               </div>
               <div className="assessments-stat">
                 <span className="assessments-stat-value">
                   {dashboard.portfolio.assessmentsCompleted}
                 </span>
                 <span className="assessments-stat-label">Assessments</span>
-              </div>
-              <div className="assessments-stat">
-                <span className="assessments-stat-value">
-                  {dashboard.portfolio.byUniversity.length}
-                </span>
-                <span className="assessments-stat-label">Universities</span>
               </div>
               <div className="assessments-stat">
                 <span className="assessments-stat-value">{verifiedTotal.toLocaleString()}</span>
@@ -125,7 +133,12 @@ export default async function DashboardPage() {
 
         {dashboard ? (
           <>
-            <DashboardRecommendedSection assessments={allRecommendedAssessments} />
+            <DashboardCombinedRecommended
+              assessments={allRecommendedAssessments}
+              tracks={allRecommendedProblemTracks}
+            />
+
+            <DashboardCompletedTracks artifacts={portfolioArtifacts} />
 
             <div className="dashboard-bento">
               <Card className="dashboard-bento-panel">

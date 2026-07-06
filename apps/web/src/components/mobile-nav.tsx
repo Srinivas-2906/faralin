@@ -136,6 +136,7 @@ export const homeNavLinks: NavLink[] = [
 export function useNavLinks(isStaff: boolean): NavLink[] {
   const base: NavLink[] = [
     { href: '/dashboard', label: 'Dashboard' },
+    { href: '/tracks', label: 'Problem Tracks' },
     { href: '/assessments', label: 'Assessments' },
     { href: '/universities', label: 'Universities' },
   ];

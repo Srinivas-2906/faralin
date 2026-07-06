@@ -1,9 +1,17 @@
+function resolveApiBase(baseUrl?: string): string {
+  if (baseUrl !== undefined) return baseUrl;
+  if (process.env.NEXT_PUBLIC_API_URL) return process.env.NEXT_PUBLIC_API_URL;
+  if (typeof window !== 'undefined') return '';
+  return process.env.API_URL ?? 'http://localhost:3001';
+}
+
 export async function apiFetch<T>(
   path: string,
   options: RequestInit & { token?: string; baseUrl?: string } = {},
 ): Promise<T> {
   const { token, baseUrl, ...fetchOptions } = options;
-  const apiUrl = baseUrl ?? process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+  const apiUrl = resolveApiBase(baseUrl);
+  const prefix = apiUrl ? `${apiUrl}/api` : '/api';
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -14,7 +22,7 @@ export async function apiFetch<T>(
     headers.Authorization = `Bearer ${token}`;
   }
 
-  const res = await fetch(`${apiUrl}/api${path}`, {
+  const res = await fetch(`${prefix}${path}`, {
     ...fetchOptions,
     headers,
   });

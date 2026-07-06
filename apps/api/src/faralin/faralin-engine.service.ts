@@ -12,9 +12,10 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 
 interface RuleMatchContext {
-  assessmentId: string;
+  assessmentId?: string;
+  problemTrackId?: string;
   subjectId: string;
-  difficulty: AssessmentDifficulty;
+  difficulty?: AssessmentDifficulty;
   trustLevel: FaralinTrustLevel;
 }
 
@@ -110,6 +111,138 @@ export class FaralinEngineService {
     }
   }
 
+  async processTrackAttemptCompletion(attemptId: string): Promise<void> {
+    const attempt = await this.prisma.problemTrackAttempt.findUnique({
+      where: { id: attemptId },
+      include: {
+        problemTrack: true,
+        studentProfile: {
+          include: { universitySelections: true },
+        },
+      },
+    });
+
+    if (!attempt || attempt.isVoided || !attempt.completedAt) return;
+    if (attempt.status !== 'SCORED' && attempt.status !== 'APPROVED') return;
+    if ((attempt.faralinsEarned ?? 0) <= 0) return;
+
+    const existing = await this.prisma.faralinTransaction.count({
+      where: { problemTrackAttemptId: attemptId },
+    });
+    if (existing > 0) return;
+
+    const selections = attempt.studentProfile.universitySelections;
+    if (!selections.length) return;
+
+    const rubricScore = Number(attempt.rubricScore ?? 0);
+
+    for (const selection of selections) {
+      const rule = await this.findBestTrackRule(selection.universityId, {
+        problemTrackId: attempt.problemTrackId,
+        subjectId: attempt.problemTrack.subjectId,
+        trustLevel: attempt.problemTrack.trustLevel,
+      });
+
+      const amount = rule
+        ? this.calculateTrackAmount(rule, attempt.faralinsEarned!, rubricScore)
+        : attempt.faralinsEarned!;
+
+      if (amount <= 0) continue;
+
+      const currentBalance = await this.getUniversityBalance(
+        attempt.studentProfileId,
+        selection.universityId,
+      );
+
+      await this.prisma.faralinTransaction.create({
+        data: {
+          studentProfileId: attempt.studentProfileId,
+          universityId: selection.universityId,
+          problemTrackAttemptId: attemptId,
+          type: FaralinTransactionType.EARNED,
+          status: FaralinTransactionStatus.CONDITIONAL,
+          trustLevel: attempt.problemTrack.trustLevel,
+          amount,
+          balanceAfter: currentBalance + amount,
+          reason: `Recognition from ${attempt.problemTrack.title}`,
+          metadata: {
+            ruleId: rule?.id,
+            rubricScore,
+            faralinsEarned: attempt.faralinsEarned,
+            awardBand: attempt.awardBandLabel,
+            trustLevel: attempt.trustLevel,
+          },
+        },
+      });
+
+      const studentProfile = await this.prisma.studentProfile.findUnique({
+        where: { id: attempt.studentProfileId },
+        select: { userId: true },
+      });
+
+      if (studentProfile) {
+        const university = await this.prisma.university.findUnique({
+          where: { id: selection.universityId },
+        });
+
+        await this.prisma.notification.create({
+          data: {
+            userId: studentProfile.userId,
+            type: NotificationType.FARALIN_EARNED,
+            title: 'Problem Track recognition recorded',
+            body: `You earned ${amount} ${university?.shortName ?? 'university'} Faralins from "${attempt.problemTrack.title}".`,
+            metadata: { universityId: selection.universityId, amount, attemptId },
+          },
+        });
+      }
+    }
+  }
+
+  private async findBestTrackRule(
+    universityId: string,
+    ctx: { problemTrackId: string; subjectId: string; trustLevel: FaralinTrustLevel },
+  ): Promise<FaralinRule | null> {
+    const now = new Date();
+    const rules = await this.prisma.faralinRule.findMany({
+      where: {
+        universityId,
+        isActive: true,
+        effectiveFrom: { lte: now },
+        OR: [{ effectiveTo: null }, { effectiveTo: { gte: now } }],
+      },
+    });
+
+    const scored = rules
+      .map((rule) => ({ rule, score: this.trackRuleSpecificity(rule, ctx) }))
+      .filter((r) => r.score > 0)
+      .sort((a, b) => b.score - a.score);
+
+    return scored[0]?.rule ?? null;
+  }
+
+  private trackRuleSpecificity(
+    rule: FaralinRule,
+    ctx: { problemTrackId: string; subjectId: string; trustLevel: FaralinTrustLevel },
+  ): number {
+    let score = 1;
+    if (rule.problemTrackId && rule.problemTrackId !== ctx.problemTrackId) return 0;
+    if (rule.problemTrackId) score += 8;
+    if (rule.assessmentId) return 0;
+    if (rule.subjectId && rule.subjectId !== ctx.subjectId) return 0;
+    if (rule.subjectId) score += 4;
+    if (rule.trustLevel && rule.trustLevel !== ctx.trustLevel) return 0;
+    if (rule.trustLevel) score += 2;
+    return score;
+  }
+
+  private calculateTrackAmount(
+    rule: FaralinRule,
+    faralinsEarned: number,
+    _rubricScore: number,
+  ): number {
+    return Math.round(faralinsEarned * Number(rule.scoreMultiplier));
+  }
+
   private async findBestRule(
     universityId: string,
     ctx: RuleMatchContext,
@@ -134,13 +267,14 @@ export class FaralinEngineService {
 
   private ruleSpecificity(rule: FaralinRule, ctx: RuleMatchContext): number {
     let score = 1;
+    if (rule.problemTrackId) return 0;
     if (rule.assessmentId && rule.assessmentId !== ctx.assessmentId) return 0;
     if (rule.assessmentId) score += 8;
     if (rule.subjectId && rule.subjectId !== ctx.subjectId) return 0;
     if (rule.subjectId) score += 4;
     if (rule.trustLevel && rule.trustLevel !== ctx.trustLevel) return 0;
     if (rule.trustLevel) score += 2;
-    if (rule.difficulty && rule.difficulty !== ctx.difficulty) return 0;
+    if (rule.difficulty && ctx.difficulty && rule.difficulty !== ctx.difficulty) return 0;
     if (rule.difficulty) score += 1;
     return score;
   }
@@ -185,7 +319,8 @@ export class PortfolioService {
     startOfMonth.setDate(1);
     startOfMonth.setHours(0, 0, 0, 0);
 
-    const [transactions, monthTransactions, attempts, selections] = await Promise.all([
+    const [transactions, monthTransactions, attempts, trackAttempts, trackArtifacts, selections] =
+      await Promise.all([
       this.prisma.faralinTransaction.findMany({
         where: {
           studentProfileId,
@@ -203,6 +338,19 @@ export class PortfolioService {
       }),
       this.prisma.assessmentAttempt.count({
         where: { studentProfileId, completedAt: { not: null }, isVoided: false },
+      }),
+      this.prisma.problemTrackAttempt.count({
+        where: {
+          studentProfileId,
+          completedAt: { not: null },
+          isVoided: false,
+          status: { in: ['SCORED', 'APPROVED', 'MODERATION_PENDING'] },
+        },
+      }),
+      this.prisma.portfolioArtifact.findMany({
+        where: { studentProfileId },
+        orderBy: { completedAt: 'desc' },
+        take: 10,
       }),
       this.prisma.studentUniversitySelection.findMany({
         where: { studentProfileId },
@@ -278,8 +426,22 @@ export class PortfolioService {
       totalFaralins,
       faralinsThisMonth: monthTransactions._sum.amount ?? 0,
       assessmentsCompleted: attempts,
+      tracksCompleted: trackAttempts,
       estimatedBursaryGbp,
       byUniversity,
+      recentArtifacts: trackArtifacts.map((a) => ({
+        id: a.id,
+        title: a.title,
+        slug: a.slug,
+        subjectName: a.subjectName,
+        difficultyBand: a.difficultyBand,
+        rubricScore: Number(a.rubricScore),
+        faralinsEarned: a.faralinsEarned,
+        skillsDemonstrated: a.skillsDemonstrated,
+        trustLevel: a.trustLevel,
+        moderationStatus: a.moderationStatus,
+        completedAt: a.completedAt.toISOString(),
+      })),
     };
   }
 }

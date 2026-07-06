@@ -23,5 +23,5 @@ COPY . .
 ENV NODE_ENV=production
 
 # Default command: apply schema then seed universities (idempotent)
-CMD ["bash","-lc","pnpm --filter @faralin/db run push:ci && pnpm --filter @faralin/db run seed:universities:ci"]
+CMD ["bash","-lc","pnpm --filter @faralin/db run push:ci && pnpm --filter @faralin/db run seed:ci"]
 

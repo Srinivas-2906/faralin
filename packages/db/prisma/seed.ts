@@ -8,6 +8,7 @@ import { assessmentDefs } from './data/assessments';
 import { universityDefs } from './data/universities';
 import { courseDefs, getLessonVideoUrl } from './data/courses';
 import { knowledgeArticleDefs } from './data/knowledge-articles';
+import { problemTrackDefs } from './data/problem-tracks';
 
 const prisma = new PrismaClient();
 
@@ -22,6 +23,10 @@ async function main() {
   await prisma.courseSection.deleteMany();
   await prisma.course.deleteMany();
   await prisma.faralinTransaction.deleteMany();
+  await prisma.portfolioArtifact.deleteMany();
+  await prisma.problemTrackStepResponse.deleteMany();
+  await prisma.problemTrackAttempt.deleteMany();
+  await prisma.problemTrack.deleteMany();
   await prisma.assessmentAnswer.deleteMany();
   await prisma.assessmentAttempt.deleteMany();
   await prisma.assessmentQuestion.deleteMany();
@@ -216,9 +221,37 @@ async function main() {
     }
   }
 
+  for (const trackDef of problemTrackDefs) {
+    const { subjectSlug, sections, rubric, awardBands, moderationRules, ...trackData } = trackDef;
+    const track = await prisma.problemTrack.create({
+      data: {
+        ...trackData,
+        subjectId: subjectMap[subjectSlug].id,
+        sections: sections as object,
+        rubric: rubric as object,
+        awardBands: awardBands as object,
+        moderationRules: moderationRules as object,
+      },
+    });
+
+    for (const university of universities) {
+      await prisma.faralinRule.create({
+        data: {
+          universityId: university.id,
+          problemTrackId: track.id,
+          baseAmount: track.maxFaralins,
+          scoreMultiplier: 1.0,
+          improvementBonus: 0,
+          difficultyMultiplier: 1.0,
+        },
+      });
+    }
+  }
+
   console.log(`Seeded ${subjects.length} subjects`);
   console.log(`Seeded ${universities.length} universities`);
   console.log(`Seeded ${assessmentDefs.length} assessments`);
+  console.log(`Seeded ${problemTrackDefs.length} problem tracks`);
   console.log(`Seeded ${knowledgeArticleDefs.length} knowledge articles`);
   console.log(`Seeded ${courseDefs.length} courses`);
   console.log(`Admin user: ${adminUser.email}`);

@@ -12,15 +12,28 @@ export class AdminService {
   constructor(private prisma: PrismaService) {}
 
   async getOverview() {
-    const [users, students, universities, assessments, transactions] = await Promise.all([
+    const [users, students, universities, assessments, problemTracks, transactions, moderationQueue] =
+      await Promise.all([
       this.prisma.user.count(),
       this.prisma.studentProfile.count(),
       this.prisma.university.count(),
       this.prisma.assessment.count(),
+      this.prisma.problemTrack.count(),
       this.prisma.faralinTransaction.count(),
+      this.prisma.problemTrackAttempt.count({
+        where: { moderationStatus: 'NEEDS_REVIEW' },
+      }),
     ]);
 
-    return { users, students, universities, assessments, transactions };
+    return {
+      users,
+      students,
+      universities,
+      assessments,
+      problemTracks,
+      transactions,
+      moderationQueue,
+    };
   }
 
   async listAssessments() {
@@ -178,5 +191,63 @@ export class AdminService {
 
   async createSubject(data: { slug: string; name: string }) {
     return this.prisma.subject.create({ data });
+  }
+
+  async listProblemTracks() {
+    return this.prisma.problemTrack.findMany({
+      include: {
+        subject: true,
+        _count: { select: { attempts: true } },
+      },
+      orderBy: { title: 'asc' },
+    });
+  }
+
+  async createProblemTrack(data: {
+    trackId: string;
+    slug: string;
+    title: string;
+    subtitle?: string;
+    subjectId: string;
+    secondarySubjectSlug?: string;
+    difficultyBand: string;
+    yearLevels: string[];
+    timeCapHours: number;
+    estimatedHoursMin: number;
+    estimatedHoursMax: number;
+    maxFaralins: number;
+    bursaryValueApproxGbp?: number;
+    outputType: string;
+    partnerUniversityCategories: string[];
+    skills: string[];
+    prerequisites: string[];
+    regionCompatibility: string[];
+    trustLevel: FaralinTrustLevel;
+    sections: object;
+    rubric: object;
+    awardBands: object;
+    moderationRules?: object;
+  }) {
+    return this.prisma.problemTrack.create({
+      data: {
+        ...data,
+        difficultyBand: data.difficultyBand as never,
+      },
+    });
+  }
+
+  async updateProblemTrack(
+    id: string,
+    data: Partial<{
+      title: string;
+      subtitle: string;
+      isActive: boolean;
+      maxFaralins: number;
+      sections: object;
+      rubric: object;
+      awardBands: object;
+    }>,
+  ) {
+    return this.prisma.problemTrack.update({ where: { id }, data });
   }
 }

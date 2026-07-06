@@ -31,22 +31,49 @@ export default function AdminPage() {
   const [universities, setUniversities] = useState<
     Array<{ id: string; name: string; slug: string; isDemo: boolean }>
   >([]);
+  const [problemTracks, setProblemTracks] = useState<
+    Array<{
+      id: string;
+      trackId: string;
+      title: string;
+      slug: string;
+      isActive: boolean;
+      maxFaralins: number;
+      _count: { attempts: number };
+    }>
+  >([]);
+  const [moderationQueue, setModerationQueue] = useState<
+    Array<{
+      id: string;
+      rubricScore: number | string;
+      faralinsEarned: number | null;
+      trustLevel: string | null;
+      problemTrack: { title: string };
+      studentProfile: { anonymousId: string };
+    }>
+  >([]);
   const [error, setError] = useState('');
 
   useEffect(() => {
     async function load() {
       try {
         const token = await getToken();
-        const [ov, ass, rl, uni] = await Promise.all([
+        const [ov, ass, rl, uni, tracks, mod] = await Promise.all([
           apiFetch<Record<string, number>>('/admin/overview', { token: token ?? undefined }),
           apiFetch<typeof assessments>('/admin/assessments', { token: token ?? undefined }),
           apiFetch<typeof rules>('/admin/faralin-rules', { token: token ?? undefined }),
           apiFetch<typeof universities>('/admin/universities', { token: token ?? undefined }),
+          apiFetch<typeof problemTracks>('/admin/problem-tracks', { token: token ?? undefined }),
+          apiFetch<typeof moderationQueue>('/admin/problem-tracks/moderation', {
+            token: token ?? undefined,
+          }),
         ]);
         setOverview(ov);
         setAssessments(ass);
         setRules(rl);
         setUniversities(uni);
+        setProblemTracks(tracks);
+        setModerationQueue(mod);
       } catch (e) {
         setError(e instanceof Error ? e.message : 'Admin access required');
       }
@@ -132,6 +159,44 @@ export default function AdminPage() {
             )}
           </Card>
         </div>
+
+        <Card style={{ marginBottom: 'var(--section-gap)' }}>
+          <h2 className="section-title">Moderation queue ({moderationQueue.length})</h2>
+          {moderationQueue.length === 0 ? (
+            <EmptyState compact message="No submissions awaiting review." />
+          ) : (
+            <ResponsiveTable
+              columns={[
+                { key: 'track', header: 'Track', render: (m) => m.problemTrack.title },
+                { key: 'student', header: 'Student', render: (m) => m.studentProfile.anonymousId },
+                { key: 'score', header: 'Score', render: (m) => `${m.rubricScore}%` },
+                { key: 'faralins', header: 'Faralins', render: (m) => m.faralinsEarned ?? 0 },
+                { key: 'trust', header: 'Trust', render: (m) => m.trustLevel ?? '—' },
+              ]}
+              data={moderationQueue}
+              getRowKey={(m) => m.id}
+            />
+          )}
+        </Card>
+
+        <Card style={{ marginBottom: 'var(--section-gap)' }}>
+          <h2 className="section-title">Problem Tracks ({problemTracks.length})</h2>
+          {problemTracks.length === 0 ? (
+            <EmptyState compact message="No problem tracks." />
+          ) : (
+            <ResponsiveTable
+              columns={[
+                { key: 'trackId', header: 'ID', render: (t) => t.trackId },
+                { key: 'title', header: 'Title', render: (t) => t.title },
+                { key: 'max', header: 'Max Faralins', render: (t) => t.maxFaralins },
+                { key: 'attempts', header: 'Attempts', render: (t) => t._count.attempts },
+                { key: 'active', header: 'Active', render: (t) => (t.isActive ? 'Yes' : 'No') },
+              ]}
+              data={problemTracks}
+              getRowKey={(t) => t.id}
+            />
+          )}
+        </Card>
 
         <Card>
           <h2 className="section-title">Universities ({universities.length})</h2>

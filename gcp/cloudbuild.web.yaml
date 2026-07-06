@@ -37,49 +37,7 @@ steps:
           --platform managed \
           --allow-unauthenticated \
           --port 8080 \
-          --set-env-vars "API_URL=${_API_PUBLIC_URL}" \
           --set-secrets "CLERK_SECRET_KEY=faralin_clerk_secret_key:latest,CLERK_PUBLISHABLE_KEY=faralin_clerk_publishable_key:latest" \
-          --min-instances 0 \
-          --max-instances 5 \
-          --memory 512Mi \
-          --cpu 1
-
-  - id: build-api
-    name: gcr.io/cloud-builders/docker
-    args:
-      - build
-      - -f
-      - Dockerfile.api
-      - -t
-      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_REPO}/${_API_IMAGE}:$BUILD_ID
-      - -t
-      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_REPO}/${_API_IMAGE}:latest
-      - .
-
-  - id: push-api
-    name: gcr.io/cloud-builders/docker
-    args:
-      - push
-      - --all-tags
-      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_REPO}/${_API_IMAGE}
-
-  - id: deploy-api
-    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
-    entrypoint: bash
-    args:
-      - -c
-      - |
-        set -euo pipefail
-        IMAGE="${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_REPO}/${_API_IMAGE}:$BUILD_ID"
-        gcloud run deploy "${_API_SERVICE}" \
-          --image "$$IMAGE" \
-          --region "${_REGION}" \
-          --platform managed \
-          --allow-unauthenticated \
-          --port 8080 \
-          --add-cloudsql-instances "kaana-prod:asia-south1:faralin-pg" \
-          --set-secrets "DATABASE_URL=faralin_database_url:latest,CLERK_SECRET_KEY=faralin_clerk_secret_key:latest,CLERK_WEBHOOK_SECRET=faralin_clerk_webhook_secret:latest" \
-          --set-env-vars "^|^WEB_URL=${_WEB_PUBLIC_URL}|ALLOWED_ORIGINS=${_ALLOWED_ORIGINS}" \
           --min-instances 0 \
           --max-instances 5 \
           --memory 512Mi \
@@ -90,11 +48,7 @@ substitutions:
   _ARTIFACT_REPO: kaana
   _WEB_IMAGE: faralin-web
   _WEB_SERVICE: faralin-web
-  _API_IMAGE: faralin-api
-  _API_SERVICE: faralin-api
   _API_PUBLIC_URL: https://faralin-api-wtba53dhka-el.a.run.app
-  _WEB_PUBLIC_URL: https://faralin-web-wtba53dhka-el.a.run.app
-  _ALLOWED_ORIGINS: https://faralin-web-wtba53dhka-el.a.run.app,https://faralin-web-851239127958.asia-south1.run.app,https://faralin.kaana.in
 
 availableSecrets:
   secretManager:
@@ -107,6 +61,3 @@ options:
 images:
   - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_REPO}/${_WEB_IMAGE}:$BUILD_ID
   - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_REPO}/${_WEB_IMAGE}:latest
-  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_REPO}/${_API_IMAGE}:$BUILD_ID
-  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_REPO}/${_API_IMAGE}:latest
-
