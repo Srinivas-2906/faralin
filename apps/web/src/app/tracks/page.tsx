@@ -40,7 +40,7 @@ export default async function TracksPage({
 
       <div className="page-section tracks-page-body">
         <div className="container-wide">
-          <div className="assessments-stats-row">
+          <div className="tracks-catalog-toolbar">
             <TracksCatalogInsight />
             <Suspense fallback={null}>
               <TracksFilters />

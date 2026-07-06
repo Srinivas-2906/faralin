@@ -30,14 +30,17 @@ export function TracksFilters() {
   );
 
   return (
-    <div className="assessments-stats-actions">
-      <div className="tracks-filter-chips-row" role="group" aria-label="Filter by difficulty">
-        {BAND_FILTERS.map((f) => (
-          <Chip key={f.value || 'all-bands'} selected={band === f.value} onClick={() => setBand(f.value)}>
-            {f.label}
-          </Chip>
-        ))}
-      </div>
+    <div className="tracks-filter-chips-row" role="group" aria-label="Filter by difficulty">
+      {BAND_FILTERS.map((f) => (
+        <Chip
+          key={f.value || 'all-bands'}
+          className="tracks-filter-chip"
+          selected={band === f.value}
+          onClick={() => setBand(f.value)}
+        >
+          {f.label}
+        </Chip>
+      ))}
     </div>
   );
 }

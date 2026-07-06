@@ -1,3 +1,5 @@
+@import './typography.css';
+
 :root {
   /* Academic Classic — primary palette */
   --faralin-ink: #002147; /* Deep Oxford Blue */
@@ -78,6 +80,7 @@ body {
 
 body {
   font-family: var(--font-sans), 'Roboto', system-ui, -apple-system, sans-serif;
+  font-size: var(--text-body);
   color: var(--faralin-text);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
@@ -194,7 +197,7 @@ select:focus {
 
 .site-header a {
   color: var(--faralin-ink);
-  font-size: 0.9375rem;
+  font-size: var(--text-base);
   font-weight: 500;
   transition: color var(--transition-medium), background var(--transition-medium);
 }
@@ -206,7 +209,7 @@ select:focus {
 .site-header .brand {
   color: var(--faralin-ink);
   font-family: var(--font-serif), 'Raleway', system-ui, sans-serif;
-  font-size: 1.5rem;
+  font-size: var(--text-2xl);
   font-weight: var(--font-weight-heading);
   letter-spacing: -0.01em;
 }
@@ -253,7 +256,7 @@ select:focus {
 }
 
 .hero-eyebrow {
-  font-size: 0.875rem;
+  font-size: var(--text-md);
   letter-spacing: 0.15em;
   text-transform: uppercase;
   color: var(--faralin-copper);
@@ -262,7 +265,7 @@ select:focus {
 }
 
 .hero-title {
-  font-size: clamp(2.5rem, 6vw, 3.5rem);
+  font-size: var(--text-display-lg);
   margin-bottom: 1.5rem;
   color: var(--faralin-ink);
   font-family: var(--font-serif), 'Raleway', system-ui, sans-serif;
@@ -270,7 +273,7 @@ select:focus {
 }
 
 .hero-lead {
-  font-size: 1.25rem;
+  font-size: var(--text-2xl);
   max-width: 600px;
   margin: 0 auto 2.5rem;
   color: var(--faralin-muted);
@@ -316,7 +319,7 @@ select:focus {
 }
 
 .stat-label {
-  font-size: 0.8125rem;
+  font-size: var(--text-sm);
   color: var(--faralin-muted);
   text-transform: uppercase;
   letter-spacing: 0.1em;
@@ -325,9 +328,17 @@ select:focus {
 
 .stat-value {
   font-family: var(--font-serif), 'Raleway', system-ui, sans-serif;
-  font-size: 2.25rem;
+  font-size: var(--text-display-sm);
   color: var(--faralin-ink);
   font-weight: 400;
+}
+
+.stat-value--compact {
+  font-size: var(--text-2xl);
+}
+
+.stat-value--hero {
+  font-size: var(--text-display-lg);
 }
 
 .stat-value.copper,
@@ -346,7 +357,7 @@ select:focus {
   gap: 0.5rem;
   padding: 12px 24px;
   border-radius: 4px;
-  font-size: 0.9375rem;
+  font-size: var(--text-base);
   font-weight: 500;
   border: none;
   transition: all var(--transition-fast);
@@ -398,7 +409,7 @@ select:focus {
 .badge {
   display: inline-block;
   padding: 0.25rem 0.65rem;
-  font-size: 0.75rem;
+  font-size: var(--text-xs);
   border-radius: 999px;
   background: var(--faralin-clay);
   color: var(--faralin-text);
@@ -421,14 +432,14 @@ select:focus {
 }
 
 .disclaimer {
-  font-size: 0.8125rem;
+  font-size: var(--text-sm);
   color: var(--faralin-muted);
   font-style: italic;
   margin-top: 0.5rem;
 }
 
 .section-title {
-  font-size: 1.0625rem;
+  font-size: var(--text-lg);
   font-weight: 600;
   margin-bottom: 1rem;
   color: var(--faralin-ivory);
@@ -477,7 +488,7 @@ td {
 }
 
 th {
-  font-size: 0.8125rem;
+  font-size: var(--text-sm);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--faralin-muted-on-dark);
@@ -636,7 +647,7 @@ td {
 }
 
 .page-header-eyebrow {
-  font-size: 0.875rem;
+  font-size: var(--text-md);
   color: var(--faralin-copper);
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -644,7 +655,7 @@ td {
 }
 
 .page-header-title {
-  font-size: clamp(1.75rem, 4vw, 2.25rem);
+  font-size: var(--text-display-sm);
   font-weight: 700;
   letter-spacing: -0.03em;
   margin-bottom: 0.35rem;
@@ -764,7 +775,7 @@ td {
 }
 
 .feed-item-meta {
-  font-size: 0.8125rem;
+  font-size: var(--text-sm);
   color: var(--faralin-muted);
   margin-top: 0.25rem;
 }
@@ -814,7 +825,7 @@ td {
 .bar-row-label {
   display: flex;
   justify-content: space-between;
-  font-size: 0.875rem;
+  font-size: var(--text-md);
   margin-bottom: 0.35rem;
 }
 
@@ -883,7 +894,7 @@ td {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 0.5rem;
-  font-size: 0.875rem;
+  font-size: var(--text-md);
   color: var(--faralin-muted);
 }
 
@@ -930,7 +941,7 @@ td {
   padding: 0.75rem 1rem;
   border-radius: 4px;
   margin-bottom: 1rem;
-  font-size: 0.9375rem;
+  font-size: var(--text-base);
 }
 
 .alert-success {
@@ -974,7 +985,7 @@ td {
   justify-content: space-between;
   gap: 1rem;
   padding: 0.35rem 0;
-  font-size: 0.9375rem;
+  font-size: var(--text-base);
 }
 
 .table-mobile-row:not(:last-child) {
@@ -982,7 +993,7 @@ td {
 }
 
 .table-mobile-label {
-  font-size: 0.75rem;
+  font-size: var(--text-xs);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--faralin-muted);
@@ -1020,7 +1031,7 @@ td {
 
 .assessment-active-title {
   margin: 0 0 0.25rem;
-  font-size: 0.9375rem;
+  font-size: var(--text-base);
   font-weight: 600;
   color: var(--faralin-ink);
   white-space: nowrap;
@@ -1030,7 +1041,7 @@ td {
 
 .assessment-active-progress {
   margin: 0;
-  font-size: 0.8125rem;
+  font-size: var(--text-sm);
   color: var(--faralin-muted);
 }
 
@@ -1067,7 +1078,7 @@ td {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.6875rem;
+  font-size: var(--text-2xs);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   color: var(--faralin-ink);
@@ -1217,7 +1228,7 @@ td {
 }
 
 .hero-cta {
-  font-size: 1rem;
+  font-size: var(--text-body);
   padding: 0.75rem 2rem;
 }
 
@@ -1230,11 +1241,11 @@ td {
 
 .feature-title {
   margin-bottom: 0.25rem;
-  font-size: 1.125rem;
+  font-size: var(--text-xl);
 }
 
 .feature-desc {
-  font-size: 0.9375rem;
+  font-size: var(--text-base);
 }
 
 /* ── Auth layout ── */
@@ -1288,7 +1299,7 @@ td {
   background: transparent;
   border: none;
   color: var(--faralin-ink);
-  font-size: 0.9375rem;
+  font-size: var(--text-base);
   font-weight: 500;
   padding: 0.5rem 0.75rem;
   border-radius: 4px;
@@ -1312,7 +1323,7 @@ td {
   justify-content: center;
   gap: 0.375rem;
   padding: 0.5rem 1.25rem;
-  font-size: 0.875rem;
+  font-size: var(--text-md);
   min-height: var(--touch-min);
   text-decoration: none;
 }
@@ -1451,7 +1462,7 @@ a.nav-sign-in {
   color: var(--faralin-ink);
   padding: 0.875rem 1rem;
   border-radius: 4px;
-  font-size: 1rem;
+  font-size: var(--text-body);
   min-height: var(--touch-min);
   display: flex;
   align-items: center;
@@ -1481,7 +1492,7 @@ a.nav-sign-in {
   background: transparent;
   border: none;
   color: var(--faralin-muted);
-  font-size: 1.5rem;
+  font-size: var(--text-2xl);
   min-width: var(--touch-min);
   min-height: var(--touch-min);
   display: flex;
@@ -1559,7 +1570,7 @@ a.nav-sign-in {
 }
 
 .site-footer-brand {
-  font-size: 1.5rem;
+  font-size: var(--text-2xl);
   font-family: var(--font-serif), 'Raleway', system-ui, sans-serif;
   font-weight: var(--font-weight-heading);
   letter-spacing: -0.01em;
@@ -1585,7 +1596,7 @@ a.nav-sign-in {
 }
 
 .site-footer-tagline {
-  font-size: 0.9375rem;
+  font-size: var(--text-base);
   line-height: 1.6;
   color: var(--faralin-muted);
   max-width: 28rem;
@@ -1594,7 +1605,7 @@ a.nav-sign-in {
 
 .site-footer-address {
   font-style: normal;
-  font-size: 0.875rem;
+  font-size: var(--text-md);
   line-height: 1.6;
   color: var(--faralin-muted);
   display: flex;
@@ -1603,7 +1614,7 @@ a.nav-sign-in {
 }
 
 .site-footer-heading {
-  font-size: 0.8125rem;
+  font-size: var(--text-sm);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.1em;
@@ -1621,7 +1632,7 @@ a.nav-sign-in {
 
 .site-footer-links a,
 .site-footer-contact a {
-  font-size: 0.9375rem;
+  font-size: var(--text-base);
   color: var(--faralin-muted);
   transition: color var(--transition-fast);
 }
@@ -1632,7 +1643,7 @@ a.nav-sign-in {
 }
 
 .site-footer-contact span {
-  font-size: 0.9375rem;
+  font-size: var(--text-base);
   color: var(--faralin-muted);
 }
 
@@ -1645,7 +1656,7 @@ a.nav-sign-in {
 }
 
 .site-footer-bottom p {
-  font-size: 0.8125rem;
+  font-size: var(--text-sm);
   color: var(--faralin-muted);
   margin: 0;
   text-align: left;
@@ -1659,7 +1670,7 @@ a.nav-sign-in {
 /* ── Buttons extended ── */
 
 .btn-lg {
-  font-size: 1rem;
+  font-size: var(--text-body);
   padding: 0.75rem 2rem;
   min-height: var(--touch-min);
 }
@@ -1723,13 +1734,13 @@ a.nav-sign-in {
 /* ── Empty state extended ── */
 
 .empty-state-icon {
-  font-size: 2rem;
+  font-size: var(--text-display);
   margin-bottom: 0.75rem;
   opacity: 0.5;
 }
 
 .empty-state-title {
-  font-size: 1.125rem;
+  font-size: var(--text-xl);
   color: var(--faralin-ivory);
   margin-bottom: 0.35rem;
 }
@@ -1760,7 +1771,7 @@ a.nav-sign-in {
 
 .uni-toolbar__stat-value {
   margin: 0;
-  font-size: 1.25rem;
+  font-size: var(--text-2xl);
   font-weight: 600;
   color: var(--faralin-copper);
   line-height: 1.2;
@@ -1768,7 +1779,7 @@ a.nav-sign-in {
 
 .uni-toolbar__stat-label {
   margin: 0.2rem 0 0;
-  font-size: 0.75rem;
+  font-size: var(--text-xs);
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--faralin-muted);
@@ -1817,7 +1828,7 @@ a.nav-sign-in {
 
 .uni-feed__heading {
   margin: 0 0 1rem;
-  font-size: 1.0625rem;
+  font-size: var(--text-lg);
   font-weight: 600;
   color: var(--faralin-ink);
 }
@@ -1854,7 +1865,7 @@ a.nav-sign-in {
 }
 
 .uni-feed .media-card-title {
-  font-size: 1rem;
+  font-size: var(--text-body);
 }
 
 .uni-feed__item--event {
@@ -1880,7 +1891,7 @@ a.nav-sign-in {
 }
 
 .uni-feed__event-weekday {
-  font-size: 0.6875rem;
+  font-size: var(--text-2xs);
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -1888,7 +1899,7 @@ a.nav-sign-in {
 }
 
 .uni-feed__event-day {
-  font-size: 0.9375rem;
+  font-size: var(--text-base);
   font-weight: 600;
   font-family: var(--font-serif), 'Raleway', system-ui, sans-serif;
   color: var(--faralin-ink);
@@ -1907,7 +1918,7 @@ a.nav-sign-in {
 
 .uni-feed__event-title {
   margin: 0;
-  font-size: 1rem;
+  font-size: var(--text-body);
   font-weight: 600;
   font-family: var(--font-serif), 'Raleway', system-ui, sans-serif;
   color: var(--faralin-ink);
@@ -1916,7 +1927,7 @@ a.nav-sign-in {
 
 .uni-feed__event-meta {
   margin: 0;
-  font-size: 0.8125rem;
+  font-size: var(--text-sm);
   color: var(--faralin-muted);
 }
 
@@ -1985,7 +1996,7 @@ a.nav-sign-in {
 
 .split-hero-lead {
   color: var(--faralin-clay);
-  font-size: 1.125rem;
+  font-size: var(--text-xl);
   margin-bottom: 1.75rem;
   line-height: 1.6;
 }
@@ -2035,7 +2046,7 @@ a.nav-sign-in {
 }
 
 .media-card-title {
-  font-size: 1.25rem;
+  font-size: var(--text-2xl);
   font-family: var(--font-serif), 'Raleway', system-ui, sans-serif;
   font-weight: var(--font-weight-heading);
   color: var(--faralin-ink);
@@ -2044,7 +2055,7 @@ a.nav-sign-in {
 }
 
 .media-card-meta {
-  font-size: 0.875rem;
+  font-size: var(--text-md);
   color: var(--faralin-muted);
   line-height: 1.35;
   margin: 0;
@@ -2159,7 +2170,7 @@ a.nav-sign-in {
 }
 
 .media-card--overlay .media-card-title {
-  font-size: 1.25rem;
+  font-size: var(--text-2xl);
   font-family: var(--font-serif), 'Raleway', system-ui, sans-serif;
   color: var(--faralin-ivory);
   margin: 0;
@@ -2168,7 +2179,7 @@ a.nav-sign-in {
 }
 
 .media-card--overlay .media-card-meta {
-  font-size: 0.875rem;
+  font-size: var(--text-md);
   color: rgba(255, 255, 255, 0.9);
   line-height: 1.35;
   margin: 0;
@@ -2235,7 +2246,7 @@ a.nav-sign-in {
 }
 
 .media-card-eyebrow {
-  font-size: 0.625rem;
+  font-size: var(--text-2xs);
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -2245,13 +2256,13 @@ a.nav-sign-in {
 }
 
 .media-card--hero-photo .media-card-title {
-  font-size: clamp(1.0625rem, 2vw, 1.2rem);
+  font-size: var(--text-lg);
   font-weight: var(--font-weight-heading);
   text-shadow: none;
 }
 
 .media-card--hero-photo .media-card-meta {
-  font-size: 0.6875rem;
+  font-size: var(--text-2xs);
   color: rgba(255, 255, 255, 0.78);
   letter-spacing: 0.02em;
   text-shadow: none;
@@ -2346,7 +2357,7 @@ a.nav-sign-in {
 }
 
 .assessment-card-details .media-card-title {
-  font-size: 1.0625rem;
+  font-size: var(--text-lg);
 }
 
 /* Compact split cards (dashboard carousel, track cards) */
@@ -2361,11 +2372,11 @@ a.nav-sign-in {
 }
 
 .assessment-card-split--compact .media-card-eyebrow {
-  font-size: 0.625rem;
+  font-size: var(--text-2xs);
 }
 
 .assessment-card-split--compact .media-card-title {
-  font-size: 0.9375rem;
+  font-size: var(--text-base);
   line-height: 1.25;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -2374,12 +2385,12 @@ a.nav-sign-in {
 }
 
 .assessment-card-split--compact .media-card-meta {
-  font-size: 0.75rem;
+  font-size: var(--text-xs);
 }
 
 .assessment-card-split--compact .assessment-card-badges .badge {
   padding: 0.0625rem 0.3rem;
-  font-size: 0.5rem;
+  font-size: var(--text-2xs);
 }
 
 .assessment-card-badges-overlay {
@@ -2429,7 +2440,7 @@ a.nav-sign-in {
 
 .assessment-card-badges .badge {
   padding: 0.0625rem 0.35rem;
-  font-size: 0.5625rem;
+  font-size: var(--text-2xs);
   line-height: 1.2;
   font-weight: 600;
   letter-spacing: 0.02em;
@@ -2515,13 +2526,13 @@ a.nav-sign-in {
 }
 
 .assessments-page .home-wide-banner-eyebrow {
-  font-size: 0.625rem;
+  font-size: var(--text-2xs);
   margin-bottom: 0.25rem;
   letter-spacing: 0.12em;
 }
 
 .assessments-page .home-wide-banner-title {
-  font-size: clamp(1.25rem, 2.5vw, 1.625rem);
+  font-size: var(--text-2xl);
   margin-bottom: 0;
   line-height: 1.2;
 }
@@ -2553,7 +2564,7 @@ a.nav-sign-in {
 .catalog-insight-eyebrow {
   flex-shrink: 0;
   margin: 0;
-  font-size: 0.5625rem;
+  font-size: var(--text-2xs);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.1em;
@@ -2571,7 +2582,7 @@ a.nav-sign-in {
 
 .catalog-insight-line {
   margin: 0;
-  font-size: 0.8125rem;
+  font-size: var(--text-sm);
   line-height: 1.35;
   color: var(--faralin-ink);
 }
@@ -2666,14 +2677,14 @@ a.nav-sign-in {
 
 .assessments-stat-value {
   font-family: var(--font-serif), Raleway, system-ui, sans-serif;
-  font-size: clamp(1.125rem, 2vw, 1.375rem);
+  font-size: var(--text-xl);
   font-weight: 400;
   line-height: 1;
   color: var(--faralin-copper);
 }
 
 .assessments-stat-label {
-  font-size: 0.5625rem;
+  font-size: var(--text-2xs);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -2708,7 +2719,7 @@ a.nav-sign-in {
   height: 100%;
   min-width: 7.25rem;
   padding: 0.625rem 1rem;
-  font-size: 0.6875rem;
+  font-size: var(--text-2xs);
   font-weight: 600;
   font-family: inherit;
   text-transform: uppercase;
@@ -2746,7 +2757,7 @@ a.nav-sign-in {
   border-radius: 999px;
   background: var(--faralin-copper);
   color: var(--faralin-ivory);
-  font-size: 0.6875rem;
+  font-size: var(--text-2xs);
   font-weight: 700;
   line-height: 1;
 }
@@ -2782,7 +2793,7 @@ a.nav-sign-in {
 
 .assessments-filters-label {
   margin: 0;
-  font-size: 0.6875rem;
+  font-size: var(--text-2xs);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -2795,7 +2806,7 @@ a.nav-sign-in {
 
 .assessments-result-count {
   margin: 0;
-  font-size: 0.875rem;
+  font-size: var(--text-md);
   font-weight: 500;
   color: var(--faralin-muted);
 }
@@ -2805,7 +2816,7 @@ a.nav-sign-in {
   background: none;
   padding: 0;
   font: inherit;
-  font-size: 0.875rem;
+  font-size: var(--text-md);
   font-weight: 600;
   color: var(--faralin-copper);
   cursor: pointer;
@@ -2832,7 +2843,7 @@ a.nav-sign-in {
 }
 
 .assessments-section-head .home-section-title {
-  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-size: var(--text-display-sm);
 }
 
 .assessments-page .content-rail-item .media-card {
@@ -2897,13 +2908,13 @@ a.nav-sign-in {
 }
 
 .universities-page .home-wide-banner-eyebrow {
-  font-size: 0.625rem;
+  font-size: var(--text-2xs);
   margin-bottom: 0.25rem;
   letter-spacing: 0.12em;
 }
 
 .universities-page .home-wide-banner-title {
-  font-size: clamp(1.25rem, 2.5vw, 1.625rem);
+  font-size: var(--text-2xl);
   margin-bottom: 0;
   line-height: 1.2;
 }
@@ -2981,14 +2992,14 @@ a.nav-sign-in {
 
 .universities-stat-value {
   font-family: var(--font-serif), Raleway, system-ui, sans-serif;
-  font-size: clamp(1.125rem, 2vw, 1.375rem);
+  font-size: var(--text-xl);
   font-weight: 400;
   line-height: 1;
   color: var(--faralin-ink);
 }
 
 .universities-stat-label {
-  font-size: 0.5625rem;
+  font-size: var(--text-2xs);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -3044,7 +3055,7 @@ a.nav-sign-in {
   min-width: 0;
   height: 100%;
   padding: 0.625rem 0;
-  font-size: 0.6875rem;
+  font-size: var(--text-2xs);
   font-weight: 600;
   font-family: inherit;
   letter-spacing: 0.04em;
@@ -3145,7 +3156,7 @@ a.nav-sign-in {
 
 .image-banner-content .display-title {
   color: #ffffff;
-  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  font-size: var(--text-display);
 }
 
 .bento-grid {
@@ -3189,7 +3200,7 @@ a.nav-sign-in {
 }
 
 .stat-row-value {
-  font-size: 1.5rem;
+  font-size: var(--text-2xl);
   font-weight: 600;
   color: var(--faralin-ivory);
 }
@@ -3215,7 +3226,7 @@ a.nav-sign-in {
 }
 
 .stat-row-label {
-  font-size: 0.75rem;
+  font-size: var(--text-xs);
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--faralin-muted-on-dark);
@@ -3264,7 +3275,7 @@ a.nav-sign-in {
 .subject-tile-label {
   display: block;
   padding: 0.625rem 0.75rem;
-  font-size: 0.875rem;
+  font-size: var(--text-md);
   font-weight: 500;
   background: var(--faralin-ivory);
 }
@@ -3315,13 +3326,13 @@ a.nav-sign-in {
 
 .auth-split-overlay .display-title {
   color: #ffffff;
-  font-size: 2rem;
+  font-size: var(--text-display);
   margin-bottom: 0.5rem;
 }
 
 .auth-split-tagline {
   color: rgba(255, 255, 255, 0.85);
-  font-size: 1.0625rem;
+  font-size: var(--text-lg);
   position: relative;
   padding-top: 0.75rem;
 }
@@ -3408,7 +3419,7 @@ a.nav-sign-in {
 
 .portfolio-hero-content .stat-row-value {
   color: #ffffff;
-  font-size: 2.25rem;
+  font-size: var(--text-display-sm);
 }
 
 /* ── Dashboard page ── */
@@ -3425,7 +3436,7 @@ a.nav-sign-in {
 .dashboard-greeting {
   margin: 0 0 0.75rem;
   font-family: var(--font-serif), 'Raleway', system-ui, sans-serif;
-  font-size: clamp(1.375rem, 2.5vw, 1.75rem);
+  font-size: var(--text-display-sm);
   font-weight: 500;
   line-height: 1.2;
   letter-spacing: -0.01em;
@@ -3472,11 +3483,11 @@ a.nav-sign-in {
 }
 
 .dashboard-stats-row .assessments-stats--compact .assessments-stat-value {
-  font-size: clamp(0.95rem, 1.5vw, 1.125rem);
+  font-size: var(--text-body);
 }
 
 .dashboard-stats-row .assessments-stats--compact .assessments-stat-label {
-  font-size: 0.5rem;
+  font-size: var(--text-2xs);
   letter-spacing: 0.06em;
 }
 
@@ -3497,7 +3508,7 @@ a.nav-sign-in {
 }
 
 .dashboard-section-title {
-  font-size: 0.6875rem;
+  font-size: var(--text-2xs);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.1em;
@@ -3519,7 +3530,7 @@ a.nav-sign-in {
 
 .dashboard-section-link {
   flex-shrink: 0;
-  font-size: 0.6875rem;
+  font-size: var(--text-2xs);
   font-weight: 600;
   line-height: 1;
   text-transform: uppercase;
@@ -3534,7 +3545,7 @@ button.dashboard-section-link {
   border: none;
   background: none;
   cursor: pointer;
-  font-size: 0.6875rem;
+  font-size: var(--text-2xs);
   font-weight: 600;
   line-height: 1;
   letter-spacing: 0.08em;
@@ -3666,21 +3677,21 @@ button.dashboard-section-link {
 }
 
 .dashboard-carousel-item .assessment-card-split--compact .media-card-eyebrow {
-  font-size: 0.625rem;
+  font-size: var(--text-2xs);
 }
 
 .dashboard-carousel-item .assessment-card-split--compact .media-card-title {
-  font-size: 0.9375rem;
+  font-size: var(--text-base);
   line-height: 1.25;
 }
 
 .dashboard-carousel-item .assessment-card-split--compact .media-card-meta {
-  font-size: 0.75rem;
+  font-size: var(--text-xs);
 }
 
 .dashboard-carousel-item .assessment-card-split--compact .assessment-card-badges .badge {
   padding: 0.0625rem 0.3rem;
-  font-size: 0.5rem;
+  font-size: var(--text-2xs);
 }
 
 .dashboard-carousel-nav {
@@ -3811,7 +3822,7 @@ button.dashboard-section-link {
 .dashboard-bento-item-title {
   margin: 0;
   font-family: var(--font-serif), 'Raleway', system-ui, sans-serif;
-  font-size: 0.9375rem;
+  font-size: var(--text-base);
   font-weight: 500;
   line-height: 1.25;
   color: var(--faralin-ink);
@@ -3823,7 +3834,7 @@ button.dashboard-section-link {
 
 .dashboard-bento-item-link {
   flex-shrink: 0;
-  font-size: 0.75rem;
+  font-size: var(--text-xs);
   font-weight: 600;
   letter-spacing: 0.02em;
   line-height: 1;
@@ -3842,7 +3853,7 @@ button.dashboard-section-link {
   align-items: baseline;
   gap: 0.375rem 0.5rem;
   margin: 0;
-  font-size: 0.8125rem;
+  font-size: var(--text-sm);
   line-height: 1.35;
 }
 
@@ -3929,7 +3940,7 @@ button.dashboard-section-link {
 }
 
 .home-hero-eyebrow {
-  font-size: 0.875rem;
+  font-size: var(--text-md);
   color: var(--faralin-muted);
   margin-bottom: 1rem;
   font-weight: 500;
@@ -3937,7 +3948,7 @@ button.dashboard-section-link {
 
 .home-hero-title {
   font-family: var(--font-serif), 'Raleway', system-ui, sans-serif;
-  font-size: clamp(2.375rem, 4.25vw, 3.375rem);
+  font-size: var(--text-display-lg);
   font-weight: 400;
   letter-spacing: -0.025em;
   line-height: 1.08;
@@ -3948,7 +3959,7 @@ button.dashboard-section-link {
 .home-hero-lead {
   max-width: 100%;
   margin: 0 0 1.5rem;
-  font-size: 1.0625rem;
+  font-size: var(--text-lg);
   line-height: 1.55;
   color: var(--faralin-muted);
 }
@@ -3992,7 +4003,7 @@ button.dashboard-section-link {
   border-radius: 0;
   background: transparent;
   color: var(--faralin-text);
-  font-size: 1.0625rem;
+  font-size: var(--text-lg);
   box-shadow: none;
   transition: border-color var(--transition-smooth);
 }
@@ -4029,7 +4040,7 @@ button.dashboard-section-link {
   border: 1px solid var(--faralin-border);
   background: var(--faralin-ivory);
   color: var(--faralin-text);
-  font-size: 1rem;
+  font-size: var(--text-body);
   transition: border-color var(--transition-smooth), box-shadow var(--transition-smooth);
 }
 
@@ -4118,7 +4129,7 @@ button.dashboard-section-link {
 
 .hero-tile__label {
   font-family: var(--font-serif), 'Raleway', system-ui, sans-serif;
-  font-size: clamp(1.0625rem, 2vw, 1.2rem);
+  font-size: var(--text-lg);
   font-weight: 400;
   line-height: 1.15;
   color: var(--faralin-ivory);
@@ -4179,7 +4190,7 @@ button.dashboard-section-link {
 }
 
 .hero-tile__eyebrow {
-  font-size: 0.625rem;
+  font-size: var(--text-2xs);
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -4187,7 +4198,7 @@ button.dashboard-section-link {
 }
 
 .hero-tile__hint {
-  font-size: 0.6875rem;
+  font-size: var(--text-2xs);
   color: rgba(255, 255, 255, 0.78);
   letter-spacing: 0.02em;
 }
@@ -4216,7 +4227,7 @@ button.dashboard-section-link {
 
 .hero-tile__metrics-eyebrow {
   display: block;
-  font-size: 0.625rem;
+  font-size: var(--text-2xs);
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -4260,7 +4271,7 @@ button.dashboard-section-link {
 }
 
 .hero-tile__metric-value {
-  font-size: 0.8125rem;
+  font-size: var(--text-sm);
   font-weight: 600;
   color: var(--faralin-ink);
   line-height: 1.2;
@@ -4271,7 +4282,7 @@ button.dashboard-section-link {
 }
 
 .hero-tile__metric-label {
-  font-size: 0.5625rem;
+  font-size: var(--text-2xs);
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--faralin-muted);
@@ -4328,7 +4339,7 @@ button.dashboard-section-link {
 
 .hero-tile__dashboard-link {
   margin-top: 0.25rem;
-  font-size: 0.6875rem;
+  font-size: var(--text-2xs);
   font-weight: 500;
   color: var(--faralin-copper);
   transition: color var(--transition-fast);
@@ -4376,7 +4387,7 @@ button.dashboard-section-link {
 }
 
 .hero-tile__split-eyebrow {
-  font-size: 0.625rem;
+  font-size: var(--text-2xs);
   font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -4385,7 +4396,7 @@ button.dashboard-section-link {
 
 .hero-tile__split-link {
   margin-top: 0.35rem;
-  font-size: 0.6875rem;
+  font-size: var(--text-2xs);
   font-weight: 500;
   color: var(--faralin-copper);
   transition: color var(--transition-fast);
@@ -4422,7 +4433,7 @@ button.dashboard-section-link {
   align-items: center;
   gap: 0.5rem;
   min-width: 76px;
-  font-size: 0.8125rem;
+  font-size: var(--text-sm);
   color: var(--faralin-muted);
   transition: color var(--transition-fast);
 }
@@ -4589,7 +4600,7 @@ button.dashboard-section-link {
   grid-row: 1;
   justify-self: end;
   font-family: var(--font-serif), 'Raleway', system-ui, sans-serif;
-  font-size: 0.8125rem;
+  font-size: var(--text-sm);
   font-weight: 600;
   letter-spacing: 0.08em;
   color: var(--faralin-crimson);
@@ -4608,7 +4619,7 @@ button.dashboard-section-link {
 
 .home-why-board-cell-title {
   font-family: var(--font-serif), 'Raleway', system-ui, sans-serif;
-  font-size: clamp(1.0625rem, 1.6vw, 1.1875rem);
+  font-size: var(--text-lg);
   font-weight: 600;
   letter-spacing: -0.015em;
   color: var(--faralin-ink);
@@ -4617,7 +4628,7 @@ button.dashboard-section-link {
 }
 
 .home-why-board-cell-hint {
-  font-size: 0.8125rem;
+  font-size: var(--text-sm);
   line-height: 1.45;
   color: var(--faralin-muted);
 }
@@ -4709,7 +4720,7 @@ button.dashboard-section-link {
   display: inline-flex;
   align-items: center;
   gap: 0.625rem;
-  font-size: 0.875rem;
+  font-size: var(--text-md);
   font-weight: 600;
   letter-spacing: 0.15em;
   text-transform: uppercase;
@@ -4728,7 +4739,7 @@ button.dashboard-section-link {
 }
 
 .home-section-title {
-  font-size: clamp(2rem, 4vw, 2.75rem);
+  font-size: var(--text-display);
   font-family: var(--font-serif), 'Raleway', system-ui, sans-serif;
   font-weight: var(--font-weight-heading);
   letter-spacing: -0.01em;
@@ -4736,7 +4747,7 @@ button.dashboard-section-link {
 }
 
 .home-section-link {
-  font-size: 1rem;
+  font-size: var(--text-body);
   font-weight: 500;
   color: var(--faralin-ink);
   white-space: nowrap;
@@ -4891,7 +4902,7 @@ button.dashboard-section-link {
 
 .home-process-title {
   margin: 0.25rem 0 0;
-  font-size: 1.0625rem;
+  font-size: var(--text-lg);
   font-weight: 600;
   line-height: 1.3;
   color: var(--faralin-ivory);
@@ -4935,7 +4946,7 @@ button.dashboard-section-link {
 }
 
 .home-wide-banner-eyebrow {
-  font-size: 0.875rem;
+  font-size: var(--text-md);
   font-weight: 600;
   letter-spacing: 0.15em;
   text-transform: uppercase;
@@ -4944,7 +4955,7 @@ button.dashboard-section-link {
 }
 
 .home-wide-banner-title {
-  font-size: clamp(2.25rem, 5vw, 3.5rem);
+  font-size: var(--text-display-lg);
   font-family: var(--font-serif), 'Raleway', system-ui, sans-serif;
   font-weight: 400;
   letter-spacing: -0.01em;
@@ -4955,7 +4966,7 @@ button.dashboard-section-link {
 }
 
 .home-wide-banner-subtitle {
-  font-size: 1.25rem;
+  font-size: var(--text-2xl);
   line-height: 1.6;
   color: rgba(255, 255, 255, 0.9);
   margin-bottom: 2rem;
@@ -5108,7 +5119,7 @@ button.dashboard-section-link {
   margin: 0;
   text-align: center;
   font-family: var(--font-serif), 'Raleway', system-ui, sans-serif;
-  font-size: clamp(1.125rem, 2.2vw, 1.375rem);
+  font-size: var(--text-xl);
   font-weight: 500;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -5120,7 +5131,7 @@ button.dashboard-section-link {
   position: absolute;
   right: 1.25rem;
   bottom: 1.25rem;
-  font-size: 1.25rem;
+  font-size: var(--text-2xl);
   opacity: 0.75;
 }
 
@@ -5169,7 +5180,7 @@ button.dashboard-section-link {
 
 .home-cta-foundation-label {
   font-family: var(--font-serif), 'Raleway', system-ui, sans-serif;
-  font-size: clamp(1rem, 2vw, 1.125rem);
+  font-size: var(--text-body);
   font-weight: 500;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -5254,7 +5265,7 @@ button.dashboard-section-link {
 }
 
 .promo-card-title {
-  font-size: clamp(1.25rem, 2.5vw, 1.75rem);
+  font-size: var(--text-2xl);
   font-family: var(--font-serif), 'Raleway', system-ui, sans-serif;
   font-weight: var(--font-weight-heading);
   letter-spacing: -0.01em;
@@ -5263,7 +5274,7 @@ button.dashboard-section-link {
 }
 
 .promo-card-subtitle {
-  font-size: 1rem;
+  font-size: var(--text-body);
   line-height: 1.4;
   opacity: 0.9;
   max-width: 24ch;
@@ -5272,7 +5283,7 @@ button.dashboard-section-link {
 
 .promo-card-arrow {
   align-self: flex-end;
-  font-size: 1.25rem;
+  font-size: var(--text-2xl);
   opacity: 0.85;
 }
 
@@ -5366,7 +5377,7 @@ button.dashboard-section-link {
 }
 
 .onboarding-eyebrow {
-  font-size: 0.8125rem;
+  font-size: var(--text-sm);
   font-weight: 600;
   letter-spacing: 0.15em;
   text-transform: uppercase;
@@ -5376,14 +5387,14 @@ button.dashboard-section-link {
 
 .onboarding-title {
   font-family: var(--font-serif), 'Raleway', system-ui, sans-serif;
-  font-size: clamp(1.75rem, 4vw, 2.25rem);
+  font-size: var(--text-display-sm);
   font-weight: var(--font-weight-heading);
   color: var(--faralin-ink);
   margin-bottom: 0.75rem;
 }
 
 .onboarding-lead {
-  font-size: 1rem;
+  font-size: var(--text-body);
   line-height: 1.6;
   color: var(--faralin-muted);
   max-width: 36rem;
@@ -5400,21 +5411,21 @@ button.dashboard-section-link {
 
 .onboarding-step-title {
   font-family: var(--font-serif), 'Raleway', system-ui, sans-serif;
-  font-size: 1.375rem;
+  font-size: var(--text-2xl);
   font-weight: 400;
   color: var(--faralin-ink);
   margin-bottom: 0.35rem;
 }
 
 .onboarding-step-desc {
-  font-size: 0.9375rem;
+  font-size: var(--text-base);
   color: var(--faralin-muted);
   margin-bottom: 1.5rem;
   line-height: 1.5;
 }
 
 .onboarding-count {
-  font-size: 0.875rem;
+  font-size: var(--text-md);
   font-weight: 500;
   color: var(--faralin-ink);
   margin-bottom: 1rem;
@@ -5445,7 +5456,7 @@ button.dashboard-section-link {
 }
 
 .onboarding-label {
-  font-size: 0.8125rem;
+  font-size: var(--text-sm);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -5552,11 +5563,11 @@ button.dashboard-section-link {
 .onboarding-subject-name {
   font-weight: 600;
   color: var(--faralin-ink);
-  font-size: 0.9375rem;
+  font-size: var(--text-base);
 }
 
 .onboarding-subject-desc {
-  font-size: 0.8125rem;
+  font-size: var(--text-sm);
   color: var(--faralin-muted);
   line-height: 1.45;
 }
@@ -5604,7 +5615,7 @@ button.dashboard-section-link {
 }
 
 .assessment-preview-eyebrow {
-  font-size: 0.8125rem;
+  font-size: var(--text-sm);
   font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -5624,7 +5635,7 @@ button.dashboard-section-link {
 }
 
 .assessment-preview-lead {
-  font-size: 1rem;
+  font-size: var(--text-body);
   line-height: 1.6;
   color: var(--faralin-muted);
   display: -webkit-box;
@@ -5636,7 +5647,7 @@ button.dashboard-section-link {
 
 .assessment-preview-facts {
   margin: 0;
-  font-size: 0.9375rem;
+  font-size: var(--text-base);
   line-height: 1.5;
   color: var(--faralin-muted);
 }
@@ -5678,7 +5689,7 @@ button.dashboard-section-link {
 
 .knowledge-center-nav-brand {
   font-family: var(--font-serif);
-  font-size: 1rem;
+  font-size: var(--text-body);
   font-weight: 600;
   color: var(--faralin-ink);
   margin: 0;
@@ -5694,7 +5705,7 @@ button.dashboard-section-link {
 }
 
 .knowledge-center-nav-link {
-  font-size: 0.875rem;
+  font-size: var(--text-md);
   color: var(--faralin-muted);
   text-decoration: none;
   padding: 0.25rem 0;
@@ -5717,7 +5728,7 @@ button.dashboard-section-link {
 
 .knowledge-center-intro {
   max-width: 42rem;
-  font-size: 1.0625rem;
+  font-size: var(--text-lg);
   line-height: 1.65;
   color: var(--faralin-muted);
   margin: 0 0 2rem;
@@ -5757,7 +5768,7 @@ button.dashboard-section-link {
 
 .knowledge-hub-panel-title {
   font-family: var(--font-serif);
-  font-size: 1.0625rem;
+  font-size: var(--text-lg);
   margin: 0;
 }
 
@@ -5784,7 +5795,7 @@ button.dashboard-section-link {
 
 .knowledge-hub-article-title,
 .knowledge-hub-course-title {
-  font-size: 0.9375rem;
+  font-size: var(--text-base);
   font-weight: 500;
   line-height: 1.35;
   margin: 0 0 0.2rem;
@@ -5792,13 +5803,13 @@ button.dashboard-section-link {
 
 .knowledge-hub-article-meta,
 .knowledge-hub-course-meta {
-  font-size: 0.8125rem;
+  font-size: var(--text-sm);
   color: var(--faralin-muted);
   margin: 0;
 }
 
 .knowledge-hub-empty {
-  font-size: 0.875rem;
+  font-size: var(--text-md);
   color: var(--faralin-muted);
   margin: 0;
 }
@@ -5815,7 +5826,7 @@ button.dashboard-section-link {
 }
 
 .knowledge-hub-quick-link {
-  font-size: 0.875rem;
+  font-size: var(--text-md);
   padding: 0.5rem 0.875rem;
   border: 1px solid var(--faralin-border);
   text-decoration: none;
@@ -5836,20 +5847,20 @@ button.dashboard-section-link {
 }
 
 .knowledge-article-meta {
-  font-size: 0.875rem;
+  font-size: var(--text-md);
   color: var(--faralin-muted);
   margin: 0.75rem 0 0.5rem;
 }
 
 .knowledge-article-title {
   font-family: var(--font-serif);
-  font-size: clamp(1.75rem, 4vw, 2.35rem);
+  font-size: var(--text-display);
   line-height: 1.15;
   margin: 0 0 0.75rem;
 }
 
 .knowledge-article-excerpt {
-  font-size: 1.0625rem;
+  font-size: var(--text-lg);
   color: var(--faralin-muted);
   line-height: 1.6;
   margin: 0;
@@ -5866,7 +5877,7 @@ button.dashboard-section-link {
 }
 
 .knowledge-article-paragraph {
-  font-size: 1rem;
+  font-size: var(--text-body);
   line-height: 1.75;
   margin: 0;
   color: var(--faralin-ink);
@@ -5886,7 +5897,7 @@ button.dashboard-section-link {
 }
 
 .all-newtons-feature-eyebrow {
-  font-size: 0.75rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--faralin-copper);
@@ -5895,7 +5906,7 @@ button.dashboard-section-link {
 
 .all-newtons-feature-title {
   font-family: var(--font-serif);
-  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-size: var(--text-display-sm);
   margin: 0 0 0.75rem;
 }
 
@@ -5914,7 +5925,7 @@ button.dashboard-section-link {
 }
 
 .all-newtons-feature-link {
-  font-size: 0.875rem;
+  font-size: var(--text-md);
   color: var(--faralin-crimson);
   text-decoration: none;
 }
@@ -5941,19 +5952,19 @@ button.dashboard-section-link {
 }
 
 .knowledge-resource-card-eyebrow {
-  font-size: 0.75rem;
+  font-size: var(--text-xs);
   color: var(--faralin-copper);
   margin: 0;
 }
 
 .knowledge-resource-card-title {
   font-family: var(--font-serif);
-  font-size: 1.0625rem;
+  font-size: var(--text-lg);
   margin: 0;
 }
 
 .knowledge-resource-card-copy {
-  font-size: 0.875rem;
+  font-size: var(--text-md);
   line-height: 1.55;
   color: var(--faralin-muted);
   margin: 0;
@@ -5961,7 +5972,7 @@ button.dashboard-section-link {
 }
 
 .knowledge-resource-card-link {
-  font-size: 0.8125rem;
+  font-size: var(--text-sm);
   color: var(--faralin-crimson);
 }
 
@@ -5983,19 +5994,19 @@ button.dashboard-section-link {
 }
 
 .course-landing-eyebrow {
-  font-size: 0.875rem;
+  font-size: var(--text-md);
   color: var(--faralin-copper);
   margin: 0 0 0.35rem;
 }
 
 .course-landing-title {
   font-family: var(--font-serif);
-  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  font-size: var(--text-display);
   margin: 0 0 0.5rem;
 }
 
 .course-landing-subtitle {
-  font-size: 1.0625rem;
+  font-size: var(--text-lg);
   color: var(--faralin-muted);
   margin: 0 0 1rem;
 }
@@ -6005,7 +6016,7 @@ button.dashboard-section-link {
   flex-wrap: wrap;
   align-items: center;
   gap: 0.75rem;
-  font-size: 0.875rem;
+  font-size: var(--text-md);
   color: var(--faralin-muted);
   margin-bottom: 1.75rem;
 }
@@ -6016,7 +6027,7 @@ button.dashboard-section-link {
 
 .course-landing-section-title {
   font-family: var(--font-serif);
-  font-size: 1.25rem;
+  font-size: var(--text-2xl);
   margin: 0 0 0.75rem;
 }
 
@@ -6051,7 +6062,7 @@ button.dashboard-section-link {
 }
 
 .course-landing-card-note {
-  font-size: 0.8125rem;
+  font-size: var(--text-sm);
   color: var(--faralin-muted);
   margin: 0.75rem 0 0;
   text-align: center;
@@ -6070,7 +6081,7 @@ button.dashboard-section-link {
 .course-curriculum-progress-label {
   display: flex;
   justify-content: space-between;
-  font-size: 0.8125rem;
+  font-size: var(--text-sm);
   margin-bottom: 0.35rem;
 }
 
@@ -6095,7 +6106,7 @@ button.dashboard-section-link {
 .course-curriculum-section-title {
   cursor: pointer;
   font-weight: 600;
-  font-size: 0.9375rem;
+  font-size: var(--text-base);
   padding: 0.875rem 1rem;
   list-style: none;
 }
@@ -6130,16 +6141,16 @@ button.dashboard-section-link {
   padding: 0.75rem 1rem;
   text-decoration: none;
   color: inherit;
-  font-size: 0.875rem;
+  font-size: var(--text-md);
 }
 
 .course-curriculum-lesson-status {
   text-align: center;
-  font-size: 0.75rem;
+  font-size: var(--text-xs);
 }
 
 .course-curriculum-lesson-duration {
-  font-size: 0.75rem;
+  font-size: var(--text-xs);
   color: var(--faralin-muted);
 }
 
@@ -6161,14 +6172,14 @@ button.dashboard-section-link {
 }
 
 .course-learn-back {
-  font-size: 0.875rem;
+  font-size: var(--text-md);
   color: var(--faralin-muted);
   text-decoration: none;
   white-space: nowrap;
 }
 
 .course-learn-topbar-title {
-  font-size: 0.875rem;
+  font-size: var(--text-md);
   font-weight: 500;
   margin: 0;
   overflow: hidden;
@@ -6213,7 +6224,7 @@ button.dashboard-section-link {
 }
 
 .course-video-caption {
-  font-size: 0.875rem;
+  font-size: var(--text-md);
   padding: 0.75rem 0 0;
   margin: 0;
 }
@@ -6233,7 +6244,7 @@ button.dashboard-section-link {
 }
 
 .course-learn-lesson-label {
-  font-size: 0.75rem;
+  font-size: var(--text-xs);
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--faralin-copper);
@@ -6242,7 +6253,7 @@ button.dashboard-section-link {
 
 .course-learn-lesson-title {
   font-family: var(--font-serif);
-  font-size: 1.35rem;
+  font-size: var(--text-2xl);
   margin: 0;
 }
 
@@ -6268,7 +6279,7 @@ button.dashboard-section-link {
 
 .course-learn-sidebar-title {
   font-family: var(--font-serif);
-  font-size: 1rem;
+  font-size: var(--text-body);
   margin: 0 0 0.75rem;
 }
 
@@ -6297,13 +6308,13 @@ button.dashboard-section-link {
 }
 
 .tracks-page .home-wide-banner-eyebrow {
-  font-size: 0.625rem;
+  font-size: var(--text-2xs);
   margin-bottom: 0.25rem;
   letter-spacing: 0.12em;
 }
 
 .tracks-page .home-wide-banner-title {
-  font-size: clamp(1.25rem, 2.5vw, 1.625rem);
+  font-size: var(--text-2xl);
   margin-bottom: 0;
   line-height: 1.2;
 }
@@ -6316,11 +6327,29 @@ button.dashboard-section-link {
   margin-top: 2rem;
 }
 
+.tracks-catalog-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  margin-bottom: var(--tracks-section-gap);
+}
+
+.tracks-catalog-toolbar .catalog-insight {
+  width: 100%;
+}
+
 .tracks-filter-chips-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
-  justify-content: flex-end;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.tracks-filter-chips-row .tracks-filter-chip {
+  padding: 0.25rem 0.625rem;
+  font-size: 0.6875rem;
+  line-height: 1.3;
+  font-weight: 500;
 }
 
 .track-card--catalog {
@@ -6353,7 +6382,7 @@ button.dashboard-section-link {
 
 .track-card__subtitle {
   margin: 0.25rem 0 0;
-  font-size: 0.875rem;
+  font-size: var(--text-md);
   color: var(--faralin-text-muted);
   line-height: 1.4;
   display: -webkit-box;
@@ -6370,7 +6399,7 @@ button.dashboard-section-link {
 }
 
 .track-card__skill-chip {
-  font-size: 0.6875rem;
+  font-size: var(--text-2xs);
   padding: 0.2rem 0.5rem;
   border-radius: 999px;
   background: var(--faralin-surface-alt);
@@ -6420,12 +6449,12 @@ button.dashboard-section-link {
 
 .track-hero-title {
   font-family: var(--font-serif);
-  font-size: clamp(1.5rem, 3.5vw, 2.125rem);
+  font-size: var(--text-display-sm);
   margin: 0.5rem 0;
 }
 
 .track-hero-subtitle {
-  font-size: 1rem;
+  font-size: var(--text-body);
   color: var(--faralin-text-muted);
   margin-bottom: 0.875rem;
 }
@@ -6460,13 +6489,13 @@ button.dashboard-section-link {
 
 .track-stat-card__value {
   font-weight: 700;
-  font-size: 0.9375rem;
+  font-size: var(--text-base);
   color: var(--faralin-copper);
   line-height: 1.3;
 }
 
 .track-stat-card__label {
-  font-size: 0.6875rem;
+  font-size: var(--text-2xs);
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--faralin-text-muted);
@@ -6487,7 +6516,7 @@ button.dashboard-section-link {
   display: flex;
   align-items: baseline;
   gap: 0.5rem;
-  font-size: 0.8125rem;
+  font-size: var(--text-sm);
   color: var(--faralin-text-muted);
 }
 
@@ -6500,7 +6529,7 @@ button.dashboard-section-link {
   justify-content: center;
   border-radius: 50%;
   background: var(--faralin-border);
-  font-size: 0.6875rem;
+  font-size: var(--text-2xs);
   font-weight: 600;
   color: var(--faralin-ink);
 }
@@ -6517,7 +6546,7 @@ button.dashboard-section-link {
 }
 
 .track-hero-stats dt {
-  font-size: 0.75rem;
+  font-size: var(--text-xs);
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--faralin-text-muted);
@@ -6551,7 +6580,7 @@ button.dashboard-section-link {
 
 .track-runner-title {
   font-family: var(--font-serif);
-  font-size: 1.5rem;
+  font-size: var(--text-2xl);
   margin: 0.25rem 0 0;
 }
 
@@ -6587,7 +6616,7 @@ button.dashboard-section-link {
   position: absolute;
   top: 0.625rem;
   right: 0;
-  font-size: 0.75rem;
+  font-size: var(--text-xs);
   color: var(--faralin-text-muted);
 }
 
@@ -6614,7 +6643,7 @@ button.dashboard-section-link {
   gap: 0.5rem;
   padding: 0.5rem 0.75rem;
   border-radius: var(--radius-sm);
-  font-size: 0.875rem;
+  font-size: var(--text-md);
   opacity: 0.55;
   border-left: 3px solid transparent;
 }
@@ -6648,7 +6677,7 @@ button.dashboard-section-link {
   justify-content: center;
   border-radius: 50%;
   background: var(--faralin-border);
-  font-size: 0.6875rem;
+  font-size: var(--text-2xs);
 }
 
 .track-curriculum-copy {
@@ -6659,7 +6688,7 @@ button.dashboard-section-link {
 }
 
 .track-curriculum-type {
-  font-size: 0.6875rem;
+  font-size: var(--text-2xs);
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--faralin-text-muted);
@@ -6702,7 +6731,7 @@ button.dashboard-section-link {
 
 .track-step-title {
   font-family: var(--font-serif);
-  font-size: 1.25rem;
+  font-size: var(--text-2xl);
   margin: 0;
 }
 
@@ -6732,7 +6761,7 @@ button.dashboard-section-link {
 
 .track-field-label {
   font-weight: 600;
-  font-size: 0.9375rem;
+  font-size: var(--text-base);
 }
 
 .track-input,
@@ -6800,7 +6829,7 @@ button.dashboard-section-link {
 
 .track-result-score-value {
   font-family: var(--font-serif);
-  font-size: clamp(2.5rem, 6vw, 3.5rem);
+  font-size: var(--text-display-lg);
   font-weight: 700;
   color: var(--faralin-copper);
   margin: 0;
@@ -6817,19 +6846,19 @@ button.dashboard-section-link {
 
 .track-result-faralins-label {
   margin: 0;
-  font-size: 0.75rem;
+  font-size: var(--text-xs);
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--faralin-text-muted);
 }
 
 .track-result-score {
-  font-size: 1.25rem;
+  font-size: var(--text-2xl);
   font-weight: 600;
 }
 
 .track-result-faralins {
-  font-size: 1.75rem;
+  font-size: var(--text-display-sm);
   font-family: var(--font-serif);
   color: var(--faralin-copper);
   margin: 0.25rem 0 0;
@@ -6862,13 +6891,13 @@ button.dashboard-section-link {
 
 .track-rubric-bar-name {
   font-weight: 600;
-  font-size: 0.9375rem;
+  font-size: var(--text-base);
 }
 
 .track-rubric-bar-score {
   font-weight: 700;
   color: var(--faralin-copper);
-  font-size: 0.875rem;
+  font-size: var(--text-md);
 }
 
 .track-rubric-bar {
@@ -6886,7 +6915,7 @@ button.dashboard-section-link {
 
 .track-rubric-bar-feedback {
   margin: 0;
-  font-size: 0.8125rem;
+  font-size: var(--text-sm);
   line-height: 1.4;
 }
 
@@ -6991,7 +7020,7 @@ button.dashboard-section-link {
 }
 
 .portfolio-artifact-stats dt {
-  font-size: 0.75rem;
+  font-size: var(--text-xs);
   color: var(--faralin-text-muted);
 }
 
