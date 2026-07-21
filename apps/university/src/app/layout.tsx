@@ -25,10 +25,15 @@ export const metadata: Metadata = {
 export const dynamic = 'force-dynamic';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const publishableKey =
+    process.env.CLERK_PUBLISHABLE_KEY ??
+    process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ??
+    '';
+
   return (
     <html lang="en" className={`${raleway.variable} ${roboto.variable}`}>
       <body>
-        <AuthProvider>
+        <AuthProvider publishableKey={publishableKey}>
           <a href="#main-content" className="skip-link">
             Skip to content
           </a>
