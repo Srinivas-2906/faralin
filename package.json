@@ -8,6 +8,7 @@
     "dev:web": "pnpm --filter web dev",
     "dev:api": "pnpm --filter api dev",
     "dev:admin": "pnpm --filter admin dev",
+    "dev:university": "pnpm --filter university dev",
     "db:generate": "pnpm --filter @faralin/db generate",
     "db:migrate": "pnpm --filter @faralin/db migrate",
     "db:push": "pnpm --filter @faralin/db push",

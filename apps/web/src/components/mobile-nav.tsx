@@ -133,21 +133,17 @@ export const homeNavLinks: NavLink[] = [
   { href: '/knowledge-center', label: 'Knowledge Center' },
 ];
 
-export function useNavLinks(isStaff: boolean): NavLink[] {
-  const base: NavLink[] = [
+export function useNavLinks(): NavLink[] {
+  return [
     { href: '/dashboard', label: 'Dashboard' },
     { href: '/tracks', label: 'Problem Tracks' },
     { href: '/assessments', label: 'Assessments' },
     { href: '/universities', label: 'Universities' },
   ];
-  if (isStaff) {
-    base.push({ href: '/university', label: 'University portal', accent: true });
-  }
-  return base;
 }
 
-export function useNavLinksForRoute(isStaff: boolean): NavLink[] {
+export function useNavLinksForRoute(): NavLink[] {
   const pathname = usePathname();
   if (pathname === '/') return homeNavLinks;
-  return useNavLinks(isStaff);
+  return useNavLinks();
 }

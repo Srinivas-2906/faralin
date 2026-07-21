@@ -14,6 +14,9 @@ const quickLinks = {
   ],
 };
 
+const universityPortalUrl =
+  process.env.NEXT_PUBLIC_UNIVERSITY_PORTAL_URL ?? 'http://localhost:3003';
+
 export function SiteFooter() {
   return (
     <footer className="site-footer site-footer-rich">
@@ -53,6 +56,9 @@ export function SiteFooter() {
                   <Link href={link.href}>{link.label}</Link>
                 </li>
               ))}
+              <li>
+                <a href={universityPortalUrl}>University staff login</a>
+              </li>
             </ul>
           </div>
 

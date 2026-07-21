@@ -1,4 +1,5 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { mapStudentWithProfile } from '../auth/auth-user.service';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -83,24 +84,18 @@ export class UniversitiesService {
 
     const studentMap = new Map<
       string,
-      {
-        anonymousId: string;
-        revealLevel: string;
-        subjectSlugs: string[];
-        assessmentsCompleted: number;
-        totalFaralins: number;
-      }
+      ReturnType<typeof mapStudentWithProfile> & { totalFaralins: number }
     >();
 
     for (const tx of assessmentAttempts) {
       const profile = tx.studentProfile;
-      const existing = studentMap.get(profile.id) ?? {
-        anonymousId: profile.anonymousId,
-        revealLevel: profile.revealLevel,
-        subjectSlugs: profile.subjects.map((s) => s.subject.slug),
-        assessmentsCompleted: profile.assessmentAttempts.length,
-        totalFaralins: 0,
-      };
+      const existing =
+        studentMap.get(profile.id) ??
+        mapStudentWithProfile(profile, {
+          subjectSlugs: profile.subjects.map((s) => s.subject.slug),
+          assessmentsCompleted: profile.assessmentAttempts.length,
+          totalFaralins: 0,
+        });
       existing.totalFaralins += tx.amount;
       studentMap.set(profile.id, existing);
     }

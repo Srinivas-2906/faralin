@@ -21,6 +21,12 @@ export class ApplicationsController {
     return this.applications.trackReferralClick(user.studentProfileId!, universitySlug);
   }
 
+  @Get('staff')
+  @Roles(UserRole.UNIVERSITY_STAFF)
+  listStaff(@CurrentUser() user: AuthUser) {
+    return this.applications.listStaffApplications(user.universityId!);
+  }
+
   @Patch('staff/:studentProfileId/status')
   @Roles(UserRole.UNIVERSITY_STAFF)
   updateStatus(

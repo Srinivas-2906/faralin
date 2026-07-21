@@ -6,9 +6,10 @@ import {
   Req,
   BadRequestException,
 } from '@nestjs/common';
-import { Webhook } from 'svix';
 import { UserRole } from '@faralin/db';
+import { Webhook } from 'svix';
 import { PrismaService } from '../prisma/prisma.service';
+import { generateAnonymousId, linkPendingStaffUser } from './auth-user.service';
 import { Public } from './public.decorator';
 
 @Controller('auth')
@@ -52,20 +53,27 @@ export class AuthController {
         emailAddresses.find((e) => e.id === primaryId)?.email_address ?? 'unknown@faralin.com';
 
       const existing = await this.prisma.user.findUnique({ where: { clerkUserId } });
-      if (!existing) {
-        await this.prisma.user.create({
-          data: {
-            clerkUserId,
-            email,
-            role: UserRole.STUDENT,
-            studentProfile: {
-              create: {
-                anonymousId: generateAnonymousId(),
-              },
+      if (existing) {
+        return { received: true };
+      }
+
+      const linkedStaff = await linkPendingStaffUser(this.prisma, clerkUserId, email);
+      if (linkedStaff) {
+        return { received: true };
+      }
+
+      await this.prisma.user.create({
+        data: {
+          clerkUserId,
+          email,
+          role: UserRole.STUDENT,
+          studentProfile: {
+            create: {
+              anonymousId: generateAnonymousId(),
             },
           },
-        });
-      }
+        },
+      });
     }
 
     if (eventType === 'user.deleted') {
@@ -78,10 +86,4 @@ export class AuthController {
 
     return { received: true };
   }
-}
-
-function generateAnonymousId(): string {
-  const num = Math.floor(1000 + Math.random() * 9000);
-  const letter = String.fromCharCode(65 + Math.floor(Math.random() * 26));
-  return `${letter}${num}`;
 }

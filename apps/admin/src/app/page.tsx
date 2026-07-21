@@ -53,6 +53,11 @@ export default function AdminPage() {
     }>
   >([]);
   const [error, setError] = useState('');
+  const [staffEmail, setStaffEmail] = useState('');
+  const [staffUniversityId, setStaffUniversityId] = useState('');
+  const [staffJobTitle, setStaffJobTitle] = useState('');
+  const [staffMessage, setStaffMessage] = useState('');
+  const [staffError, setStaffError] = useState('');
 
   useEffect(() => {
     async function load() {
@@ -80,6 +85,29 @@ export default function AdminPage() {
     }
     load();
   }, [getToken]);
+
+  async function inviteStaff(e: React.FormEvent) {
+    e.preventDefault();
+    setStaffError('');
+    setStaffMessage('');
+    try {
+      const token = await getToken();
+      await apiFetch('/admin/university-staff', {
+        token: token ?? undefined,
+        method: 'POST',
+        body: JSON.stringify({
+          email: staffEmail,
+          universityId: staffUniversityId,
+          jobTitle: staffJobTitle || undefined,
+        }),
+      });
+      setStaffMessage(`Invited ${staffEmail}. Ask them to accept the Clerk invite, then sign in at the university portal.`);
+      setStaffEmail('');
+      setStaffJobTitle('');
+    } catch (err) {
+      setStaffError(err instanceof Error ? err.message : 'Failed to invite staff');
+    }
+  }
 
   if (error) {
     return (
@@ -196,6 +224,63 @@ export default function AdminPage() {
               getRowKey={(t) => t.id}
             />
           )}
+        </Card>
+
+        <Card style={{ marginBottom: 'var(--section-gap)' }}>
+          <h2 className="section-title">Invite university staff</h2>
+          <p style={{ color: 'var(--faralin-muted)', marginBottom: '1rem' }}>
+            Creates a pending staff account. Send a Clerk invite to the same email, then staff sign in at the university portal.
+          </p>
+          {staffError && (
+            <div style={{ marginBottom: '1rem' }}>
+              <Alert variant="error">{staffError}</Alert>
+            </div>
+          )}
+          {staffMessage && (
+            <div style={{ marginBottom: '1rem' }}>
+              <Alert variant="success">{staffMessage}</Alert>
+            </div>
+          )}
+          <form
+            onSubmit={inviteStaff}
+            style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxWidth: '480px' }}
+          >
+            <label style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
+              <span style={{ fontSize: '0.875rem', color: 'var(--faralin-muted)' }}>Email</span>
+              <input
+                type="email"
+                required
+                value={staffEmail}
+                onChange={(e) => setStaffEmail(e.target.value)}
+              />
+            </label>
+            <label style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
+              <span style={{ fontSize: '0.875rem', color: 'var(--faralin-muted)' }}>University</span>
+              <select
+                required
+                value={staffUniversityId}
+                onChange={(e) => setStaffUniversityId(e.target.value)}
+              >
+                <option value="">Select university</option>
+                {universities.map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {u.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
+              <span style={{ fontSize: '0.875rem', color: 'var(--faralin-muted)' }}>Job title</span>
+              <input
+                value={staffJobTitle}
+                onChange={(e) => setStaffJobTitle(e.target.value)}
+                placeholder="Widening Participation Officer"
+              />
+            </label>
+            <button type="submit" className="btn btn-primary" style={{ alignSelf: 'flex-start' }}>
+              Create staff account
+            </button>
+          </form>
         </Card>
 
         <Card>

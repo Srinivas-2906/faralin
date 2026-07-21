@@ -86,4 +86,9 @@ export class AdminController {
   ) {
     return this.admin.updateProblemTrack(id, body);
   }
+
+  @Post('university-staff')
+  createUniversityStaff(@Body() body: Parameters<AdminService['createUniversityStaff']>[0]) {
+    return this.admin.createUniversityStaff(body);
+  }
 }

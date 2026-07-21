@@ -1,10 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import {
   AssessmentDifficulty,
   ArticleType,
   EventType,
   FaralinTrustLevel,
+  UserRole,
 } from '@faralin/db';
+import { pendingClerkUserId } from '../auth/auth-user.service';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -249,5 +251,36 @@ export class AdminService {
     }>,
   ) {
     return this.prisma.problemTrack.update({ where: { id }, data });
+  }
+
+  async createUniversityStaff(data: { email: string; universityId: string; jobTitle?: string }) {
+    const university = await this.prisma.university.findUnique({
+      where: { id: data.universityId },
+    });
+    if (!university) {
+      throw new NotFoundException('University not found');
+    }
+
+    const existing = await this.prisma.user.findUnique({ where: { email: data.email } });
+    if (existing) {
+      throw new ConflictException('A user with this email already exists');
+    }
+
+    return this.prisma.user.create({
+      data: {
+        clerkUserId: pendingClerkUserId(),
+        email: data.email,
+        role: UserRole.UNIVERSITY_STAFF,
+        universityStaffProfile: {
+          create: {
+            universityId: data.universityId,
+            jobTitle: data.jobTitle,
+          },
+        },
+      },
+      include: {
+        universityStaffProfile: { include: { university: true } },
+      },
+    });
   }
 }

@@ -1,34 +1,80 @@
-import { auth } from '@clerk/nextjs/server';
-import { redirect } from 'next/navigation';
-import { Badge, Card, EmptyState, PageHeader, ResponsiveTable, StatCard } from '@faralin/ui';
+'use client';
 
-export default async function UniversityPortalPage() {
-  const { userId, getToken } = await auth();
-  if (!userId) redirect('/sign-in');
+import { useEffect, useState } from 'react';
+import {
+  Badge,
+  Card,
+  EmptyState,
+  PageHeader,
+  ResponsiveTable,
+  Skeleton,
+  StatCard,
+} from '@faralin/ui';
+import { AccessDenied } from '@/components/access-denied';
+import { useStaffApi } from '@/lib/use-staff-api';
 
-  const token = await getToken();
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+interface DashboardData {
+  university: { name: string };
+  funnel: {
+    followers: number;
+    referralClicked: number;
+    applied: number;
+    offerReceived: number;
+    offerAccepted: number;
+    enrolled: number;
+  };
+  followerCount: number;
+  subjectInterests: Record<string, number>;
+  topPerformers: Array<{
+    anonymousId: string;
+    totalFaralins: number;
+    performanceBand: string;
+  }>;
+  estimatedFutureBursaryGbp: number;
+  contentEngagement: { articles: number; events: number };
+}
 
-  let dashboard = null;
-  try {
-    const res = await fetch(`${apiUrl}/api/universities/staff/dashboard`, {
-      headers: { Authorization: `Bearer ${token}` },
-      cache: 'no-store',
-    });
-    if (res.ok) dashboard = await res.json();
-  } catch {
-    // API unavailable
+export default function DashboardPage() {
+  const { staffFetch, accessDenied } = useStaffApi();
+  const [dashboard, setDashboard] = useState<DashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const data = await staffFetch<DashboardData>('/universities/staff/dashboard');
+        if (data) setDashboard(data);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'Failed to load dashboard');
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, [staffFetch]);
+
+  if (accessDenied) return <AccessDenied />;
+  if (loading) {
+    return (
+      <div className="page-section">
+        <div className="container">
+          <Skeleton variant="title" width="40%" style={{ marginBottom: '2rem' }} />
+          <div className="stat-grid">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} variant="stat" />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
   }
-
-  if (!dashboard) {
+  if (error || !dashboard) {
     return (
       <div className="page-section">
         <div className="container">
           <Card>
-            <PageHeader
-              title="University portal"
-              description="Access requires a university staff account. Contact Faralin admin if you need access."
-            />
+            <PageHeader title="Dashboard" description={error || 'Unable to load dashboard.'} />
           </Card>
         </div>
       </div>
@@ -75,9 +121,7 @@ export default async function UniversityPortalPage() {
             ].map((step) => (
               <div key={step.label}>
                 <div className="stat-label">{step.label}</div>
-                <div className="stat-value stat-value--compact">
-                  {step.value}
-                </div>
+                <div className="stat-value stat-value--compact">{step.value}</div>
               </div>
             ))}
           </div>
@@ -111,7 +155,7 @@ export default async function UniversityPortalPage() {
                 performanceBand: string;
               }>
                 columns={[
-                  { key: 'id', header: 'ID', render: (s) => s.anonymousId },
+                  { key: 'id', header: 'Anonymous ID', render: (s) => s.anonymousId },
                   {
                     key: 'faralins',
                     header: 'Faralins',

@@ -93,6 +93,12 @@ Repeat for API:
 2. **Custom domains**
 3. Add mapping: `api.faralin.kaana.in`
 
+Repeat for university staff portal:
+1. Cloud Run → `faralin-university`
+2. **Custom domains**
+3. Add mapping: `university.faralin.kaana.in`
+4. In Clerk Dashboard, add `https://university.faralin.kaana.in` to allowed redirect origins
+
 ---
 
 ## 7) Environment variables / secrets (if needed)
