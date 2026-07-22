@@ -22,6 +22,8 @@ export default function UniversityDetailPage() {
     events: Array<{ id: string; title: string; startsAt: string }>;
   } | null>(null);
   const [applying, setApplying] = useState(false);
+  const [registeringId, setRegisteringId] = useState<string | null>(null);
+  const [registeredIds, setRegisteredIds] = useState<Set<string>>(new Set());
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -51,6 +53,27 @@ export default function UniversityDetailPage() {
       setError('Unable to track application referral. Please try again.');
     } finally {
       setApplying(false);
+    }
+  }
+
+  async function handleRegister(eventId: string) {
+    if (!isSignedIn) {
+      window.location.href = '/sign-in';
+      return;
+    }
+    setRegisteringId(eventId);
+    setError('');
+    try {
+      const token = await getToken();
+      await apiFetch(`/content/events/${eventId}/register`, {
+        method: 'POST',
+        token: token ?? undefined,
+      });
+      setRegisteredIds((prev) => new Set(prev).add(eventId));
+    } catch {
+      setError('Unable to register for this event. Follow the university first, then try again.');
+    } finally {
+      setRegisteringId(null);
     }
   }
 
@@ -140,6 +163,7 @@ export default function UniversityDetailPage() {
               <ul className="uni-feed__list">
                 {university.events.map((e) => {
                   const date = new Date(e.startsAt);
+                  const registered = registeredIds.has(e.id);
                   return (
                     <li key={e.id} className="uni-feed__item uni-feed__item--event">
                       <div className="uni-feed__event-date">
@@ -159,6 +183,14 @@ export default function UniversityDetailPage() {
                             month: 'long',
                           })}
                         </p>
+                        <Button
+                          variant="secondary"
+                          loading={registeringId === e.id}
+                          disabled={registered}
+                          onClick={() => handleRegister(e.id)}
+                        >
+                          {registered ? 'Registered' : 'Register'}
+                        </Button>
                       </div>
                     </li>
                   );

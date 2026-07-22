@@ -4,6 +4,15 @@ import { useAuth } from '@clerk/nextjs';
 import { useCallback, useState } from 'react';
 import { apiFetch } from '@faralin/utils';
 
+function isAccessDeniedError(message: string) {
+  const lower = message.toLowerCase();
+  return (
+    lower.includes('forbidden') ||
+    lower.includes('insufficient permissions') ||
+    message.includes('403')
+  );
+}
+
 export function useStaffApi() {
   const { getToken } = useAuth();
   const [accessDenied, setAccessDenied] = useState(false);
@@ -16,7 +25,7 @@ export function useStaffApi() {
         return await apiFetch<T>(path, { ...options, token });
       } catch (e) {
         const message = e instanceof Error ? e.message : 'Request failed';
-        if (message.toLowerCase().includes('forbidden') || message.includes('403')) {
+        if (isAccessDeniedError(message)) {
           setAccessDenied(true);
           return null;
         }

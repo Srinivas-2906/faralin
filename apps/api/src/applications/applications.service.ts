@@ -6,6 +6,10 @@ import {
 import { ApplicationStatus, FaralinTransactionStatus } from '@faralin/db';
 import { mapStudentWithProfile } from '../auth/auth-user.service';
 import { PrismaService } from '../prisma/prisma.service';
+import {
+  APPLICATION_STATUS_LABELS,
+  getPerformanceBand,
+} from '../universities/staff-roster';
 
 @Injectable()
 export class ApplicationsService {
@@ -62,25 +66,39 @@ export class ApplicationsService {
   }
 
   async listStaffApplications(universityId: string) {
-    const applications = await this.prisma.application.findMany({
-      where: { universityId },
-      include: {
-        studentProfile: {
-          include: {
-            subjects: { include: { subject: true } },
-            assessmentAttempts: { where: { completedAt: { not: null }, isVoided: false } },
+    const [applications, faralinTotals] = await Promise.all([
+      this.prisma.application.findMany({
+        where: { universityId },
+        include: {
+          studentProfile: {
+            include: {
+              subjects: { include: { subject: true } },
+              assessmentAttempts: { where: { completedAt: { not: null }, isVoided: false } },
+            },
           },
         },
-      },
-      orderBy: { updatedAt: 'desc' },
-    });
+        orderBy: { updatedAt: 'desc' },
+      }),
+      this.prisma.faralinTransaction.groupBy({
+        by: ['studentProfileId'],
+        where: { universityId },
+        _sum: { amount: true },
+      }),
+    ]);
+
+    const faralinByStudent = Object.fromEntries(
+      faralinTotals.map((row) => [row.studentProfileId, row._sum.amount ?? 0]),
+    );
 
     return applications.map((application) => {
       const profile = application.studentProfile;
+      const totalFaralins = faralinByStudent[profile.id] ?? 0;
+      const assessmentsCompleted = profile.assessmentAttempts.length;
       const studentView = mapStudentWithProfile(profile, {
         subjectSlugs: profile.subjects.map((s) => s.subject.slug),
-        assessmentsCompleted: profile.assessmentAttempts.length,
-        totalFaralins: 0,
+        assessmentsCompleted,
+        totalFaralins,
+        performanceBand: getPerformanceBand(totalFaralins, assessmentsCompleted),
       });
 
       return {
@@ -92,6 +110,10 @@ export class ApplicationsService {
             ? [studentView.firstName, studentView.lastName].filter(Boolean).join(' ')
             : studentView.anonymousId,
         status: application.status,
+        pipelineLabel: APPLICATION_STATUS_LABELS[application.status] ?? application.status,
+        subjectNames: profile.subjects.map((s) => s.subject.name),
+        totalFaralins,
+        performanceBand: getPerformanceBand(totalFaralins, assessmentsCompleted),
         referralClickedAt: application.referralClickedAt,
         appliedAt: application.appliedAt,
         offerReceivedAt: application.offerReceivedAt,

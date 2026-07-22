@@ -1,19 +1,28 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, Card, EmptyState, PageHeader, ResponsiveTable, Skeleton } from '@faralin/ui';
+import {
+  Alert,
+  Badge,
+  Button,
+  Card,
+  EmptyState,
+  PageHeader,
+  ResponsiveTable,
+  SkeletonTable,
+} from '@faralin/ui';
 import { AccessDenied } from '@/components/access-denied';
 import { useStaffApi } from '@/lib/use-staff-api';
 
 const STATUS_OPTIONS = [
-  'FOLLOWER',
-  'REFERRAL_CLICKED',
-  'APPLIED',
-  'OFFER_RECEIVED',
-  'OFFER_ACCEPTED',
-  'ENROLLED',
-  'WITHDRAWN',
-  'REJECTED',
+  { value: 'FOLLOWER', label: 'Following' },
+  { value: 'REFERRAL_CLICKED', label: 'Referral clicked' },
+  { value: 'APPLIED', label: 'Applied' },
+  { value: 'OFFER_RECEIVED', label: 'Offer received' },
+  { value: 'OFFER_ACCEPTED', label: 'Offer accepted' },
+  { value: 'ENROLLED', label: 'Enrolled' },
+  { value: 'WITHDRAWN', label: 'Withdrawn' },
+  { value: 'REJECTED', label: 'Rejected' },
 ] as const;
 
 interface ApplicationRow {
@@ -22,6 +31,10 @@ interface ApplicationRow {
   anonymousId: string;
   displayName: string;
   status: string;
+  pipelineLabel: string;
+  subjectNames: string[];
+  totalFaralins: number;
+  performanceBand: string;
   updatedAt: string;
 }
 
@@ -56,7 +69,16 @@ export default function ApplicationsPage() {
         body: JSON.stringify({ status }),
       });
       setApplications((prev) =>
-        prev.map((a) => (a.studentProfileId === studentProfileId ? { ...a, status } : a)),
+        prev.map((a) =>
+          a.studentProfileId === studentProfileId
+            ? {
+                ...a,
+                status,
+                pipelineLabel:
+                  STATUS_OPTIONS.find((s) => s.value === status)?.label ?? status,
+              }
+            : a,
+        ),
       );
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to update status');
@@ -70,7 +92,10 @@ export default function ApplicationsPage() {
     return (
       <div className="page-section">
         <div className="container">
-          <Skeleton variant="title" width="35%" />
+          <PageHeader title="Applications" description="Loading pipeline…" />
+          <Card>
+            <SkeletonTable rows={5} />
+          </Card>
         </div>
       </div>
     );
@@ -98,21 +123,42 @@ export default function ApplicationsPage() {
               columns={[
                 { key: 'id', header: 'Anonymous ID', render: (a) => a.anonymousId },
                 {
+                  key: 'subjects',
+                  header: 'Subjects',
+                  render: (a) =>
+                    a.subjectNames.length > 0 ? a.subjectNames.join(', ') : '—',
+                },
+                {
+                  key: 'faralins',
+                  header: 'Faralins',
+                  render: (a) => a.totalFaralins.toLocaleString(),
+                },
+                {
+                  key: 'band',
+                  header: 'Band',
+                  render: (a) => <Badge>{a.performanceBand}</Badge>,
+                },
+                {
                   key: 'status',
                   header: 'Status',
                   render: (a) => (
-                    <select
-                      value={a.status}
-                      disabled={savingId === a.studentProfileId}
-                      onChange={(e) => updateStatus(a.studentProfileId, e.target.value)}
-                      aria-label={`Status for ${a.anonymousId}`}
-                    >
-                      {STATUS_OPTIONS.map((s) => (
-                        <option key={s} value={s}>
-                          {s.replace(/_/g, ' ')}
-                        </option>
-                      ))}
-                    </select>
+                    <div>
+                      <Badge variant="copper">{a.pipelineLabel}</Badge>
+                      <div className="portal-status-actions" style={{ marginTop: '0.5rem' }}>
+                        {STATUS_OPTIONS.map((option) => (
+                          <Button
+                            key={option.value}
+                            type="button"
+                            variant={a.status === option.value ? 'copper' : 'secondary'}
+                            disabled={savingId === a.studentProfileId}
+                            onClick={() => updateStatus(a.studentProfileId, option.value)}
+                            aria-pressed={a.status === option.value}
+                          >
+                            {option.label}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
                   ),
                 },
                 {

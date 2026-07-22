@@ -8,7 +8,7 @@ import {
   EmptyState,
   PageHeader,
   ResponsiveTable,
-  Skeleton,
+  SkeletonTable,
 } from '@faralin/ui';
 import { AccessDenied } from '@/components/access-denied';
 import { useStaffApi } from '@/lib/use-staff-api';
@@ -87,7 +87,13 @@ export default function ArticlesPage() {
     return (
       <div className="page-section">
         <div className="container">
-          <Skeleton variant="title" width="30%" />
+          <PageHeader
+            title="Articles"
+            description="Publish content for students following your university."
+          />
+          <Card>
+            <SkeletonTable rows={4} />
+          </Card>
         </div>
       </div>
     );
@@ -179,7 +185,10 @@ export default function ArticlesPage() {
 
         <Card>
           {articles.length === 0 ? (
-            <EmptyState compact message="No articles yet." />
+            <EmptyState
+              compact
+              message="No articles yet. Publish to appear on faralin.kaana.in/universities/…"
+            />
           ) : (
             <ResponsiveTable<Article>
               columns={[

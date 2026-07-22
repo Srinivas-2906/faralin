@@ -13,7 +13,7 @@ const publishableKey = getPublishableKey();
 const hasClerk =
   publishableKey.length > 0 && !publishableKey.includes('placeholder');
 
-const isPublicRoute = createRouteMatcher(['/sign-in(.*)']);
+const isPublicRoute = createRouteMatcher(['/sign-in(.*)', '/api(.*)']);
 
 export default hasClerk
   ? clerkMiddleware(

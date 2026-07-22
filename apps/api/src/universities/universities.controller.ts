@@ -24,6 +24,19 @@ export class UniversitiesController {
     });
   }
 
+  @Get('staff/me')
+  @Roles(UserRole.UNIVERSITY_STAFF)
+  getStaffMe(@CurrentUser() user: AuthUser) {
+    return this.universities.getStaffMe(user.id);
+  }
+
+  @Get('staff/students')
+  @Roles(UserRole.UNIVERSITY_STAFF)
+  getStaffStudents(@CurrentUser() user: AuthUser) {
+    this.universities.requireUniversityAccess(user.universityId, user.universityId!);
+    return this.universities.getStaffStudents(user.universityId!);
+  }
+
   @Get('staff/dashboard')
   @Roles(UserRole.UNIVERSITY_STAFF)
   getStaffDashboard(@CurrentUser() user: AuthUser) {

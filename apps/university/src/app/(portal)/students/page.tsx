@@ -1,102 +1,80 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Badge, Card, EmptyState, PageHeader, ResponsiveTable, Skeleton } from '@faralin/ui';
+import { Badge, Card, EmptyState, PageHeader, ResponsiveTable, SkeletonTable } from '@faralin/ui';
 import { AccessDenied } from '@/components/access-denied';
-import { useStaffApi } from '@/lib/use-staff-api';
+import { usePortalData } from '@/lib/use-portal-data';
 
 interface StudentRow {
   anonymousId: string;
   revealLevel: string;
   subjectSlugs: string[];
+  subjectNames: string[];
   assessmentsCompleted: number;
   totalFaralins: number;
   performanceBand: string;
+  applicationStatus: string;
   firstName?: string;
   lastName?: string;
   schoolName?: string;
   yearGroup?: number;
 }
 
-export default function StudentsPage() {
-  const { staffFetch, accessDenied } = useStaffApi();
-  const [students, setStudents] = useState<StudentRow[]>([]);
-  const [universityName, setUniversityName] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+const STATUS_LABELS: Record<string, string> = {
+  FOLLOWER: 'Following',
+  REFERRAL_CLICKED: 'Referral clicked',
+  APPLIED: 'Applied',
+  OFFER_RECEIVED: 'Offer received',
+  OFFER_ACCEPTED: 'Offer accepted',
+  ENROLLED: 'Enrolled',
+  WITHDRAWN: 'Withdrawn',
+  REJECTED: 'Rejected',
+};
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const data = await staffFetch<{ university: { name: string }; students: StudentRow[] }>(
-          '/universities/staff/dashboard',
-        );
-        if (data) {
-          setUniversityName(data.university.name);
-          setStudents(data.students ?? []);
-        }
-      } catch (e) {
-        setError(e instanceof Error ? e.message : 'Failed to load students');
-      } finally {
-        setLoading(false);
-      }
-    }
-    load();
-  }, [staffFetch]);
+export default function StudentsPage() {
+  const { data, loading, error, accessDenied } = usePortalData<{
+    university: { name: string };
+    students: StudentRow[];
+  }>('/universities/staff/students');
 
   if (accessDenied) return <AccessDenied />;
   if (loading) {
     return (
       <div className="page-section">
         <div className="container">
-          <Skeleton variant="title" width="30%" />
+          <PageHeader title="Students" description="Loading roster…" />
+          <Card>
+            <SkeletonTable rows={6} />
+          </Card>
         </div>
       </div>
     );
   }
+
+  const students = data?.students ?? [];
+  const universityName = data?.university.name ?? 'your university';
 
   return (
     <div className="page-section">
       <div className="container">
         <PageHeader
           title="Students"
-          description={`Anonymous student roster for ${universityName || 'your university'}. Personal details appear only when a student has raised their reveal level.`}
+          description={`Anonymous student roster for ${universityName}. Personal details appear only when a student has raised their reveal level.`}
         />
 
         <Card>
           {error ? (
             <EmptyState compact message={error} />
           ) : students.length === 0 ? (
-            <EmptyState compact message="No students with activity yet." />
+            <EmptyState compact message="No students following your university yet." />
           ) : (
             <ResponsiveTable<StudentRow>
               columns={[
                 { key: 'id', header: 'Anonymous ID', render: (s) => s.anonymousId },
                 {
-                  key: 'name',
-                  header: 'Display',
-                  render: (s) =>
-                    s.firstName || s.lastName
-                      ? [s.firstName, s.lastName].filter(Boolean).join(' ')
-                      : '—',
-                },
-                {
                   key: 'subjects',
                   header: 'Subjects',
-                  render: (s) => s.subjectSlugs.join(', ') || '—',
-                },
-                {
-                  key: 'school',
-                  header: 'School / year',
                   render: (s) =>
-                    [s.schoolName, s.yearGroup ? `Year ${s.yearGroup}` : null]
-                      .filter(Boolean)
-                      .join(' · ') || '—',
-                },
-                {
-                  key: 'assessments',
-                  header: 'Assessments',
-                  render: (s) => s.assessmentsCompleted,
+                    s.subjectNames.length > 0 ? s.subjectNames.join(', ') : '—',
                 },
                 {
                   key: 'faralins',
@@ -109,9 +87,15 @@ export default function StudentsPage() {
                   render: (s) => <Badge>{s.performanceBand}</Badge>,
                 },
                 {
-                  key: 'reveal',
-                  header: 'Reveal',
-                  render: (s) => s.revealLevel,
+                  key: 'pipeline',
+                  header: 'Pipeline',
+                  render: (s) =>
+                    STATUS_LABELS[s.applicationStatus] ?? s.applicationStatus.replace(/_/g, ' '),
+                },
+                {
+                  key: 'assessments',
+                  header: 'Assessments',
+                  render: (s) => s.assessmentsCompleted,
                 },
               ]}
               data={students}

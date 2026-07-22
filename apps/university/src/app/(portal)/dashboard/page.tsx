@@ -1,17 +1,17 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import {
   Badge,
   Card,
+  DashboardSkeleton,
   EmptyState,
   PageHeader,
+  ProgressBar,
   ResponsiveTable,
-  Skeleton,
   StatCard,
 } from '@faralin/ui';
 import { AccessDenied } from '@/components/access-denied';
-import { useStaffApi } from '@/lib/use-staff-api';
+import { usePortalData } from '@/lib/use-portal-data';
 
 interface DashboardData {
   university: { name: string };
@@ -24,51 +24,37 @@ interface DashboardData {
     enrolled: number;
   };
   followerCount: number;
-  subjectInterests: Record<string, number>;
+  subjectInterests: Array<{ slug: string; name: string; count: number }>;
   topPerformers: Array<{
     anonymousId: string;
     totalFaralins: number;
     performanceBand: string;
   }>;
   estimatedFutureBursaryGbp: number;
+  eventRegistrations: number;
   contentEngagement: { articles: number; events: number };
 }
 
-export default function DashboardPage() {
-  const { staffFetch, accessDenied } = useStaffApi();
-  const [dashboard, setDashboard] = useState<DashboardData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+const FUNNEL_STEPS: Array<{ key: keyof DashboardData['funnel']; label: string }> = [
+  { key: 'followers', label: 'Followers' },
+  { key: 'referralClicked', label: 'Referral clicked' },
+  { key: 'applied', label: 'Applied' },
+  { key: 'offerReceived', label: 'Offer received' },
+  { key: 'offerAccepted', label: 'Offer accepted' },
+  { key: 'enrolled', label: 'Enrolled' },
+];
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const data = await staffFetch<DashboardData>('/universities/staff/dashboard');
-        if (data) setDashboard(data);
-      } catch (e) {
-        setError(e instanceof Error ? e.message : 'Failed to load dashboard');
-      } finally {
-        setLoading(false);
-      }
-    }
-    load();
-  }, [staffFetch]);
+function conversionPercent(current: number, previous: number) {
+  if (previous <= 0) return current > 0 ? 100 : 0;
+  return Math.round((current / previous) * 100);
+}
+
+export default function DashboardPage() {
+  const { data: dashboard, loading, error, accessDenied } =
+    usePortalData<DashboardData>('/universities/staff/dashboard');
 
   if (accessDenied) return <AccessDenied />;
-  if (loading) {
-    return (
-      <div className="page-section">
-        <div className="container">
-          <Skeleton variant="title" width="40%" style={{ marginBottom: '2rem' }} />
-          <div className="stat-grid">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <Skeleton key={i} variant="stat" />
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return <DashboardSkeleton />;
   if (error || !dashboard) {
     return (
       <div className="page-section">
@@ -81,13 +67,18 @@ export default function DashboardPage() {
     );
   }
 
-  const { university, funnel, followerCount, subjectInterests, topPerformers, estimatedFutureBursaryGbp, contentEngagement } =
-    dashboard;
+  const {
+    university,
+    funnel,
+    followerCount,
+    subjectInterests,
+    topPerformers,
+    estimatedFutureBursaryGbp,
+    eventRegistrations,
+    contentEngagement,
+  } = dashboard;
 
-  const subjectRows = Object.entries(subjectInterests).map(([slug, count]) => ({
-    slug,
-    count: count as number,
-  }));
+  const funnelValues = FUNNEL_STEPS.map((step) => funnel[step.key]);
 
   return (
     <div className="page-section">
@@ -104,41 +95,49 @@ export default function DashboardPage() {
             value={`£${estimatedFutureBursaryGbp.toFixed(2)}`}
             copper
           />
+          <StatCard label="Event registrations" value={eventRegistrations} />
           <StatCard label="Published articles" value={contentEngagement.articles} />
           <StatCard label="Upcoming events" value={contentEngagement.events} />
         </div>
 
         <Card style={{ marginBottom: 'var(--section-gap)' }}>
           <h2 className="section-title">Conversion funnel</h2>
-          <div className="stat-grid">
-            {[
-              { label: 'Followers', value: funnel.followers },
-              { label: 'Referral clicked', value: funnel.referralClicked },
-              { label: 'Applied', value: funnel.applied },
-              { label: 'Offer received', value: funnel.offerReceived },
-              { label: 'Offer accepted', value: funnel.offerAccepted },
-              { label: 'Enrolled', value: funnel.enrolled },
-            ].map((step) => (
-              <div key={step.label}>
-                <div className="stat-label">{step.label}</div>
-                <div className="stat-value stat-value--compact">{step.value}</div>
-              </div>
-            ))}
+          <div className="portal-funnel-steps">
+            {FUNNEL_STEPS.map((step, index) => {
+              const value = funnel[step.key];
+              const previous = index === 0 ? value : funnelValues[index - 1];
+              const pct = conversionPercent(value, previous);
+              return (
+                <div key={step.key} className="portal-funnel-step">
+                  <div className="portal-funnel-meta">
+                    <span className="portal-funnel-label">{step.label}</span>
+                    {index > 0 ? (
+                      <span className="portal-funnel-conversion">{pct}% from previous stage</span>
+                    ) : null}
+                  </div>
+                  <ProgressBar
+                    current={value}
+                    total={Math.max(funnel.followers, value, 1)}
+                    label={`${value} students`}
+                  />
+                </div>
+              );
+            })}
           </div>
         </Card>
 
         <div className="layout-two-col">
           <Card>
             <h2 className="section-title">Subject interests</h2>
-            {subjectRows.length === 0 ? (
+            {subjectInterests.length === 0 ? (
               <EmptyState compact message="No data yet." />
             ) : (
-              <ResponsiveTable<{ slug: string; count: number }>
+              <ResponsiveTable<{ slug: string; name: string; count: number }>
                 columns={[
-                  { key: 'subject', header: 'Subject', render: (r) => r.slug },
+                  { key: 'subject', header: 'Subject', render: (r) => r.name },
                   { key: 'students', header: 'Students', render: (r) => r.count },
                 ]}
-                data={subjectRows}
+                data={subjectInterests}
                 getRowKey={(r) => r.slug}
               />
             )}

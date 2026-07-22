@@ -8,7 +8,7 @@ import {
   EmptyState,
   PageHeader,
   ResponsiveTable,
-  Skeleton,
+  SkeletonTable,
 } from '@faralin/ui';
 import { AccessDenied } from '@/components/access-denied';
 import { useStaffApi } from '@/lib/use-staff-api';
@@ -92,7 +92,10 @@ export default function EventsPage() {
     return (
       <div className="page-section">
         <div className="container">
-          <Skeleton variant="title" width="30%" />
+          <PageHeader title="Events" description="Schedule webinars, open days, and taster sessions." />
+          <Card>
+            <SkeletonTable rows={4} />
+          </Card>
         </div>
       </div>
     );
@@ -195,7 +198,10 @@ export default function EventsPage() {
 
         <Card>
           {events.length === 0 ? (
-            <EmptyState compact message="No events yet." />
+            <EmptyState
+              compact
+              message="No events yet. Publish to appear on faralin.kaana.in/universities/…"
+            />
           ) : (
             <ResponsiveTable<EventRow>
               columns={[

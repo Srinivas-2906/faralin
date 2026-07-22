@@ -41,6 +41,46 @@ export async function linkPendingStaffUser(
   });
 }
 
+export async function linkStaffUserByEmail(
+  prisma: PrismaService,
+  clerkUserId: string,
+  email: string,
+) {
+  const staff = await prisma.user.findFirst({
+    where: {
+      email: { equals: email, mode: 'insensitive' },
+      role: UserRole.UNIVERSITY_STAFF,
+    },
+    include: {
+      studentProfile: true,
+      universityStaffProfile: true,
+    },
+  });
+
+  if (!staff) return null;
+
+  const duplicate = await prisma.user.findUnique({
+    where: { clerkUserId },
+  });
+
+  if (duplicate && duplicate.id !== staff.id) {
+    await prisma.user.delete({ where: { id: duplicate.id } });
+  }
+
+  if (staff.clerkUserId === clerkUserId) {
+    return staff;
+  }
+
+  return prisma.user.update({
+    where: { id: staff.id },
+    data: { clerkUserId },
+    include: {
+      studentProfile: true,
+      universityStaffProfile: true,
+    },
+  });
+}
+
 export async function findOrCreateUserFromClerk(
   prisma: PrismaService,
   clerkUserId: string,
@@ -56,6 +96,17 @@ export async function findOrCreateUserFromClerk(
 
   if (!user && email) {
     user = await linkPendingStaffUser(prisma, clerkUserId, email);
+  }
+
+  if (!user && email) {
+    user = await linkStaffUserByEmail(prisma, clerkUserId, email);
+  }
+
+  if (user?.role === UserRole.STUDENT && email) {
+    const staffUser = await linkStaffUserByEmail(prisma, clerkUserId, email);
+    if (staffUser) {
+      user = staffUser;
+    }
   }
 
   if (!user) {

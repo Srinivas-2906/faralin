@@ -1,0 +1,62 @@
+steps:
+  - id: build-dbjob
+    name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -f
+      - Dockerfile.dbjob
+      - -t
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_REPO}/${_DBJOB_IMAGE}:$BUILD_ID
+      - -t
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_REPO}/${_DBJOB_IMAGE}:latest
+      - .
+
+  - id: push-dbjob
+    name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - --all-tags
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_REPO}/${_DBJOB_IMAGE}
+
+  - id: provision-all-staff
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        set -euo pipefail
+        IMAGE="${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_REPO}/${_DBJOB_IMAGE}:$BUILD_ID"
+        CONN="$(gcloud sql instances describe faralin-pg --project "$PROJECT_ID" --format='value(connectionName)')"
+        PROVISION_CMD="pnpm --filter @faralin/db run generate:ci && pnpm --filter @faralin/db exec tsx prisma/provision-all-staff.ts"
+        gcloud run jobs update faralin-provision-all-staff \
+          --project "$PROJECT_ID" \
+          --region "${_REGION}" \
+          --image "$$IMAGE" \
+          --set-cloudsql-instances "$$CONN" \
+          --set-secrets "DATABASE_URL=faralin_database_url:latest" \
+          --command bash \
+          --args=-lc,"$$PROVISION_CMD" \
+          2>/dev/null || gcloud run jobs create faralin-provision-all-staff \
+          --project "$PROJECT_ID" \
+          --region "${_REGION}" \
+          --image "$$IMAGE" \
+          --set-cloudsql-instances "$$CONN" \
+          --set-secrets "DATABASE_URL=faralin_database_url:latest" \
+          --command bash \
+          --args=-lc,"$$PROVISION_CMD"
+        gcloud run jobs execute faralin-provision-all-staff \
+          --project "$PROJECT_ID" \
+          --region "${_REGION}" \
+          --wait
+
+substitutions:
+  _REGION: asia-south1
+  _ARTIFACT_REPO: kaana
+  _DBJOB_IMAGE: faralin-dbjob
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+images:
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_REPO}/${_DBJOB_IMAGE}:$BUILD_ID
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_REPO}/${_DBJOB_IMAGE}:latest

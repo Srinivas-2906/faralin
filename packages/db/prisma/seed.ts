@@ -9,6 +9,7 @@ import { universityDefs } from './data/universities';
 import { courseDefs, getLessonVideoUrl } from './data/courses';
 import { knowledgeArticleDefs } from './data/knowledge-articles';
 import { problemTrackDefs } from './data/problem-tracks';
+import { seedStudentPipeline } from './seed-student-pipeline';
 
 const prisma = new PrismaClient();
 
@@ -254,6 +255,9 @@ async function main() {
   console.log(`Seeded ${problemTrackDefs.length} problem tracks`);
   console.log(`Seeded ${knowledgeArticleDefs.length} knowledge articles`);
   console.log(`Seeded ${courseDefs.length} courses`);
+
+  await seedStudentPipeline(prisma, universityBySlug, subjectMap);
+
   console.log(`Admin user: ${adminUser.email}`);
   console.log('Seed complete.');
 }
