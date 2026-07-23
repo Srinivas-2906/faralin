@@ -1,5 +1,6 @@
 import { PrismaClient, UserRole } from '@prisma/client';
 import { universityDefs } from './data/universities';
+import { legacyStaffEmailForSlug, staffEmailForSlug } from './staff-email';
 
 const prisma = new PrismaClient();
 
@@ -8,7 +9,7 @@ async function provisionStaffForUniversity(
   name: string,
   universityId: string,
 ) {
-  const email = `staff@${slug}.demo`;
+  const email = staffEmailForSlug(slug);
 
   const existing = await prisma.user.findFirst({
     where: { email: { equals: email, mode: 'insensitive' } },
@@ -74,7 +75,12 @@ async function main() {
   for (const def of universityDefs) {
     const university = bySlug[def.slug];
     if (!university) {
-      results.push({ email: `staff@${def.slug}.demo`, university: def.name, action: 'missing_university' });
+      results.push({
+        email: staffEmailForSlug(def.slug),
+        legacyEmail: legacyStaffEmailForSlug(def.slug),
+        university: def.name,
+        action: 'missing_university',
+      });
       continue;
     }
     results.push(await provisionStaffForUniversity(def.slug, def.name, university.id));

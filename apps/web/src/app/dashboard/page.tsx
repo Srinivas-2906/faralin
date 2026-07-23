@@ -161,6 +161,7 @@ export default async function DashboardPage() {
                           universityName: string;
                           totalFaralins: number;
                           estimatedBursaryGbp: number;
+                          faralinsPerGbp?: number | null;
                         }) => (
                           <DashboardPartnerCard key={u.universitySlug} university={u} />
                         ),

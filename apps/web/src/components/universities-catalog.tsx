@@ -6,6 +6,8 @@ import { EmptyState } from '@faralin/ui';
 import { UniversityCard } from '@/components/university-card';
 import { chunk, useCatalogGridColumns } from '@/lib/catalog-grid';
 
+import type { UniversityPrestigeTier } from '@faralin/types';
+
 export interface UniversityListItem {
   slug: string;
   name: string;
@@ -14,6 +16,8 @@ export interface UniversityListItem {
   description: string | null;
   applyUrl: string | null;
   conversionRule: { faralinsPerGbp: number } | null;
+  prestigeTier?: UniversityPrestigeTier | null;
+  guardianRank2025?: number | null;
 }
 
 export function UniversitiesCatalog({ universities }: { universities: UniversityListItem[] }) {

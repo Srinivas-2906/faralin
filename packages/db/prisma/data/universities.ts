@@ -1,3 +1,11 @@
+import type { UniversityPrestigeTier } from '@faralin/types';
+import {
+  RANKING_SOURCE,
+  buildConversionDisclaimer,
+  getTierEconomics,
+  getUniversityRankingMeta,
+} from '@faralin/types';
+
 export interface UniversitySeedDef {
   slug: string;
   name: string;
@@ -7,6 +15,9 @@ export interface UniversitySeedDef {
   websiteUrl: string;
   applyUrl: string;
   isDemo: boolean;
+  guardianRank2025: number;
+  prestigeTier: UniversityPrestigeTier;
+  rankingSource: string;
   conversion: {
     faralinsPerGbp: number;
     minVerifiedPercent: number;
@@ -20,7 +31,45 @@ export interface UniversitySeedDef {
   };
 }
 
-export const universityDefs: UniversitySeedDef[] = [
+interface UniversityCoreDef {
+  slug: string;
+  name: string;
+  shortName: string;
+  logoUrl: string;
+  description: string;
+  websiteUrl: string;
+  applyUrl: string;
+}
+
+function buildUniversityDef(core: UniversityCoreDef): UniversitySeedDef {
+  const ranking = getUniversityRankingMeta(core.slug);
+  if (!ranking) {
+    throw new Error(`Missing ranking metadata for university: ${core.slug}`);
+  }
+
+  const economics = getTierEconomics(core.slug);
+
+  return {
+    ...core,
+    isDemo: true,
+    guardianRank2025: ranking.guardianRank2025,
+    prestigeTier: ranking.prestigeTier,
+    rankingSource: RANKING_SOURCE,
+    conversion: {
+      faralinsPerGbp: economics.faralinsPerGbp,
+      minVerifiedPercent: economics.minVerifiedPercent,
+      disclaimerText: buildConversionDisclaimer(core.shortName),
+    },
+    rules: {
+      baseAmount: economics.baseAmount,
+      scoreMultiplier: economics.scoreMultiplier,
+      improvementBonus: economics.improvementBonus,
+      difficultyMultiplier: economics.difficultyMultiplier,
+    },
+  };
+}
+
+const universityCores: UniversityCoreDef[] = [
   {
     slug: 'oxford',
     name: 'University of Oxford',
@@ -30,14 +79,6 @@ export const universityDefs: UniversitySeedDef[] = [
       'One of the oldest universities in the world, offering rigorous academic recognition for sustained effort.',
     websiteUrl: 'https://www.ox.ac.uk',
     applyUrl: 'https://www.ox.ac.uk/admissions',
-    isDemo: true,
-    conversion: {
-      faralinsPerGbp: 200,
-      minVerifiedPercent: 80,
-      disclaimerText:
-        'Estimated Oxford bursary value is subject to admission, eligibility, and university terms.',
-    },
-    rules: { baseAmount: 80, scoreMultiplier: 1.2, improvementBonus: 40, difficultyMultiplier: 1.3 },
   },
   {
     slug: 'cambridge',
@@ -48,14 +89,6 @@ export const universityDefs: UniversitySeedDef[] = [
       'A world-leading research university recognising exceptional academic progress and intellectual curiosity.',
     websiteUrl: 'https://www.cam.ac.uk',
     applyUrl: 'https://www.undergraduate.study.cam.ac.uk/applying',
-    isDemo: true,
-    conversion: {
-      faralinsPerGbp: 195,
-      minVerifiedPercent: 80,
-      disclaimerText:
-        'Estimated Cambridge bursary value is subject to admission, eligibility, and university terms.',
-    },
-    rules: { baseAmount: 85, scoreMultiplier: 1.22, improvementBonus: 42, difficultyMultiplier: 1.32 },
   },
   {
     slug: 'imperial',
@@ -66,14 +99,6 @@ export const universityDefs: UniversitySeedDef[] = [
       'A science and technology specialist university rewarding verified STEM achievement and problem-solving.',
     websiteUrl: 'https://www.imperial.ac.uk',
     applyUrl: 'https://www.imperial.ac.uk/study/apply/',
-    isDemo: true,
-    conversion: {
-      faralinsPerGbp: 185,
-      minVerifiedPercent: 78,
-      disclaimerText:
-        'Estimated Imperial bursary value is subject to admission, eligibility, and university terms.',
-    },
-    rules: { baseAmount: 90, scoreMultiplier: 1.18, improvementBonus: 38, difficultyMultiplier: 1.28 },
   },
   {
     slug: 'ucl',
@@ -81,17 +106,9 @@ export const universityDefs: UniversitySeedDef[] = [
     shortName: 'UCL',
     logoUrl: '/images/universities/ucl.jpg',
     description:
-      'London\'s global university, recognising diverse subject excellence and consistent improvement across disciplines.',
+      "London's global university, recognising diverse subject excellence and consistent improvement across disciplines.",
     websiteUrl: 'https://www.ucl.ac.uk',
     applyUrl: 'https://www.ucl.ac.uk/prospective-students/undergraduate/how-apply',
-    isDemo: true,
-    conversion: {
-      faralinsPerGbp: 170,
-      minVerifiedPercent: 75,
-      disclaimerText:
-        'Estimated UCL bursary value is subject to admission, eligibility, and university terms.',
-    },
-    rules: { baseAmount: 95, scoreMultiplier: 1.12, improvementBonus: 48, difficultyMultiplier: 1.2 },
   },
   {
     slug: 'kings-college-london',
@@ -102,14 +119,6 @@ export const universityDefs: UniversitySeedDef[] = [
       'A leading London university with strong recognition for humanities, health sciences, and social sciences.',
     websiteUrl: 'https://www.kcl.ac.uk',
     applyUrl: 'https://www.kcl.ac.uk/study/undergraduate/how-to-apply',
-    isDemo: true,
-    conversion: {
-      faralinsPerGbp: 165,
-      minVerifiedPercent: 74,
-      disclaimerText:
-        "Estimated King's College London bursary value is subject to admission, eligibility, and university terms.",
-    },
-    rules: { baseAmount: 92, scoreMultiplier: 1.1, improvementBonus: 50, difficultyMultiplier: 1.18 },
   },
   {
     slug: 'lse',
@@ -120,14 +129,6 @@ export const universityDefs: UniversitySeedDef[] = [
       'A specialist social science university rewarding analytical reasoning and evidence-based argument.',
     websiteUrl: 'https://www.lse.ac.uk',
     applyUrl: 'https://www.lse.ac.uk/study-at-lse/Undergraduate/How-to-Apply',
-    isDemo: true,
-    conversion: {
-      faralinsPerGbp: 175,
-      minVerifiedPercent: 76,
-      disclaimerText:
-        'Estimated LSE bursary value is subject to admission, eligibility, and university terms.',
-    },
-    rules: { baseAmount: 88, scoreMultiplier: 1.15, improvementBonus: 44, difficultyMultiplier: 1.25 },
   },
   {
     slug: 'edinburgh',
@@ -135,17 +136,9 @@ export const universityDefs: UniversitySeedDef[] = [
     shortName: 'Edinburgh',
     logoUrl: '/images/universities/edinburgh.jpg',
     description:
-      'Scotland\'s ancient university, offering broad recognition for verified learning and subject mastery.',
+      "Scotland's ancient university, offering broad recognition for verified learning and subject mastery.",
     websiteUrl: 'https://www.ed.ac.uk',
     applyUrl: 'https://www.ed.ac.uk/studying/undergraduate/applying',
-    isDemo: true,
-    conversion: {
-      faralinsPerGbp: 130,
-      minVerifiedPercent: 72,
-      disclaimerText:
-        'Estimated Edinburgh bursary value is subject to admission, eligibility, and university terms.',
-    },
-    rules: { baseAmount: 105, scoreMultiplier: 1.08, improvementBonus: 52, difficultyMultiplier: 1.14 },
   },
   {
     slug: 'durham',
@@ -156,14 +149,6 @@ export const universityDefs: UniversitySeedDef[] = [
       'A collegiate Russell Group university recognising sustained academic effort and written reasoning.',
     websiteUrl: 'https://www.durham.ac.uk',
     applyUrl: 'https://www.durham.ac.uk/study/undergraduate/how-to-apply/',
-    isDemo: true,
-    conversion: {
-      faralinsPerGbp: 140,
-      minVerifiedPercent: 73,
-      disclaimerText:
-        'Estimated Durham bursary value is subject to admission, eligibility, and university terms.',
-    },
-    rules: { baseAmount: 98, scoreMultiplier: 1.1, improvementBonus: 46, difficultyMultiplier: 1.16 },
   },
   {
     slug: 'warwick',
@@ -174,14 +159,6 @@ export const universityDefs: UniversitySeedDef[] = [
       'A research-intensive university with strong employer links and generous recognition for improvement.',
     websiteUrl: 'https://warwick.ac.uk',
     applyUrl: 'https://warwick.ac.uk/study/undergraduate/apply/',
-    isDemo: true,
-    conversion: {
-      faralinsPerGbp: 125,
-      minVerifiedPercent: 71,
-      disclaimerText:
-        'Estimated Warwick bursary value is subject to admission, eligibility, and university terms.',
-    },
-    rules: { baseAmount: 108, scoreMultiplier: 1.06, improvementBonus: 55, difficultyMultiplier: 1.12 },
   },
   {
     slug: 'southampton',
@@ -192,14 +169,6 @@ export const universityDefs: UniversitySeedDef[] = [
       'A research-intensive Russell Group university with generous recognition for consistent progress.',
     websiteUrl: 'https://www.southampton.ac.uk',
     applyUrl: 'https://www.southampton.ac.uk/courses/how-to-apply',
-    isDemo: true,
-    conversion: {
-      faralinsPerGbp: 100,
-      minVerifiedPercent: 70,
-      disclaimerText:
-        'Estimated Southampton bursary value is subject to admission, eligibility, and university terms.',
-    },
-    rules: { baseAmount: 120, scoreMultiplier: 1.0, improvementBonus: 60, difficultyMultiplier: 1.1 },
   },
   {
     slug: 'manchester',
@@ -210,14 +179,6 @@ export const universityDefs: UniversitySeedDef[] = [
       'A major civic university rewarding improvement and subject strength across disciplines.',
     websiteUrl: 'https://www.manchester.ac.uk',
     applyUrl: 'https://www.manchester.ac.uk/study/undergraduate/applications/',
-    isDemo: true,
-    conversion: {
-      faralinsPerGbp: 120,
-      minVerifiedPercent: 75,
-      disclaimerText:
-        'Estimated Manchester bursary value is subject to admission, eligibility, and university terms.',
-    },
-    rules: { baseAmount: 100, scoreMultiplier: 1.1, improvementBonus: 50, difficultyMultiplier: 1.15 },
   },
   {
     slug: 'bristol',
@@ -228,14 +189,6 @@ export const universityDefs: UniversitySeedDef[] = [
       'A Russell Group university recognising verified learning and written reasoning.',
     websiteUrl: 'https://www.bristol.ac.uk',
     applyUrl: 'https://www.bristol.ac.uk/study/undergraduate/apply/',
-    isDemo: true,
-    conversion: {
-      faralinsPerGbp: 110,
-      minVerifiedPercent: 72,
-      disclaimerText:
-        'Estimated Bristol bursary value is subject to admission, eligibility, and university terms.',
-    },
-    rules: { baseAmount: 95, scoreMultiplier: 1.05, improvementBonus: 45, difficultyMultiplier: 1.12 },
   },
   {
     slug: 'leeds',
@@ -246,14 +199,6 @@ export const universityDefs: UniversitySeedDef[] = [
       'A large research university with strong recognition budgets for motivated students across all subjects.',
     websiteUrl: 'https://www.leeds.ac.uk',
     applyUrl: 'https://www.leeds.ac.uk/undergraduate-applications/doc/apply',
-    isDemo: true,
-    conversion: {
-      faralinsPerGbp: 105,
-      minVerifiedPercent: 68,
-      disclaimerText:
-        'Estimated Leeds bursary value is subject to admission, eligibility, and university terms.',
-    },
-    rules: { baseAmount: 115, scoreMultiplier: 1.02, improvementBonus: 58, difficultyMultiplier: 1.08 },
   },
   {
     slug: 'birmingham',
@@ -264,14 +209,6 @@ export const universityDefs: UniversitySeedDef[] = [
       'A founding redbrick university rewarding verified assessments and steady academic progress.',
     websiteUrl: 'https://www.birmingham.ac.uk',
     applyUrl: 'https://www.birmingham.ac.uk/study/undergraduate/apply',
-    isDemo: true,
-    conversion: {
-      faralinsPerGbp: 108,
-      minVerifiedPercent: 69,
-      disclaimerText:
-        'Estimated Birmingham bursary value is subject to admission, eligibility, and university terms.',
-    },
-    rules: { baseAmount: 112, scoreMultiplier: 1.04, improvementBonus: 54, difficultyMultiplier: 1.1 },
   },
   {
     slug: 'nottingham',
@@ -282,14 +219,6 @@ export const universityDefs: UniversitySeedDef[] = [
       'A global university with campuses in the UK and abroad, recognising consistent subject achievement.',
     websiteUrl: 'https://www.nottingham.ac.uk',
     applyUrl: 'https://www.nottingham.ac.uk/studywithus/undergraduate/apply/index.aspx',
-    isDemo: true,
-    conversion: {
-      faralinsPerGbp: 102,
-      minVerifiedPercent: 67,
-      disclaimerText:
-        'Estimated Nottingham bursary value is subject to admission, eligibility, and university terms.',
-    },
-    rules: { baseAmount: 118, scoreMultiplier: 1.0, improvementBonus: 62, difficultyMultiplier: 1.06 },
   },
   {
     slug: 'sheffield',
@@ -300,14 +229,6 @@ export const universityDefs: UniversitySeedDef[] = [
       'A Russell Group university with a strong widening participation mission and fair recognition rules.',
     websiteUrl: 'https://www.sheffield.ac.uk',
     applyUrl: 'https://www.sheffield.ac.uk/undergraduate/apply',
-    isDemo: true,
-    conversion: {
-      faralinsPerGbp: 98,
-      minVerifiedPercent: 66,
-      disclaimerText:
-        'Estimated Sheffield bursary value is subject to admission, eligibility, and university terms.',
-    },
-    rules: { baseAmount: 122, scoreMultiplier: 0.98, improvementBonus: 64, difficultyMultiplier: 1.05 },
   },
   {
     slug: 'newcastle',
@@ -318,14 +239,6 @@ export const universityDefs: UniversitySeedDef[] = [
       'A research-intensive university in the North East rewarding improvement and subject engagement.',
     websiteUrl: 'https://www.ncl.ac.uk',
     applyUrl: 'https://www.ncl.ac.uk/undergraduate/apply/',
-    isDemo: true,
-    conversion: {
-      faralinsPerGbp: 95,
-      minVerifiedPercent: 65,
-      disclaimerText:
-        'Estimated Newcastle bursary value is subject to admission, eligibility, and university terms.',
-    },
-    rules: { baseAmount: 125, scoreMultiplier: 0.96, improvementBonus: 66, difficultyMultiplier: 1.04 },
   },
   {
     slug: 'cardiff',
@@ -333,17 +246,9 @@ export const universityDefs: UniversitySeedDef[] = [
     shortName: 'Cardiff',
     logoUrl: '/images/universities/cardiff.jpg',
     description:
-      'Wales\' leading Russell Group university with accessible recognition for verified student progress.',
+      "Wales' leading Russell Group university with accessible recognition for verified student progress.",
     websiteUrl: 'https://www.cardiff.ac.uk',
     applyUrl: 'https://www.cardiff.ac.uk/study/undergraduate/applying',
-    isDemo: true,
-    conversion: {
-      faralinsPerGbp: 92,
-      minVerifiedPercent: 64,
-      disclaimerText:
-        'Estimated Cardiff bursary value is subject to admission, eligibility, and university terms.',
-    },
-    rules: { baseAmount: 128, scoreMultiplier: 0.95, improvementBonus: 68, difficultyMultiplier: 1.03 },
   },
   {
     slug: 'bath',
@@ -354,14 +259,6 @@ export const universityDefs: UniversitySeedDef[] = [
       'A top-ranked university for graduate outcomes, recognising rigorous verified assessment performance.',
     websiteUrl: 'https://www.bath.ac.uk',
     applyUrl: 'https://www.bath.ac.uk/guides/applying-for-undergraduate-courses/',
-    isDemo: true,
-    conversion: {
-      faralinsPerGbp: 115,
-      minVerifiedPercent: 73,
-      disclaimerText:
-        'Estimated Bath bursary value is subject to admission, eligibility, and university terms.',
-    },
-    rules: { baseAmount: 102, scoreMultiplier: 1.08, improvementBonus: 48, difficultyMultiplier: 1.14 },
   },
   {
     slug: 'exeter',
@@ -372,13 +269,7 @@ export const universityDefs: UniversitySeedDef[] = [
       'A welcoming university with higher reward budgets to attract motivated students.',
     websiteUrl: 'https://www.exeter.ac.uk',
     applyUrl: 'https://www.exeter.ac.uk/undergraduate/apply/',
-    isDemo: true,
-    conversion: {
-      faralinsPerGbp: 90,
-      minVerifiedPercent: 65,
-      disclaimerText:
-        'Estimated Exeter bursary value is subject to admission, eligibility, and university terms.',
-    },
-    rules: { baseAmount: 130, scoreMultiplier: 1.0, improvementBonus: 70, difficultyMultiplier: 1.0 },
   },
 ];
+
+export const universityDefs: UniversitySeedDef[] = universityCores.map(buildUniversityDef);

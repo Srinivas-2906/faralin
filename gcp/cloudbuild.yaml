@@ -142,7 +142,7 @@ substitutions:
   _API_PUBLIC_URL: https://faralin-api-wtba53dhka-el.a.run.app
   _WEB_PUBLIC_URL: https://faralin-web-wtba53dhka-el.a.run.app
   _UNIVERSITY_PUBLIC_URL: https://university.faralin.kaana.in
-  _ALLOWED_ORIGINS: https://faralin-web-wtba53dhka-el.a.run.app,https://faralin-web-851239127958.asia-south1.run.app,https://faralin.kaana.in,https://university.faralin.kaana.in
+  _ALLOWED_ORIGINS: https://faralin-web-wtba53dhka-el.a.run.app,https://faralin-web-851239127958.asia-south1.run.app,https://faralin.kaana.in,https://university.faralin.kaana.in,https://admin.faralin.kaana.in,http://localhost:3002
 
 availableSecrets:
   secretManager:

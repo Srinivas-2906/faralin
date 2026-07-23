@@ -1,8 +1,9 @@
 'use client';
 
-import { Badge, Card, EmptyState, PageHeader, ResponsiveTable, SkeletonTable } from '@faralin/ui';
+import { useMemo, useState } from 'react';
+import { Badge, Button, Card, EmptyState, PageHeader, ResponsiveTable, SkeletonTable } from '@faralin/ui';
 import { AccessDenied } from '@/components/access-denied';
-import { usePortalData } from '@/lib/use-portal-data';
+import { usePortalData } from '@/components/portal-provider';
 
 interface StudentRow {
   anonymousId: string;
@@ -30,14 +31,47 @@ const STATUS_LABELS: Record<string, string> = {
   REJECTED: 'Rejected',
 };
 
+const SORT_OPTIONS = [
+  { id: 'faralins-desc', label: 'Faralins (high → low)' },
+  { id: 'faralins-asc', label: 'Faralins (low → high)' },
+  { id: 'band', label: 'Performance band' },
+  { id: 'assessments', label: 'Assessments' },
+] as const;
+
+const BAND_ORDER = ['exceptional', 'strong', 'steady', 'developing'];
+
 export default function StudentsPage() {
-  const { data, loading, error, accessDenied } = usePortalData<{
+  const { data, loading, error, accessDenied, refresh, lastUpdated } = usePortalData<{
     university: { name: string };
     students: StudentRow[];
   }>('/universities/staff/students');
 
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [sort, setSort] = useState<(typeof SORT_OPTIONS)[number]['id']>('faralins-desc');
+
+  const students = useMemo(() => {
+    const rows = [...(data?.students ?? [])];
+    if (statusFilter !== 'all') {
+      return rows.filter((student) => student.applicationStatus === statusFilter);
+    }
+    return rows;
+  }, [data?.students, statusFilter]);
+
+  const sortedStudents = useMemo(() => {
+    const rows = [...students];
+    rows.sort((a, b) => {
+      if (sort === 'faralins-desc') return b.totalFaralins - a.totalFaralins;
+      if (sort === 'faralins-asc') return a.totalFaralins - b.totalFaralins;
+      if (sort === 'assessments') return b.assessmentsCompleted - a.assessmentsCompleted;
+      return (
+        BAND_ORDER.indexOf(a.performanceBand) - BAND_ORDER.indexOf(b.performanceBand)
+      );
+    });
+    return rows;
+  }, [students, sort]);
+
   if (accessDenied) return <AccessDenied />;
-  if (loading) {
+  if (loading && !data) {
     return (
       <div className="page-section">
         <div className="container">
@@ -50,7 +84,6 @@ export default function StudentsPage() {
     );
   }
 
-  const students = data?.students ?? [];
   const universityName = data?.university.name ?? 'your university';
 
   return (
@@ -59,13 +92,59 @@ export default function StudentsPage() {
         <PageHeader
           title="Students"
           description={`Anonymous student roster for ${universityName}. Personal details appear only when a student has raised their reveal level.`}
+          actions={
+            <div className="portal-page-actions">
+              {lastUpdated ? (
+                <span className="portal-last-updated">
+                  Updated {lastUpdated.toLocaleTimeString()}
+                </span>
+              ) : null}
+              <Button type="button" variant="secondary" onClick={() => refresh()}>
+                Refresh
+              </Button>
+            </div>
+          }
         />
+
+        <Card style={{ marginBottom: 'var(--section-gap)' }}>
+          <div className="portal-toolbar">
+            <label className="portal-filter">
+              Pipeline
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                aria-label="Filter by pipeline status"
+              >
+                <option value="all">All statuses</option>
+                {Object.entries(STATUS_LABELS).map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="portal-filter">
+              Sort by
+              <select
+                value={sort}
+                onChange={(e) => setSort(e.target.value as typeof sort)}
+                aria-label="Sort students"
+              >
+                {SORT_OPTIONS.map((option) => (
+                  <option key={option.id} value={option.id}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+        </Card>
 
         <Card>
           {error ? (
             <EmptyState compact message={error} />
-          ) : students.length === 0 ? (
-            <EmptyState compact message="No students following your university yet." />
+          ) : sortedStudents.length === 0 ? (
+            <EmptyState compact message="No students match this filter." />
           ) : (
             <ResponsiveTable<StudentRow>
               columns={[
@@ -98,7 +177,7 @@ export default function StudentsPage() {
                   render: (s) => s.assessmentsCompleted,
                 },
               ]}
-              data={students}
+              data={sortedStudents}
               getRowKey={(s) => s.anonymousId}
             />
           )}

@@ -11,7 +11,9 @@ import {
   SkeletonTable,
 } from '@faralin/ui';
 import { AccessDenied } from '@/components/access-denied';
+import { usePortalContext } from '@/components/portal-provider';
 import { useStaffApi } from '@/lib/use-staff-api';
+import { studentUniversityUrl } from '@/lib/media';
 
 const EVENT_TYPES = ['WEBINAR', 'OPEN_DAY', 'TASTER', 'CHALLENGE'];
 
@@ -26,6 +28,7 @@ interface EventRow {
 
 export default function EventsPage() {
   const { staffFetch, accessDenied } = useStaffApi();
+  const { context } = usePortalContext();
   const [events, setEvents] = useState<EventRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -108,9 +111,24 @@ export default function EventsPage() {
           title="Events"
           description="Schedule webinars, open days, and taster sessions."
           actions={
-            <Button type="button" onClick={() => setShowForm((v) => !v)}>
-              {showForm ? 'Cancel' : 'New event'}
-            </Button>
+            <div className="portal-page-actions">
+              {context?.university.slug ? (
+                <a
+                  href={studentUniversityUrl(context.university.slug)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn btn-secondary"
+                >
+                  View live page
+                </a>
+              ) : null}
+              <Button type="button" variant="secondary" onClick={() => load()}>
+                Refresh
+              </Button>
+              <Button type="button" onClick={() => setShowForm((v) => !v)}>
+                {showForm ? 'Cancel' : 'New event'}
+              </Button>
+            </div>
           }
         />
 

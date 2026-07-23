@@ -34,11 +34,39 @@ export async function linkPendingStaffUser(
   return prisma.user.update({
     where: { id: pendingStaff.id },
     data: { clerkUserId },
-    include: {
-      studentProfile: true,
-      universityStaffProfile: true,
-    },
+    include: userInclude(),
   });
+}
+
+export async function linkPendingSupportAgentUser(
+  prisma: PrismaService,
+  clerkUserId: string,
+  email: string,
+) {
+  const pendingAgent = await prisma.user.findFirst({
+    where: {
+      email,
+      role: UserRole.SUPPORT_AGENT,
+      clerkUserId: { startsWith: 'pending_' },
+    },
+    include: userInclude(),
+  });
+
+  if (!pendingAgent) return null;
+
+  return prisma.user.update({
+    where: { id: pendingAgent.id },
+    data: { clerkUserId },
+    include: userInclude(),
+  });
+}
+
+function userInclude() {
+  return {
+    studentProfile: true,
+    universityStaffProfile: true,
+    supportAgentProfile: true,
+  } as const;
 }
 
 export async function linkStaffUserByEmail(
@@ -51,10 +79,7 @@ export async function linkStaffUserByEmail(
       email: { equals: email, mode: 'insensitive' },
       role: UserRole.UNIVERSITY_STAFF,
     },
-    include: {
-      studentProfile: true,
-      universityStaffProfile: true,
-    },
+    include: userInclude(),
   });
 
   if (!staff) return null;
@@ -74,10 +99,41 @@ export async function linkStaffUserByEmail(
   return prisma.user.update({
     where: { id: staff.id },
     data: { clerkUserId },
-    include: {
-      studentProfile: true,
-      universityStaffProfile: true,
+    include: userInclude(),
+  });
+}
+
+export async function linkSupportAgentByEmail(
+  prisma: PrismaService,
+  clerkUserId: string,
+  email: string,
+) {
+  const agent = await prisma.user.findFirst({
+    where: {
+      email: { equals: email, mode: 'insensitive' },
+      role: UserRole.SUPPORT_AGENT,
     },
+    include: userInclude(),
+  });
+
+  if (!agent) return null;
+
+  const duplicate = await prisma.user.findUnique({
+    where: { clerkUserId },
+  });
+
+  if (duplicate && duplicate.id !== agent.id) {
+    await prisma.user.delete({ where: { id: duplicate.id } });
+  }
+
+  if (agent.clerkUserId === clerkUserId) {
+    return agent;
+  }
+
+  return prisma.user.update({
+    where: { id: agent.id },
+    data: { clerkUserId },
+    include: userInclude(),
   });
 }
 
@@ -88,10 +144,7 @@ export async function findOrCreateUserFromClerk(
 ) {
   let user = await prisma.user.findUnique({
     where: { clerkUserId },
-    include: {
-      studentProfile: true,
-      universityStaffProfile: true,
-    },
+    include: userInclude(),
   });
 
   if (!user && email) {
@@ -99,13 +152,26 @@ export async function findOrCreateUserFromClerk(
   }
 
   if (!user && email) {
+    user = await linkPendingSupportAgentUser(prisma, clerkUserId, email);
+  }
+
+  if (!user && email) {
     user = await linkStaffUserByEmail(prisma, clerkUserId, email);
+  }
+
+  if (!user && email) {
+    user = await linkSupportAgentByEmail(prisma, clerkUserId, email);
   }
 
   if (user?.role === UserRole.STUDENT && email) {
     const staffUser = await linkStaffUserByEmail(prisma, clerkUserId, email);
     if (staffUser) {
       user = staffUser;
+    } else {
+      const agentUser = await linkSupportAgentByEmail(prisma, clerkUserId, email);
+      if (agentUser) {
+        user = agentUser;
+      }
     }
   }
 
@@ -121,10 +187,7 @@ export async function findOrCreateUserFromClerk(
           },
         },
       },
-      include: {
-        studentProfile: true,
-        universityStaffProfile: true,
-      },
+      include: userInclude(),
     });
   }
 

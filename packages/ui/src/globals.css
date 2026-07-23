@@ -5620,6 +5620,129 @@ button.dashboard-section-link {
   outline-offset: 2px;
 }
 
+.university-card-tier {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  z-index: 2;
+  padding: 0.25rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--faralin-ink);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+}
+
+.university-card-tier--elite {
+  color: #5c3d1e;
+}
+
+.university-card-tier--premier {
+  color: #2f4a6b;
+}
+
+.university-card-tier--established {
+  color: #2f5a44;
+}
+
+.university-card-tier--accessible {
+  color: #5a3f68;
+}
+
+.university-card-conversion {
+  margin-top: 0.5rem;
+}
+
+.university-card-conversion-rate {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--faralin-copper);
+}
+
+.university-card-conversion-example {
+  margin: 0.15rem 0 0;
+  font-size: 0.75rem;
+  color: var(--faralin-muted);
+}
+
+.dashboard-bento-item-conversion {
+  margin: 0.35rem 0 0;
+  font-size: 0.75rem;
+  color: var(--faralin-muted);
+}
+
+.uni-economics {
+  margin: 1.5rem 0 2rem;
+  padding: 1.25rem;
+  border: 1px solid var(--faralin-border);
+  border-radius: var(--radius-lg);
+  background: var(--faralin-surface);
+}
+
+.uni-economics__heading {
+  margin: 0 0 1rem;
+  font-size: 1.125rem;
+}
+
+.uni-economics__grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.uni-economics__panel {
+  padding: 0.875rem 1rem;
+  border-radius: var(--radius-md);
+  background: var(--faralin-bg);
+  border: 1px solid var(--faralin-border);
+}
+
+.uni-economics__label {
+  margin: 0 0 0.35rem;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--faralin-muted);
+}
+
+.uni-economics__value {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.uni-economics__meta {
+  margin: 0.35rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--faralin-muted);
+}
+
+.uni-economics__examples {
+  margin-top: 1rem;
+}
+
+.uni-economics__examples-title {
+  margin: 0 0 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.uni-economics__examples-list {
+  margin: 0;
+  padding-left: 1.25rem;
+  color: var(--faralin-muted);
+  font-size: 0.875rem;
+}
+
+.uni-economics__disclaimer {
+  margin-top: 1rem;
+  margin-bottom: 0;
+}
+
 /* ── Assessment preview (detail page) ── */
 
 .assessment-preview {

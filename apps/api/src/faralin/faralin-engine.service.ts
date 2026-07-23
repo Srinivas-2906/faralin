@@ -413,6 +413,7 @@ export class PortfolioService {
         totalFaralins: u.totalFaralins,
         verifiedFaralins: u.verifiedFaralins,
         estimatedBursaryGbp,
+        faralinsPerGbp: rule?.faralinsPerGbp ?? null,
         disclaimer:
           rule?.disclaimerText ??
           'Estimated bursary value is subject to admission, eligibility, and university terms.',

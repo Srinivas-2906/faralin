@@ -69,6 +69,7 @@ export class ClerkAuthGuard implements CanActivate {
         studentProfileId: user.studentProfile?.id,
         universityStaffProfileId: user.universityStaffProfile?.id,
         universityId: user.universityStaffProfile?.universityId,
+        supportAgentProfileId: user.supportAgentProfile?.id,
       };
 
       request.user = authUser;

@@ -1,4 +1,10 @@
 import { MediaImage } from '@faralin/ui';
+import type { UniversityPrestigeTier } from '@faralin/types';
+import { PRESTIGE_TIER_LABELS } from '@faralin/types';
+import {
+  exampleGbpAtFaralins,
+  formatFaralinPerGbp,
+} from '@faralin/utils';
 import { getUniversityImage } from '@/lib/media';
 
 export interface UniversityCardData {
@@ -6,6 +12,9 @@ export interface UniversityCardData {
   name: string;
   shortName?: string | null;
   logoUrl?: string | null;
+  conversionRule?: { faralinsPerGbp: number } | null;
+  prestigeTier?: UniversityPrestigeTier | null;
+  guardianRank2025?: number | null;
 }
 
 type UniversityCardProps = {
@@ -15,7 +24,19 @@ type UniversityCardProps = {
   onToggle?: () => void;
 };
 
+function tierBadgeLabel(university: UniversityCardData): string | null {
+  if (!university.prestigeTier) return null;
+  const tier = PRESTIGE_TIER_LABELS[university.prestigeTier];
+  if (university.guardianRank2025) {
+    return `${tier} · #${university.guardianRank2025}`;
+  }
+  return tier;
+}
+
 function UniversityCardContent({ university }: { university: UniversityCardData }) {
+  const tierLabel = tierBadgeLabel(university);
+  const faralinsPerGbp = university.conversionRule?.faralinsPerGbp;
+
   return (
     <>
       <div className="assessment-card-visual">
@@ -29,9 +50,20 @@ function UniversityCardContent({ university }: { university: UniversityCardData 
         <div className="media-card-eyebrow assessment-card-visual-eyebrow">
           {university.shortName ?? 'Partner university'}
         </div>
+        {tierLabel && (
+          <div className={`university-card-tier university-card-tier--${university.prestigeTier?.toLowerCase()}`}>
+            {tierLabel}
+          </div>
+        )}
       </div>
       <div className="assessment-card-details">
         <div className="media-card-title">{university.name}</div>
+        {faralinsPerGbp && (
+          <div className="university-card-conversion">
+            <p className="university-card-conversion-rate">{formatFaralinPerGbp(faralinsPerGbp)}</p>
+            <p className="university-card-conversion-example">{exampleGbpAtFaralins(faralinsPerGbp)}</p>
+          </div>
+        )}
       </div>
     </>
   );

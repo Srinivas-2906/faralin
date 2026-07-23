@@ -9,6 +9,7 @@
     "build": "nest build",
     "dev": "nest build && nest start --watch",
     "start": "node dist/main.js",
+    "setup:stream": "tsx scripts/setup-stream-chat.ts",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\""
   },
   "dependencies": {
@@ -23,6 +24,7 @@
     "class-validator": "^0.14.2",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",
+    "stream-chat": "^9.50.2",
     "svix": "^1.66.0"
   },
   "devDependencies": {
@@ -30,6 +32,8 @@
     "@nestjs/schematics": "^11.0.3",
     "@types/express": "^5.0.3",
     "@types/node": "^22.15.30",
+    "dotenv": "^16.5.0",
+    "tsx": "^4.19.4",
     "typescript": "^5.8.3"
   }
 }

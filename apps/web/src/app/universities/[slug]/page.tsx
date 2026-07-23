@@ -4,7 +4,14 @@ import { useAuth } from '@clerk/nextjs';
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { apiFetch } from '@faralin/utils';
+import {
+  apiFetch,
+  exampleGbpAtFaralins,
+  FARALIN_CONVERSION_DISCLAIMER,
+  faralinsToGbp,
+  formatFaralinPerGbp,
+} from '@faralin/utils';
+import { PRESTIGE_TIER_LABELS, RANKING_SOURCE, type UniversityPrestigeTier } from '@faralin/types';
 import { Alert, Button, ImageBanner, MediaCard } from '@faralin/ui';
 import { getUniversityImage } from '@/lib/media';
 
@@ -17,7 +24,11 @@ export default function UniversityDetailPage() {
     logoUrl?: string | null;
     description: string;
     websiteUrl: string;
+    prestigeTier?: UniversityPrestigeTier | null;
+    guardianRank2025?: number | null;
+    rankingSource?: string | null;
     conversionRule: { faralinsPerGbp: number; disclaimerText: string };
+    exampleEarnRange?: { min: number; max: number } | null;
     articles: Array<{ id: string; slug: string; title: string; excerpt: string }>;
     events: Array<{ id: string; title: string; startsAt: string }>;
   } | null>(null);
@@ -88,6 +99,16 @@ export default function UniversityDetailPage() {
   }
 
   const cover = getUniversityImage(university.slug ?? slug, university.logoUrl);
+  const faralinsPerGbp = university.conversionRule?.faralinsPerGbp;
+  const tierLabel = university.prestigeTier
+    ? PRESTIGE_TIER_LABELS[university.prestigeTier]
+    : null;
+  const gbpExamples = faralinsPerGbp
+    ? [500, 1000, 5000].map((amount) => ({
+        faralins: amount,
+        gbp: faralinsToGbp(amount, faralinsPerGbp),
+      }))
+    : [];
 
   return (
     <div className="page-section">
@@ -105,7 +126,7 @@ export default function UniversityDetailPage() {
           {university.conversionRule && (
             <div className="uni-toolbar__stat">
               <p className="uni-toolbar__stat-value">
-                {university.conversionRule.faralinsPerGbp} Faralins ≈ £1
+                {formatFaralinPerGbp(university.conversionRule.faralinsPerGbp)}
               </p>
               <p className="uni-toolbar__stat-label">Conversion rate</p>
             </div>
@@ -126,6 +147,57 @@ export default function UniversityDetailPage() {
             )}
           </div>
         </div>
+
+        {faralinsPerGbp && (
+          <section className="uni-economics" aria-labelledby="uni-economics-heading">
+            <h2 id="uni-economics-heading" className="uni-economics__heading">
+              Recognition economics
+            </h2>
+            <div className="uni-economics__grid">
+              <div className="uni-economics__panel">
+                <p className="uni-economics__label">University tier</p>
+                {tierLabel && (
+                  <p
+                    className={`uni-economics__value university-card-tier university-card-tier--${university.prestigeTier?.toLowerCase()}`}
+                  >
+                    {tierLabel}
+                    {university.guardianRank2025 ? ` · #${university.guardianRank2025}` : ''}
+                  </p>
+                )}
+                <p className="uni-economics__meta">
+                  {university.rankingSource ?? RANKING_SOURCE}
+                </p>
+              </div>
+              <div className="uni-economics__panel">
+                <p className="uni-economics__label">Conversion</p>
+                <p className="uni-economics__value">{formatFaralinPerGbp(faralinsPerGbp)}</p>
+                <p className="uni-economics__meta">{exampleGbpAtFaralins(faralinsPerGbp)}</p>
+              </div>
+              {university.exampleEarnRange && (
+                <div className="uni-economics__panel">
+                  <p className="uni-economics__label">Typical verified assessment</p>
+                  <p className="uni-economics__value">
+                    {university.exampleEarnRange.min}–{university.exampleEarnRange.max} Faralins
+                  </p>
+                  <p className="uni-economics__meta">Varies by accuracy and improvement</p>
+                </div>
+              )}
+            </div>
+            {gbpExamples.length > 0 && (
+              <div className="uni-economics__examples">
+                <p className="uni-economics__examples-title">Faralin to pounds (indicative)</p>
+                <ul className="uni-economics__examples-list">
+                  {gbpExamples.map(({ faralins, gbp }) => (
+                    <li key={faralins}>
+                      {faralins.toLocaleString('en-GB')} Faralins ≈ £{gbp.toFixed(2)}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            <p className="disclaimer uni-economics__disclaimer">{FARALIN_CONVERSION_DISCLAIMER}</p>
+          </section>
+        )}
 
         <div className="uni-feed">
           <section className="uni-feed__col">

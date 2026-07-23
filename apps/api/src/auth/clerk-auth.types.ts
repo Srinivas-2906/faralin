@@ -6,4 +6,5 @@ export interface AuthUser {
   studentProfileId?: string;
   universityStaffProfileId?: string;
   universityId?: string;
+  supportAgentProfileId?: string;
 }

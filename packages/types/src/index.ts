@@ -161,6 +161,18 @@ export const EVENT_TYPE_LABELS = {
 
 export const MAX_UNIVERSITY_SELECTIONS = 10;
 
+export {
+  buildAssessmentRule,
+  buildConversionDisclaimer,
+  estimateTypicalAssessmentFaralins,
+  getTierEconomics,
+  getUniversityRankingMeta,
+  PRESTIGE_TIER_LABELS,
+  RANKING_SOURCE,
+  UNIVERSITY_RANKINGS,
+} from './university-tiers';
+export type { TierEconomics, UniversityPrestigeTier, UniversityRankingMeta } from './university-tiers';
+
 export interface UniversityBalance {
   universityId: string;
   universityName: string;
@@ -168,6 +180,7 @@ export interface UniversityBalance {
   totalFaralins: number;
   verifiedFaralins: number;
   estimatedBursaryGbp: number;
+  faralinsPerGbp: number | null;
   disclaimer: string;
 }
 
@@ -188,3 +201,39 @@ export interface UniversityFunnelStats {
   offerAccepted: number;
   enrolled: number;
 }
+
+export const TICKET_STATUS_LABELS = {
+  OPEN: 'Open',
+  IN_PROGRESS: 'In progress',
+  WAITING: 'Waiting',
+  RESOLVED: 'Resolved',
+  CLOSED: 'Closed',
+} as const;
+
+export const TICKET_PRIORITY_LABELS = {
+  LOW: 'Low',
+  MEDIUM: 'Medium',
+  HIGH: 'High',
+  URGENT: 'Urgent',
+} as const;
+
+export const TICKET_CHANNEL_LABELS = {
+  EMAIL: 'Email',
+  PHONE: 'Phone',
+  CHAT: 'Chat',
+  INTERNAL: 'Internal',
+  OTHER: 'Other',
+} as const;
+
+export const SUPPORT_CONVERSATION_PHASE_LABELS = {
+  BOT: 'Bot assist',
+  WAITING_AGENT: 'Waiting for agent',
+  AGENT: 'Live with agent',
+  RESOLVED: 'Resolved',
+} as const;
+
+export const SUPPORT_REQUESTER_TYPE_LABELS = {
+  STUDENT: 'Student',
+  UNIVERSITY_STAFF: 'University staff',
+  INTERNAL: 'Internal',
+} as const;

@@ -97,7 +97,7 @@ Repeat for university staff portal:
 1. Cloud Run → `faralin-university`
 2. **Custom domains**
 3. Add mapping: `university.faralin.kaana.in`
-4. In Clerk Dashboard, add `https://university.faralin.kaana.in` to allowed redirect origins
+4. Clerk: configure **Developers → Domains** for production (not redirect URLs). See [docs/clerk-production-setup.md](../docs/clerk-production-setup.md)
 
 ---
 

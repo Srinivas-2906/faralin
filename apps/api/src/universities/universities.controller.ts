@@ -4,6 +4,7 @@ import { Public } from '../auth/public.decorator';
 import { Roles } from '../auth/roles.decorator';
 import { AuthUser } from '../auth/clerk-auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
+import { SupportBotService } from '../support/support-bot.service';
 import { UniversitiesService } from './universities.service';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -12,6 +13,7 @@ export class UniversitiesController {
   constructor(
     private universities: UniversitiesService,
     private prisma: PrismaService,
+    private supportBot: SupportBotService,
   ) {}
 
   @Public()
@@ -20,7 +22,7 @@ export class UniversitiesController {
     return this.prisma.university.findMany({
       where: { isActive: true },
       include: { conversionRule: true },
-      orderBy: { name: 'asc' },
+      orderBy: [{ guardianRank2025: { sort: 'asc', nulls: 'last' } }, { name: 'asc' }],
     });
   }
 
@@ -42,6 +44,12 @@ export class UniversitiesController {
   getStaffDashboard(@CurrentUser() user: AuthUser) {
     this.universities.requireUniversityAccess(user.universityId, user.universityId!);
     return this.universities.getStaffDashboard(user.universityId!);
+  }
+
+  @Get('staff/support/tickets')
+  @Roles(UserRole.UNIVERSITY_STAFF)
+  listSupportTickets(@CurrentUser() user: AuthUser) {
+    return this.supportBot.listUniversityTickets(user);
   }
 
   @Public()

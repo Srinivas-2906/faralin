@@ -6,6 +6,7 @@ import {
 } from '@prisma/client';
 import { assessmentDefs } from './data/assessments';
 import { universityDefs } from './data/universities';
+import { buildAssessmentRule, getTierEconomics } from '@faralin/types';
 import { courseDefs, getLessonVideoUrl } from './data/courses';
 import { knowledgeArticleDefs } from './data/knowledge-articles';
 import { problemTrackDefs } from './data/problem-tracks';
@@ -17,6 +18,11 @@ async function main() {
   console.log('Seeding Faralin database...');
 
   await prisma.auditLog.deleteMany();
+  await prisma.supportTicketEvent.deleteMany();
+  await prisma.supportBotTurn.deleteMany();
+  await prisma.supportTicketMessage.deleteMany();
+  await prisma.supportTicket.deleteMany();
+  await prisma.supportCategory.deleteMany();
   await prisma.notification.deleteMany();
   await prisma.eventRegistration.deleteMany();
   await prisma.courseLessonProgress.deleteMany();
@@ -42,6 +48,7 @@ async function main() {
   await prisma.universityPartnership.deleteMany();
   await prisma.studentProfile.deleteMany();
   await prisma.universityStaffProfile.deleteMany();
+  await prisma.supportAgentProfile.deleteMany();
   await prisma.adminProfile.deleteMany();
   await prisma.user.deleteMany();
   await prisma.subject.deleteMany();
@@ -95,6 +102,37 @@ async function main() {
       adminProfile: { create: {} },
     },
   });
+
+  const supportCategories = await Promise.all(
+    [
+      { slug: 'account', name: 'Account', description: 'Login, profile, and access issues', sortOrder: 1 },
+      { slug: 'payments', name: 'Payments', description: 'Bursary, Faralin conversion, and billing', sortOrder: 2 },
+      {
+        slug: 'university-partnership',
+        name: 'University partnership',
+        description: 'Partnership and institutional enquiries',
+        sortOrder: 3,
+      },
+      { slug: 'technical', name: 'Technical', description: 'Platform bugs and technical issues', sortOrder: 4 },
+      { slug: 'general', name: 'General', description: 'General enquiries and other topics', sortOrder: 5 },
+    ].map((category) => prisma.supportCategory.create({ data: category })),
+  );
+
+  for (let i = 1; i <= 5; i += 1) {
+    await prisma.user.create({
+      data: {
+        clerkUserId: `clerk_support_agent_${i}`,
+        email: `agent-${i}@faralin.kaana.in`,
+        role: UserRole.SUPPORT_AGENT,
+        supportAgentProfile: {
+          create: {
+            displayName: `Support Agent ${i}`,
+            jobTitle: 'Support Agent',
+          },
+        },
+      },
+    });
+  }
 
   const universityBySlug = Object.fromEntries(universities.map((u) => [u.slug, u]));
 
@@ -209,14 +247,13 @@ async function main() {
     }
 
     for (const university of universities) {
+      const economics = getTierEconomics(university.slug);
+      const assessmentRule = buildAssessmentRule(economics);
       await prisma.faralinRule.create({
         data: {
           universityId: university.id,
           assessmentId: assessment.id,
-          baseAmount: 150,
-          scoreMultiplier: 1.15,
-          improvementBonus: 55,
-          difficultyMultiplier: 1.2,
+          ...assessmentRule,
         },
       });
     }
@@ -236,12 +273,13 @@ async function main() {
     });
 
     for (const university of universities) {
+      const economics = getTierEconomics(university.slug);
       await prisma.faralinRule.create({
         data: {
           universityId: university.id,
           problemTrackId: track.id,
           baseAmount: track.maxFaralins,
-          scoreMultiplier: 1.0,
+          scoreMultiplier: economics.trackScoreMultiplier,
           improvementBonus: 0,
           difficultyMultiplier: 1.0,
         },
@@ -255,6 +293,8 @@ async function main() {
   console.log(`Seeded ${problemTrackDefs.length} problem tracks`);
   console.log(`Seeded ${knowledgeArticleDefs.length} knowledge articles`);
   console.log(`Seeded ${courseDefs.length} courses`);
+  console.log(`Seeded ${supportCategories.length} support categories`);
+  console.log('Seeded 5 support agents');
 
   await seedStudentPipeline(prisma, universityBySlug, subjectMap);
 

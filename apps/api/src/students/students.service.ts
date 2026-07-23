@@ -54,7 +54,7 @@ export class StudentsService {
     return this.prisma.university.findMany({
       where: { isActive: true },
       include: { conversionRule: true },
-      orderBy: { name: 'asc' },
+      orderBy: [{ guardianRank2025: { sort: 'asc', nulls: 'last' } }, { name: 'asc' }],
     });
   }
 

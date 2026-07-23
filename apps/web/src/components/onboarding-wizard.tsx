@@ -4,7 +4,7 @@ import { useAuth } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { apiFetch } from '@faralin/utils';
-import { MAX_UNIVERSITY_SELECTIONS } from '@faralin/types';
+import { MAX_UNIVERSITY_SELECTIONS, type UniversityPrestigeTier } from '@faralin/types';
 import {
   Alert,
   Button,
@@ -27,6 +27,9 @@ interface University {
   shortName: string;
   slug: string;
   logoUrl?: string | null;
+  conversionRule?: { faralinsPerGbp: number } | null;
+  prestigeTier?: UniversityPrestigeTier | null;
+  guardianRank2025?: number | null;
 }
 
 interface StudentProfile {
@@ -339,7 +342,15 @@ export function OnboardingWizard() {
               {universities.map((university) => (
                 <UniversityCard
                   key={university.id}
-                  university={university}
+                  university={{
+                    slug: university.slug,
+                    name: university.name,
+                    shortName: university.shortName,
+                    logoUrl: university.logoUrl,
+                    conversionRule: university.conversionRule,
+                    prestigeTier: university.prestigeTier,
+                    guardianRank2025: university.guardianRank2025,
+                  }}
                   selectable
                   selected={selectedUniversities.includes(university.id)}
                   onToggle={() => toggleUniversity(university.id)}

@@ -13,6 +13,22 @@ import { PrismaService } from '../prisma/prisma.service';
 export class AdminService {
   constructor(private prisma: PrismaService) {}
 
+  async getMe(user: { id: string; email: string; role: string }) {
+    const dbUser = await this.prisma.user.findUnique({
+      where: { id: user.id },
+      include: { adminProfile: true },
+    });
+
+    return {
+      user: {
+        id: dbUser?.id ?? user.id,
+        email: dbUser?.email ?? user.email,
+        role: dbUser?.role ?? user.role,
+      },
+      isAdmin: true,
+    };
+  }
+
   async getOverview() {
     const [users, students, universities, assessments, problemTracks, transactions, moderationQueue] =
       await Promise.all([

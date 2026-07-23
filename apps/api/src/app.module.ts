@@ -10,6 +10,7 @@ import { ContentModule } from './content/content.module';
 import { ApplicationsModule } from './applications/applications.module';
 import { AdminModule } from './admin/admin.module';
 import { ProblemTracksModule } from './problem-tracks/problem-tracks.module';
+import { SupportModule } from './support/support.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { ProblemTracksModule } from './problem-tracks/problem-tracks.module';
     ContentModule,
     ApplicationsModule,
     AdminModule,
+    SupportModule,
     ProblemTracksModule,
   ],
 })

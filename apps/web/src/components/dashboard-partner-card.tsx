@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { MediaImage } from '@faralin/ui';
+import { formatFaralinPerGbp } from '@faralin/utils';
 import { getUniversityImage } from '@/lib/media';
 
 export interface DashboardPartnerUniversity {
@@ -7,6 +8,7 @@ export interface DashboardPartnerUniversity {
   universityName: string;
   totalFaralins: number;
   estimatedBursaryGbp: number;
+  faralinsPerGbp?: number | null;
 }
 
 type DashboardPartnerCardProps = {
@@ -14,7 +16,8 @@ type DashboardPartnerCardProps = {
 };
 
 export function DashboardPartnerCard({ university }: DashboardPartnerCardProps) {
-  const { universitySlug, universityName, totalFaralins, estimatedBursaryGbp } = university;
+  const { universitySlug, universityName, totalFaralins, estimatedBursaryGbp, faralinsPerGbp } =
+    university;
 
   return (
     <article className="dashboard-bento-item">
@@ -40,6 +43,9 @@ export function DashboardPartnerCard({ university }: DashboardPartnerCardProps) 
             £{estimatedBursaryGbp.toFixed(2)} est.
           </span>
         </p>
+        {faralinsPerGbp && (
+          <p className="dashboard-bento-item-conversion">{formatFaralinPerGbp(faralinsPerGbp)}</p>
+        )}
       </div>
     </article>
   );

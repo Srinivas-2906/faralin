@@ -1,18 +1,28 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 
-const hasClerk =
-  process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY &&
-  !process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY.includes('placeholder');
+function getPublishableKey() {
+  return (
+    process.env.CLERK_PUBLISHABLE_KEY ??
+    process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ??
+    ''
+  );
+}
 
-const isPublicRoute = createRouteMatcher(['/sign-in(.*)']);
+const publishableKey = getPublishableKey();
+const hasClerk = publishableKey.length > 0 && !publishableKey.includes('placeholder');
+
+const isPublicRoute = createRouteMatcher(['/sign-in(.*)', '/api(.*)']);
 
 export default hasClerk
-  ? clerkMiddleware(async (auth, request) => {
-      if (!isPublicRoute(request)) {
-        await auth.protect();
-      }
-    })
+  ? clerkMiddleware(
+      async (auth, request) => {
+        if (!isPublicRoute(request)) {
+          await auth.protect();
+        }
+      },
+      () => ({ publishableKey }),
+    )
   : () => NextResponse.next();
 
 export const config = {

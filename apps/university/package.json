@@ -15,7 +15,9 @@
     "@faralin/utils": "workspace:*",
     "next": "^15.3.3",
     "react": "^19.1.0",
-    "react-dom": "^19.1.0"
+    "react-dom": "^19.1.0",
+    "stream-chat": "^9.50.2",
+    "stream-chat-react": "^14.10.0"
   },
   "devDependencies": {
     "@types/node": "^22.15.30",

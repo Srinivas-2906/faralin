@@ -10,7 +10,49 @@ datasource db {
 enum UserRole {
   STUDENT
   UNIVERSITY_STAFF
+  SUPPORT_AGENT
   ADMIN
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  WAITING
+  RESOLVED
+  CLOSED
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum TicketChannel {
+  EMAIL
+  PHONE
+  CHAT
+  INTERNAL
+  OTHER
+}
+
+enum SupportRequesterType {
+  STUDENT
+  UNIVERSITY_STAFF
+  INTERNAL
+}
+
+enum SupportConversationPhase {
+  BOT
+  WAITING_AGENT
+  AGENT
+  RESOLVED
+}
+
+enum SupportBotRole {
+  USER
+  BOT
 }
 
 enum ProfileRevealLevel {
@@ -80,6 +122,13 @@ enum EventType {
   CHALLENGE
 }
 
+enum UniversityPrestigeTier {
+  ELITE
+  PREMIER
+  ESTABLISHED
+  ACCESSIBLE
+}
+
 enum NotificationType {
   FARALIN_EARNED
   ASSESSMENT_REMINDER
@@ -144,8 +193,14 @@ model User {
 
   studentProfile         StudentProfile?
   universityStaffProfile UniversityStaffProfile?
+  supportAgentProfile    SupportAgentProfile?
   adminProfile           AdminProfile?
   notifications          Notification[]
+  ticketsCreated         SupportTicket[]         @relation("TicketCreatedBy")
+  ticketsAssigned        SupportTicket[]         @relation("TicketAssignee")
+  ticketsRequested       SupportTicket[]         @relation("TicketRequester")
+  ticketMessages         SupportTicketMessage[]
+  ticketEvents           SupportTicketEvent[]
 }
 
 model StudentProfile {
@@ -172,6 +227,7 @@ model StudentProfile {
   courseLessonProgress   CourseLessonProgress[]
   problemTrackAttempts   ProblemTrackAttempt[]
   portfolioArtifacts     PortfolioArtifact[]
+  supportTickets         SupportTicket[]
 }
 
 model University {
@@ -183,10 +239,13 @@ model University {
   description String?
   websiteUrl  String?
   applyUrl    String?
-  isDemo      Boolean  @default(false)
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  isDemo            Boolean                 @default(false)
+  isActive          Boolean                 @default(true)
+  guardianRank2025  Int?
+  prestigeTier      UniversityPrestigeTier?
+  rankingSource     String?                 @default("Guardian University Guide 2025")
+  createdAt         DateTime                @default(now())
+  updatedAt         DateTime                @updatedAt
 
   selections          StudentUniversitySelection[]
   faralinRules        FaralinRule[]
@@ -197,6 +256,7 @@ model University {
   applications        Application[]
   staff               UniversityStaffProfile[]
   partnership         UniversityPartnership?
+  supportTickets      SupportTicket[]
 }
 
 model StudentUniversitySelection {
@@ -655,6 +715,118 @@ model AdminProfile {
   createdAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model SupportAgentProfile {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  displayName String?
+  jobTitle    String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model SupportCategory {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  description String?
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  tickets SupportTicket[]
+}
+
+model SupportTicket {
+  id                 String                   @id @default(cuid())
+  ticketNumber       String                   @unique
+  subject            String
+  description        String
+  status             TicketStatus             @default(OPEN)
+  priority           TicketPriority           @default(MEDIUM)
+  channel            TicketChannel            @default(INTERNAL)
+  categoryId         String
+  requesterName      String
+  requesterEmail     String?
+  requesterPhone     String?
+  requesterUserId    String?
+  requesterType      SupportRequesterType     @default(INTERNAL)
+  universityId       String?
+  studentProfileId   String?
+  streamChannelId    String?                  @unique
+  conversationPhase  SupportConversationPhase @default(BOT)
+  botSessionId       String?
+  escalatedAt        DateTime?
+  lastBotConfidence  Float?
+  assigneeId         String?
+  createdById        String
+  resolvedAt         DateTime?
+  closedAt           DateTime?
+  dueAt              DateTime?
+  tags               String[]
+  createdAt          DateTime                 @default(now())
+  updatedAt          DateTime                 @updatedAt
+
+  category       SupportCategory        @relation(fields: [categoryId], references: [id])
+  university     University?            @relation(fields: [universityId], references: [id])
+  studentProfile StudentProfile?        @relation(fields: [studentProfileId], references: [id])
+  requester      User?                  @relation("TicketRequester", fields: [requesterUserId], references: [id])
+  assignee       User?                  @relation("TicketAssignee", fields: [assigneeId], references: [id])
+  createdBy      User                   @relation("TicketCreatedBy", fields: [createdById], references: [id])
+  messages       SupportTicketMessage[]
+  events         SupportTicketEvent[]
+  botTurns       SupportBotTurn[]
+
+  @@index([status, priority])
+  @@index([assigneeId, status])
+  @@index([createdAt])
+  @@index([universityId, status])
+  @@index([requesterUserId])
+  @@index([conversationPhase, status])
+}
+
+model SupportBotTurn {
+  id         String         @id @default(cuid())
+  ticketId   String
+  role       SupportBotRole
+  body       String
+  confidence Float?
+  createdAt  DateTime       @default(now())
+
+  ticket SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@index([ticketId, createdAt])
+}
+
+model SupportTicketMessage {
+  id         String   @id @default(cuid())
+  ticketId   String
+  authorId   String
+  body       String
+  isInternal Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  ticket SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  author User          @relation(fields: [authorId], references: [id])
+
+  @@index([ticketId, createdAt])
+}
+
+model SupportTicketEvent {
+  id          String   @id @default(cuid())
+  ticketId    String
+  actorUserId String?
+  eventType   String
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  ticket SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  actor  User?         @relation(fields: [actorUserId], references: [id])
+
+  @@index([ticketId, createdAt])
 }
 
 model UniversityPartnership {

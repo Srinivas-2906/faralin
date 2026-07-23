@@ -33,7 +33,7 @@ steps:
           --allow-unauthenticated \
           --port 8080 \
           --add-cloudsql-instances "kaana-prod:asia-south1:faralin-pg" \
-          --set-secrets "DATABASE_URL=faralin_database_url:latest,CLERK_SECRET_KEY=faralin_clerk_secret_key:latest,CLERK_WEBHOOK_SECRET=faralin_clerk_webhook_secret:latest" \
+          --set-secrets "DATABASE_URL=faralin_database_url:latest,CLERK_SECRET_KEY=faralin_clerk_secret_key:latest,CLERK_WEBHOOK_SECRET=faralin_clerk_webhook_secret:latest,STREAM_API_KEY=faralin_stream_api_key:latest,STREAM_API_SECRET=faralin_stream_api_secret:latest" \
           --set-env-vars "^|^WEB_URL=${_WEB_PUBLIC_URL}|UNIVERSITY_PORTAL_URL=${_UNIVERSITY_PUBLIC_URL}|ALLOWED_ORIGINS=${_ALLOWED_ORIGINS}" \
           --min-instances 0 \
           --max-instances 5 \
@@ -47,7 +47,7 @@ substitutions:
   _API_SERVICE: faralin-api
   _WEB_PUBLIC_URL: https://faralin-web-wtba53dhka-el.a.run.app
   _UNIVERSITY_PUBLIC_URL: https://university.faralin.kaana.in
-  _ALLOWED_ORIGINS: https://faralin-web-wtba53dhka-el.a.run.app,https://faralin-web-851239127958.asia-south1.run.app,https://faralin.kaana.in,https://faralin-university-wtba53dhka-el.a.run.app,https://faralin-university-851239127958.asia-south1.run.app,https://university.faralin.kaana.in
+  _ALLOWED_ORIGINS: https://faralin-web-wtba53dhka-el.a.run.app,https://faralin-web-851239127958.asia-south1.run.app,https://faralin.kaana.in,https://faralin-university-wtba53dhka-el.a.run.app,https://faralin-university-851239127958.asia-south1.run.app,https://university.faralin.kaana.in,https://faralin-admin-wtba53dhka-el.a.run.app,https://faralin-admin-851239127958.asia-south1.run.app,https://admin.faralin.kaana.in,http://localhost:3002
 
 options:
   logging: CLOUD_LOGGING_ONLY

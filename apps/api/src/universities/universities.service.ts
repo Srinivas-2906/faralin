@@ -1,8 +1,14 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';import { PrismaService } from '../prisma/prisma.service';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { estimateTypicalAssessmentFaralins, getTierEconomics } from '@faralin/types';
+import { PrismaService } from '../prisma/prisma.service';
 import {
   buildStaffStudentRoster,
   buildSubjectInterests,
 } from './staff-roster';
+import {
+  buildAssessmentBreakdown,
+  buildFaralinDistribution,
+} from './staff-analytics';
 
 @Injectable()
 export class UniversitiesService {
@@ -30,7 +36,14 @@ export class UniversitiesService {
       throw new NotFoundException('University not found');
     }
 
-    return university;
+    let exampleEarnRange: { min: number; max: number } | null = null;
+    try {
+      exampleEarnRange = estimateTypicalAssessmentFaralins(getTierEconomics(slug));
+    } catch {
+      exampleEarnRange = null;
+    }
+
+    return { ...university, exampleEarnRange };
   }
 
   async getStaffMe(userId: string) {
@@ -109,20 +122,19 @@ export class UniversitiesService {
 
     const subjectInterests = buildSubjectInterests(students);
 
-    const estimatedLiability = await this.prisma.faralinTransaction.aggregate({
-      where: {
-        universityId,
-        status: { in: ['CONDITIONAL', 'CONFIRMED'] },
-        trustLevel: { not: 'PRACTICE' },
-      },
-      _sum: { amount: true },
-    });
+    const followerStudentIds = students.map((s) => s.studentProfileId);
 
-    const conversionRule = university.conversionRule;
-    const estimatedFutureBursaryGbp = conversionRule
-      ? Math.round(((estimatedLiability._sum.amount ?? 0) / conversionRule.faralinsPerGbp) * 100) /
-        100
-      : 0;
+    const [faralinDistribution, assessmentAnalytics] = await Promise.all([
+      buildFaralinDistribution(
+        this.prisma,
+        universityId,
+        university.conversionRule,
+        followerCount,
+      ),
+      buildAssessmentBreakdown(this.prisma, universityId, followerStudentIds),
+    ]);
+
+    const estimatedFutureBursaryGbp = faralinDistribution.outstandingLiabilityGbp;
 
     const topPerformers = [...students]
       .sort((a, b) => b.totalFaralins - a.totalFaralins)
@@ -142,6 +154,9 @@ export class UniversitiesService {
       eventRegistrations,
       contentEngagement: { articles, events },
       estimatedFutureBursaryGbp,
+      faralinDistribution,
+      assessmentSummary: assessmentAnalytics.summary,
+      assessmentBreakdown: assessmentAnalytics.breakdown,
       students: students.slice(0, 50),
     };
   }

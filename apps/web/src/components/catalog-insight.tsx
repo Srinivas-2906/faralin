@@ -30,7 +30,8 @@ export function UniversitiesCatalogInsight() {
   return (
     <CatalogInsight variant="copper" eyebrow="Find your partner">
       <p className="catalog-insight-line">
-        Compare Faralin conversion rates and apply when you are ready.
+        Rates range from ~90 Faralins/£1 to ~200 Faralins/£1 depending on university tier.
+        Compare conversion rates and apply when you are ready.
         <span className="catalog-insight-hint"> Use search →</span>
       </p>
     </CatalogInsight>

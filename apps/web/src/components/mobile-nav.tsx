@@ -139,6 +139,7 @@ export function useNavLinks(): NavLink[] {
     { href: '/tracks', label: 'Problem Tracks' },
     { href: '/assessments', label: 'Assessments' },
     { href: '/universities', label: 'Universities' },
+    { href: '/support/chat', label: 'Help' },
   ];
 }
 

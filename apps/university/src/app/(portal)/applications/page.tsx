@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   Badge,
@@ -25,6 +25,14 @@ const STATUS_OPTIONS = [
   { value: 'REJECTED', label: 'Rejected' },
 ] as const;
 
+const PIPELINE_TABS = [
+  { id: 'all', label: 'All' },
+  { id: 'active', label: 'Active pipeline' },
+  { id: 'FOLLOWER', label: 'Following' },
+  { id: 'APPLIED', label: 'Applied' },
+  { id: 'ENROLLED', label: 'Enrolled' },
+] as const;
+
 interface ApplicationRow {
   id: string;
   studentProfileId: string;
@@ -43,7 +51,10 @@ export default function ApplicationsPage() {
   const [applications, setApplications] = useState<ApplicationRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [query, setQuery] = useState('');
+  const [tab, setTab] = useState<(typeof PIPELINE_TABS)[number]['id']>('all');
 
   const load = useCallback(async () => {
     try {
@@ -61,26 +72,59 @@ export default function ApplicationsPage() {
     load();
   }, [load]);
 
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return applications.filter((application) => {
+      const matchesQuery =
+        !q ||
+        application.anonymousId.toLowerCase().includes(q) ||
+        application.displayName.toLowerCase().includes(q);
+      if (!matchesQuery) return false;
+      if (tab === 'all') return true;
+      if (tab === 'active') {
+        return !['WITHDRAWN', 'REJECTED', 'FOLLOWER'].includes(application.status);
+      }
+      return application.status === tab;
+    });
+  }, [applications, query, tab]);
+
+  const grouped = useMemo(() => {
+    const groups: Record<string, ApplicationRow[]> = {};
+    for (const application of filtered) {
+      if (!groups[application.status]) groups[application.status] = [];
+      groups[application.status].push(application);
+    }
+    return groups;
+  }, [filtered]);
+
   async function updateStatus(studentProfileId: string, status: string) {
     setSavingId(studentProfileId);
+    setSuccess('');
+    const previous = applications.find((a) => a.studentProfileId === studentProfileId);
+    setApplications((prev) =>
+      prev.map((a) =>
+        a.studentProfileId === studentProfileId
+          ? {
+              ...a,
+              status,
+              pipelineLabel:
+                STATUS_OPTIONS.find((option) => option.value === status)?.label ?? status,
+            }
+          : a,
+      ),
+    );
     try {
       await staffFetch(`/applications/staff/${studentProfileId}/status`, {
         method: 'PATCH',
         body: JSON.stringify({ status }),
       });
-      setApplications((prev) =>
-        prev.map((a) =>
-          a.studentProfileId === studentProfileId
-            ? {
-                ...a,
-                status,
-                pipelineLabel:
-                  STATUS_OPTIONS.find((s) => s.value === status)?.label ?? status,
-              }
-            : a,
-        ),
-      );
+      setSuccess(`Updated ${previous?.anonymousId ?? 'application'}`);
     } catch (e) {
+      if (previous) {
+        setApplications((prev) =>
+          prev.map((a) => (a.studentProfileId === studentProfileId ? previous : a)),
+        );
+      }
       setError(e instanceof Error ? e.message : 'Failed to update status');
     } finally {
       setSavingId(null);
@@ -107,6 +151,11 @@ export default function ApplicationsPage() {
         <PageHeader
           title="Applications"
           description="Admissions pipeline — students are shown by anonymous ID only."
+          actions={
+            <Button type="button" variant="secondary" onClick={() => load()}>
+              Refresh
+            </Button>
+          }
         />
 
         {error && (
@@ -114,19 +163,109 @@ export default function ApplicationsPage() {
             <Alert variant="error">{error}</Alert>
           </div>
         )}
+        {success && (
+          <div style={{ marginBottom: '1rem' }}>
+            <Alert variant="success">{success}</Alert>
+          </div>
+        )}
 
-        <Card>
-          {applications.length === 0 ? (
-            <EmptyState compact message="No applications in the pipeline yet." />
-          ) : (
+        <Card style={{ marginBottom: 'var(--section-gap)' }}>
+          <div className="portal-toolbar">
+            <input
+              type="search"
+              className="portal-search"
+              placeholder="Search anonymous ID…"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              aria-label="Search applications"
+            />
+            <div className="portal-tabs" role="tablist" aria-label="Pipeline filters">
+              {PIPELINE_TABS.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={tab === item.id}
+                  className={`portal-tab${tab === item.id ? ' portal-tab-active' : ''}`}
+                  onClick={() => setTab(item.id)}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </Card>
+
+        {filtered.length === 0 ? (
+          <Card>
+            <EmptyState compact message="No applications match this filter." />
+          </Card>
+        ) : tab === 'all' ? (
+          Object.entries(grouped).map(([status, rows]) => (
+            <Card key={status} style={{ marginBottom: 'var(--section-gap)' }}>
+              <h2 className="section-title">
+                {STATUS_OPTIONS.find((option) => option.value === status)?.label ??
+                  status.replace(/_/g, ' ')}{' '}
+                <Badge>{rows.length}</Badge>
+              </h2>
+              <ResponsiveTable<ApplicationRow>
+                columns={[
+                  { key: 'id', header: 'Anonymous ID', render: (a) => a.anonymousId },
+                  {
+                    key: 'subjects',
+                    header: 'Subjects',
+                    render: (a) =>
+                      a.subjectNames.length > 0 ? a.subjectNames.join(', ') : '—',
+                  },
+                  {
+                    key: 'faralins',
+                    header: 'Faralins',
+                    render: (a) => a.totalFaralins.toLocaleString(),
+                  },
+                  {
+                    key: 'band',
+                    header: 'Band',
+                    render: (a) => <Badge>{a.performanceBand}</Badge>,
+                  },
+                  {
+                    key: 'status',
+                    header: 'Status',
+                    render: (a) => (
+                      <select
+                        className="portal-status-select"
+                        value={a.status}
+                        disabled={savingId === a.studentProfileId}
+                        onChange={(e) => updateStatus(a.studentProfileId, e.target.value)}
+                        aria-label={`Status for ${a.anonymousId}`}
+                      >
+                        {STATUS_OPTIONS.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                    ),
+                  },
+                  {
+                    key: 'updated',
+                    header: 'Updated',
+                    render: (a) => new Date(a.updatedAt).toLocaleDateString(),
+                  },
+                ]}
+                data={rows}
+                getRowKey={(a) => a.id}
+              />
+            </Card>
+          ))
+        ) : (
+          <Card>
             <ResponsiveTable<ApplicationRow>
               columns={[
                 { key: 'id', header: 'Anonymous ID', render: (a) => a.anonymousId },
                 {
                   key: 'subjects',
                   header: 'Subjects',
-                  render: (a) =>
-                    a.subjectNames.length > 0 ? a.subjectNames.join(', ') : '—',
+                  render: (a) => (a.subjectNames.length > 0 ? a.subjectNames.join(', ') : '—'),
                 },
                 {
                   key: 'faralins',
@@ -142,23 +281,19 @@ export default function ApplicationsPage() {
                   key: 'status',
                   header: 'Status',
                   render: (a) => (
-                    <div>
-                      <Badge variant="copper">{a.pipelineLabel}</Badge>
-                      <div className="portal-status-actions" style={{ marginTop: '0.5rem' }}>
-                        {STATUS_OPTIONS.map((option) => (
-                          <Button
-                            key={option.value}
-                            type="button"
-                            variant={a.status === option.value ? 'copper' : 'secondary'}
-                            disabled={savingId === a.studentProfileId}
-                            onClick={() => updateStatus(a.studentProfileId, option.value)}
-                            aria-pressed={a.status === option.value}
-                          >
-                            {option.label}
-                          </Button>
-                        ))}
-                      </div>
-                    </div>
+                    <select
+                      className="portal-status-select"
+                      value={a.status}
+                      disabled={savingId === a.studentProfileId}
+                      onChange={(e) => updateStatus(a.studentProfileId, e.target.value)}
+                      aria-label={`Status for ${a.anonymousId}`}
+                    >
+                      {STATUS_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
                   ),
                 },
                 {
@@ -167,11 +302,11 @@ export default function ApplicationsPage() {
                   render: (a) => new Date(a.updatedAt).toLocaleDateString(),
                 },
               ]}
-              data={applications}
+              data={filtered}
               getRowKey={(a) => a.id}
             />
-          )}
-        </Card>
+          </Card>
+        )}
       </div>
     </div>
   );

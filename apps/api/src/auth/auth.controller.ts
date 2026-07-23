@@ -9,7 +9,7 @@ import {
 import { UserRole } from '@faralin/db';
 import { Webhook } from 'svix';
 import { PrismaService } from '../prisma/prisma.service';
-import { generateAnonymousId, linkPendingStaffUser } from './auth-user.service';
+import { generateAnonymousId, linkPendingStaffUser, linkPendingSupportAgentUser } from './auth-user.service';
 import { Public } from './public.decorator';
 
 @Controller('auth')
@@ -59,6 +59,11 @@ export class AuthController {
 
       const linkedStaff = await linkPendingStaffUser(this.prisma, clerkUserId, email);
       if (linkedStaff) {
+        return { received: true };
+      }
+
+      const linkedAgent = await linkPendingSupportAgentUser(this.prisma, clerkUserId, email);
+      if (linkedAgent) {
         return { received: true };
       }
 

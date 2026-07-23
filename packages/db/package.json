@@ -18,10 +18,14 @@
     "seed": "dotenv -e ../../.env -- tsx prisma/seed.ts",
     "seed:universities": "dotenv -e ../../.env -- tsx prisma/seed-universities.ts",
     "seed:universities:ci": "tsx prisma/seed-universities.ts",
+    "sync:university-faralin-rules": "dotenv -e ../../.env -- tsx prisma/sync-university-faralin-rules.ts",
+    "sync:university-faralin-rules:ci": "tsx prisma/sync-university-faralin-rules.ts",
     "seed:ci": "tsx prisma/seed.ts",
     "studio": "dotenv -e ../../.env -- prisma studio"
   },
   "dependencies": {
+    "@clerk/backend": "^1.34.0",
+    "@faralin/types": "workspace:*",
     "@prisma/client": "^6.9.0"
   },
   "devDependencies": {

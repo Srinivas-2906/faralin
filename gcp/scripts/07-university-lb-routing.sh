@@ -24,6 +24,7 @@ create_neg_backend() {
 create_neg_backend "faralin-web" "faralin-web"
 create_neg_backend "faralin-api" "faralin-api"
 create_neg_backend "faralin-university" "faralin-university"
+create_neg_backend "faralin-admin" "faralin-admin"
 
 gcloud compute url-maps add-path-matcher "${URL_MAP}" \
   --path-matcher-name=faralin-web --default-service=faralin-web-backend \
@@ -37,9 +38,13 @@ gcloud compute url-maps add-path-matcher "${URL_MAP}" \
   --path-matcher-name=faralin-university --default-service=faralin-university-backend \
   --new-hosts=university.faralin.kaana.in >/dev/null 2>&1 || true
 
+gcloud compute url-maps add-path-matcher "${URL_MAP}" \
+  --path-matcher-name=faralin-admin --default-service=faralin-admin-backend \
+  --new-hosts=admin.faralin.kaana.in >/dev/null 2>&1 || true
+
 gcloud compute ssl-certificates describe faralin-cert-v2 --global >/dev/null 2>&1 || \
   gcloud compute ssl-certificates create faralin-cert-v2 \
-    --domains=faralin.kaana.in,api.faralin.kaana.in,university.faralin.kaana.in --global
+    --domains=faralin.kaana.in,api.faralin.kaana.in,university.faralin.kaana.in,admin.faralin.kaana.in --global
 
 gcloud compute target-https-proxies update "${HTTPS_PROXY}" --global \
   --ssl-certificates=kaana-all-cert,faralin-cert-v2,kaana-tracker-cert,ajitdentalclinic-cert,kaana-clinic-cert,dentacare-cert,aquafarm-cert,kaana-menu-cert
@@ -49,6 +54,11 @@ echo "Load balancer configured."
 echo "Add this DNS record at your kaana.in DNS provider:"
 echo "  Type: A"
 echo "  Name: university.faralin"
+echo "  Value: ${LB_IP}"
+echo "  TTL: 300"
+echo ""
+echo "  Type: A"
+echo "  Name: admin.faralin"
 echo "  Value: ${LB_IP}"
 echo "  TTL: 300"
 echo ""

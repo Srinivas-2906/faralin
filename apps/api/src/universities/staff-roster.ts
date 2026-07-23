@@ -3,6 +3,7 @@ import { mapStudentWithProfile } from '../auth/auth-user.service';
 import { PrismaService } from '../prisma/prisma.service';
 
 export type StaffStudentRow = ReturnType<typeof mapStudentWithProfile> & {
+  studentProfileId: string;
   totalFaralins: number;
   subjectNames: string[];
   performanceBand: 'developing' | 'steady' | 'strong' | 'exceptional';
@@ -63,6 +64,7 @@ export async function buildStaffStudentRoster(
 
     return {
       ...mapped,
+      studentProfileId: profile.id,
       totalFaralins,
       subjectNames: profile.subjects.map((s) => s.subject.name),
       performanceBand: getPerformanceBand(totalFaralins, profile.assessmentAttempts.length),

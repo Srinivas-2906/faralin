@@ -1,12 +1,18 @@
-import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Req } from '@nestjs/common';
 import { UserRole } from '@faralin/db';
 import { Roles } from '../auth/roles.decorator';
+import { AuthUser } from '../auth/clerk-auth.types';
 import { AdminService } from './admin.service';
 
 @Controller('admin')
 @Roles(UserRole.ADMIN)
 export class AdminController {
   constructor(private admin: AdminService) {}
+
+  @Get('me')
+  getMe(@Req() req: { user: AuthUser }) {
+    return this.admin.getMe(req.user);
+  }
 
   @Get('overview')
   getOverview() {
