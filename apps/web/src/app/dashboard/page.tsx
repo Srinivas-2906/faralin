@@ -127,6 +127,12 @@ export default async function DashboardPage() {
                 <span className="assessments-stat-value">{verifiedTotal.toLocaleString()}</span>
                 <span className="assessments-stat-label">Verified</span>
               </div>
+              <div className="assessments-stat">
+                <span className="assessments-stat-value">
+                  {(dashboard.portfolio.hearEligibleFaralins ?? 0).toLocaleString()}
+                </span>
+                <span className="assessments-stat-label">HEAR eligible</span>
+              </div>
             </div>
           ) : null}
         </div>
@@ -160,10 +166,27 @@ export default async function DashboardPage() {
                           universitySlug: string;
                           universityName: string;
                           totalFaralins: number;
+                          verifiedFaralins: number;
+                          hearEligibleFaralins: number;
+                          recognitionTierLabel: string;
+                          recognitionProgressPercent: number;
                           estimatedBursaryGbp: number;
                           faralinsPerGbp?: number | null;
                         }) => (
-                          <DashboardPartnerCard key={u.universitySlug} university={u} />
+                          <DashboardPartnerCard
+                            key={u.universitySlug}
+                            university={{
+                              universitySlug: u.universitySlug,
+                              universityName: u.universityName,
+                              totalFaralins: u.totalFaralins,
+                              verifiedFaralins: u.verifiedFaralins,
+                              hearEligibleFaralins: u.hearEligibleFaralins,
+                              recognitionTierLabel: u.recognitionTierLabel,
+                              recognitionProgressPercent: u.recognitionProgressPercent,
+                              estimatedBursaryGbp: u.estimatedBursaryGbp,
+                              faralinsPerGbp: u.faralinsPerGbp,
+                            }}
+                          />
                         ),
                       )}
                     </div>

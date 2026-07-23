@@ -7,6 +7,10 @@ export interface DashboardPartnerUniversity {
   universitySlug: string;
   universityName: string;
   totalFaralins: number;
+  verifiedFaralins?: number;
+  hearEligibleFaralins?: number;
+  recognitionTierLabel?: string;
+  recognitionProgressPercent?: number;
   estimatedBursaryGbp: number;
   faralinsPerGbp?: number | null;
 }
@@ -16,8 +20,16 @@ type DashboardPartnerCardProps = {
 };
 
 export function DashboardPartnerCard({ university }: DashboardPartnerCardProps) {
-  const { universitySlug, universityName, totalFaralins, estimatedBursaryGbp, faralinsPerGbp } =
-    university;
+  const {
+    universitySlug,
+    universityName,
+    totalFaralins,
+    hearEligibleFaralins,
+    recognitionTierLabel,
+    recognitionProgressPercent,
+    estimatedBursaryGbp,
+    faralinsPerGbp,
+  } = university;
 
   return (
     <article className="dashboard-bento-item">
@@ -43,6 +55,23 @@ export function DashboardPartnerCard({ university }: DashboardPartnerCardProps) 
             £{estimatedBursaryGbp.toFixed(2)} est.
           </span>
         </p>
+        {recognitionTierLabel ? (
+          <p className="dashboard-bento-item-meta">
+            <span className="dashboard-bento-item-meta-primary">
+              {recognitionTierLabel} recognition
+            </span>
+            {recognitionProgressPercent != null && recognitionProgressPercent < 100 ? (
+              <span className="dashboard-bento-item-meta-secondary">
+                {recognitionProgressPercent}% to next level
+              </span>
+            ) : null}
+          </p>
+        ) : null}
+        {hearEligibleFaralins != null ? (
+          <p className="dashboard-bento-item-conversion">
+            {hearEligibleFaralins.toLocaleString()} HEAR-eligible verified Faralins
+          </p>
+        ) : null}
         {faralinsPerGbp && (
           <p className="dashboard-bento-item-conversion">{formatFaralinPerGbp(faralinsPerGbp)}</p>
         )}

@@ -11,7 +11,7 @@ const pillars: {
   {
     index: '01',
     title: 'Honest recognition',
-    hint: 'No gamification',
+    hint: 'Recognition levels, not points-chasing',
     watermark: 'book',
   },
   {

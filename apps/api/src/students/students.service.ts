@@ -38,6 +38,7 @@ export class StudentsService {
       schoolName?: string;
       yearGroup?: number;
       onboardingComplete?: boolean;
+      leaderboardOptIn?: boolean;
     },
   ) {
     return this.prisma.studentProfile.update({

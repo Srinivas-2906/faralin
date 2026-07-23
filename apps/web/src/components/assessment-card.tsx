@@ -18,6 +18,12 @@ export interface AssessmentListItem {
   durationMinutes: number | null;
   isTimed: boolean;
   category?: string;
+  seriesSlug?: string | null;
+  levelOrder?: number | null;
+  levelLabel?: string | null;
+  lockState?: string;
+  lockReason?: string | null;
+  prerequisiteAssessment?: { slug: string; title: string } | null;
   subject: { name: string; slug: string };
   availableUniversities?: Array<{ universityId: string; slug: string; shortName: string }>;
   previewReward?: number | null;
@@ -61,10 +67,17 @@ export function AssessmentCard({
       <div className="assessment-card-details">
         <div className="media-card-eyebrow">{assessment.subject.name}</div>
         <div className="media-card-title">{assessment.title}</div>
+        {assessment.levelLabel ? (
+          <div className="media-card-meta">{assessment.levelLabel}</div>
+        ) : null}
         <div className="media-card-meta">
-          {assessment.previewReward != null
-            ? `From ${assessment.previewReward} Faralins`
-            : `${assessment.estimatedFaralinMin}–${assessment.estimatedFaralinMax} Faralins`}
+          {assessment.lockState === 'LOCKED' && assessment.lockReason ? (
+            <span className="assessment-lock-notice">{assessment.lockReason}</span>
+          ) : assessment.previewReward != null ? (
+            `From ${assessment.previewReward} Faralins`
+          ) : (
+            `${assessment.estimatedFaralinMin}–${assessment.estimatedFaralinMax} Faralins`
+          )}
         </div>
         {assessment.availableUniversities && assessment.availableUniversities.length > 0 ? (
           <div className="media-card-meta assessment-availability">

@@ -11,6 +11,13 @@ import {
   getStudentEnabledUniversityIds,
   isAssessmentEnabledForStudent,
 } from '../universities/staff-assessment-config';
+import {
+  aggregateLockState,
+  canStudentStartAssessment,
+  computeLevelLabel,
+  evaluateAssessmentAccessForUniversities,
+  loadStudentAssessmentAccessContext,
+} from '../universities/assessment-access';
 
 @Injectable()
 export class AssessmentsService {
@@ -32,7 +39,8 @@ export class AssessmentsService {
   }
 
   async listAssessmentsForStudent(studentProfileId: string, category?: string) {
-    const universityIds = await getStudentEnabledUniversityIds(this.prisma, studentProfileId);
+    const context = await loadStudentAssessmentAccessContext(this.prisma, studentProfileId);
+    const universityIds = context.universityIds;
     if (universityIds.length === 0) return [];
 
     const enabledConfigs = await this.prisma.universityAssessmentConfig.findMany({
@@ -40,6 +48,7 @@ export class AssessmentsService {
       include: {
         university: { select: { id: true, slug: true, shortName: true, name: true } },
         assessment: { include: { subject: true } },
+        unlocksAfter: { select: { id: true, slug: true, title: true } },
       },
     });
 
@@ -47,6 +56,19 @@ export class AssessmentsService {
 
     for (const config of enabledConfigs) {
       if (category && config.assessment.category !== category) continue;
+
+      const access = (
+        await evaluateAssessmentAccessForUniversities(
+          this.prisma,
+          config.assessmentId,
+          [config.universityId],
+          context,
+        )
+      ).get(config.universityId);
+
+      if (access?.lockState === 'LOCKED' && !access.accessible) {
+        // Still show locked assessments so students know they exist
+      }
 
       const uniEntry = {
         universityId: config.university.id,
@@ -59,6 +81,7 @@ export class AssessmentsService {
         if (!existing.availableUniversities.some((u) => u.universityId === uniEntry.universityId)) {
           existing.availableUniversities.push(uniEntry);
         }
+        if (access?.accessible) existing.lockState = 'AVAILABLE';
         continue;
       }
 
@@ -72,7 +95,13 @@ export class AssessmentsService {
 
       byAssessment.set(
         config.assessmentId,
-        this.mapStudentAssessmentItem(config.assessment, uniEntry, rule?.baseAmount ?? null),
+        this.mapStudentAssessmentItem(
+          config.assessment,
+          uniEntry,
+          rule?.baseAmount ?? null,
+          access ?? { accessible: false, lockState: 'LOCKED', lockReason: null },
+          config.unlocksAfter,
+        ),
       );
     }
 
@@ -92,10 +121,14 @@ export class AssessmentsService {
       estimatedFaralinMax: number;
       isTimed: boolean;
       durationMinutes: number | null;
+      seriesSlug: string | null;
+      levelOrder: number | null;
       subject: { slug: string; name: string };
     },
     uniEntry: { universityId: string; slug: string; shortName: string },
     baseReward: number | null,
+    access: { accessible: boolean; lockState: string; lockReason: string | null },
+    prerequisite: { slug: string; title: string } | null,
   ) {
     return {
       id: assessment.id,
@@ -109,9 +142,17 @@ export class AssessmentsService {
       estimatedFaralinMax: assessment.estimatedFaralinMax,
       isTimed: assessment.isTimed,
       durationMinutes: assessment.durationMinutes,
+      seriesSlug: assessment.seriesSlug,
+      levelOrder: assessment.levelOrder,
+      levelLabel: computeLevelLabel(assessment.levelOrder),
       subject: assessment.subject,
       availableUniversities: [uniEntry],
       previewReward: baseReward,
+      lockState: access.lockState,
+      lockReason: access.lockReason,
+      prerequisiteAssessment: prerequisite
+        ? { slug: prerequisite.slug, title: prerequisite.title }
+        : null,
     };
   }
 
@@ -142,26 +183,40 @@ export class AssessmentsService {
       shortName: string;
       enabled: boolean;
       baseAmount: number | null;
+      lockState?: string;
+      lockReason?: string | null;
     }> = [];
     let enabledForStudent = true;
+    let lockState: string | null = null;
+    let lockReason: string | null = null;
+    let prerequisiteAssessment: { slug: string; title: string } | null = null;
+    let levelLabel: string | null = computeLevelLabel(assessment.levelOrder);
 
     if (studentProfileId) {
-      const universityIds = await getStudentEnabledUniversityIds(this.prisma, studentProfileId);
+      const context = await loadStudentAssessmentAccessContext(this.prisma, studentProfileId);
+      const universityIds = context.universityIds;
       const selections = await this.prisma.university.findMany({
         where: { id: { in: universityIds } },
         select: { id: true, slug: true, shortName: true, name: true },
       });
 
+      const accessByUni = await evaluateAssessmentAccessForUniversities(
+        this.prisma,
+        assessment.id,
+        universityIds,
+        context,
+      );
+
+      const configRows = await this.prisma.universityAssessmentConfig.findMany({
+        where: { assessmentId: assessment.id, universityId: { in: universityIds } },
+        include: { unlocksAfter: { select: { slug: true, title: true } } },
+      });
+      const configByUni = Object.fromEntries(configRows.map((c) => [c.universityId, c]));
+
       universityRewards = await Promise.all(
         selections.map(async (uni) => {
-          const config = await this.prisma.universityAssessmentConfig.findUnique({
-            where: {
-              universityId_assessmentId: {
-                universityId: uni.id,
-                assessmentId: assessment.id,
-              },
-            },
-          });
+          const config = configByUni[uni.id];
+          const access = accessByUni.get(uni.id);
           const rule = await this.prisma.faralinRule.findFirst({
             where: {
               universityId: uni.id,
@@ -175,14 +230,31 @@ export class AssessmentsService {
             shortName: uni.shortName ?? uni.name,
             enabled: config?.enabled ?? false,
             baseAmount: rule?.baseAmount ?? null,
+            lockState: access?.lockState,
+            lockReason: access?.lockReason ?? null,
           };
         }),
       );
 
-      enabledForStudent = universityRewards.some((r) => r.enabled);
+      enabledForStudent = Array.from(accessByUni.values()).some((r) => r.accessible);
+      lockState = aggregateLockState(accessByUni);
+      lockReason =
+        Array.from(accessByUni.values()).find((r) => r.lockReason)?.lockReason ?? null;
+      const firstPrereq = configRows.find((c) => c.unlocksAfter)?.unlocksAfter;
+      prerequisiteAssessment = firstPrereq
+        ? { slug: firstPrereq.slug, title: firstPrereq.title }
+        : null;
     }
 
-    return { ...assessment, universityRewards, enabledForStudent };
+    return {
+      ...assessment,
+      levelLabel,
+      universityRewards,
+      enabledForStudent,
+      lockState,
+      lockReason,
+      prerequisiteAssessment,
+    };
   }
 
   async startAttempt(studentProfileId: string, assessmentSlug: string) {
@@ -194,15 +266,13 @@ export class AssessmentsService {
       throw new NotFoundException('Assessment not found');
     }
 
-    const enabled = await isAssessmentEnabledForStudent(
+    const startCheck = await canStudentStartAssessment(
       this.prisma,
       studentProfileId,
       assessment.id,
     );
-    if (!enabled) {
-      throw new ForbiddenException(
-        'This assessment is not offered by any of your selected universities.',
-      );
+    if (!startCheck.allowed) {
+      throw new ForbiddenException(startCheck.reason ?? 'You cannot start this assessment.');
     }
 
     const inProgress = await this.prisma.assessmentAttempt.findFirst({

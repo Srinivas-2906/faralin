@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Patch, Body } from '@nestjs/common';
+import { Controller, Get, Param, Patch, Body, Header } from '@nestjs/common';
 import { UserRole } from '@faralin/db';
 import { Public } from '../auth/public.decorator';
 import { Roles } from '../auth/roles.decorator';
@@ -56,6 +56,13 @@ export class UniversitiesController {
     return this.universities.getStaffAssessmentLibrary(user.universityId!);
   }
 
+  @Get('staff/assessments/series')
+  @Roles(UserRole.UNIVERSITY_STAFF)
+  getStaffAssessmentSeries(@CurrentUser() user: AuthUser) {
+    this.universities.requireUniversityAccess(user.universityId, user.universityId!);
+    return this.universities.getStaffAssessmentSeries(user.universityId!);
+  }
+
   @Get('staff/assessments/active')
   @Roles(UserRole.UNIVERSITY_STAFF)
   getStaffActiveAssessments(@CurrentUser() user: AuthUser) {
@@ -97,10 +104,80 @@ export class UniversitiesController {
   patchStaffTrackConfig(
     @CurrentUser() user: AuthUser,
     @Param('trackId') trackId: string,
-    @Body() body: { enabled?: boolean; isCompulsory?: boolean },
+    @Body()
+    body: { enabled?: boolean; isCompulsory?: boolean; affectsBursaryEligibility?: boolean },
   ) {
     this.universities.requireUniversityAccess(user.universityId, user.universityId!);
     return this.universities.patchStaffTrackConfig(user.universityId!, trackId, body);
+  }
+
+  @Get('staff/journeys/library')
+  @Roles(UserRole.UNIVERSITY_STAFF)
+  getStaffJourneyLibrary(@CurrentUser() user: AuthUser) {
+    this.universities.requireUniversityAccess(user.universityId, user.universityId!);
+    return this.universities.getStaffJourneyLibrary(user.universityId!);
+  }
+
+  @Patch('staff/journeys/:journeyId/config')
+  @Roles(UserRole.UNIVERSITY_STAFF)
+  patchStaffJourneyConfig(
+    @CurrentUser() user: AuthUser,
+    @Param('journeyId') journeyId: string,
+    @Body() body: { enabled?: boolean; bonusRules?: unknown },
+  ) {
+    this.universities.requireUniversityAccess(user.universityId, user.universityId!);
+    return this.universities.patchStaffJourneyConfig(user.universityId!, journeyId, body);
+  }
+
+  @Get('staff/recognition-tiers')
+  @Roles(UserRole.UNIVERSITY_STAFF)
+  getStaffRecognitionTiers(@CurrentUser() user: AuthUser) {
+    this.universities.requireUniversityAccess(user.universityId, user.universityId!);
+    return this.universities.getStaffRecognitionTiers(user.universityId!);
+  }
+
+  @Patch('staff/recognition-tiers')
+  @Roles(UserRole.UNIVERSITY_STAFF)
+  patchStaffRecognitionTiers(
+    @CurrentUser() user: AuthUser,
+    @Body()
+    body: {
+      tiers: Array<{ tier: string; minVerifiedFaralins: number; benefitsSummary?: string | null }>;
+    },
+  ) {
+    this.universities.requireUniversityAccess(user.universityId, user.universityId!);
+    return this.universities.patchStaffRecognitionTiers(user.universityId!, body.tiers);
+  }
+
+  @Get('staff/leaderboard/config')
+  @Roles(UserRole.UNIVERSITY_STAFF)
+  getStaffLeaderboardConfig(@CurrentUser() user: AuthUser) {
+    this.universities.requireUniversityAccess(user.universityId, user.universityId!);
+    return this.universities.getStaffLeaderboardConfig(user.universityId!);
+  }
+
+  @Patch('staff/leaderboard/config')
+  @Roles(UserRole.UNIVERSITY_STAFF)
+  patchStaffLeaderboardConfig(
+    @CurrentUser() user: AuthUser,
+    @Body() body: { enabled?: boolean; scope?: string; optInRequired?: boolean },
+  ) {
+    this.universities.requireUniversityAccess(user.universityId, user.universityId!);
+    return this.universities.patchStaffLeaderboardConfig(user.universityId!, body);
+  }
+
+  @Get('staff/hear-export')
+  @Roles(UserRole.UNIVERSITY_STAFF)
+  @Header('Content-Type', 'text/csv')
+  getStaffHearExport(@CurrentUser() user: AuthUser) {
+    this.universities.requireUniversityAccess(user.universityId, user.universityId!);
+    return this.universities.getStaffHearExport(user.universityId!);
+  }
+
+  @Public()
+  @Get(':slug/leaderboard')
+  getPublicLeaderboard(@Param('slug') slug: string) {
+    return this.universities.getPublicLeaderboard(slug);
   }
 
   @Get('staff/dashboard')

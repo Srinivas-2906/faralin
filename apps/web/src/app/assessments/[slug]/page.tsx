@@ -41,6 +41,10 @@ interface Assessment {
   questions: Question[];
   subject?: { name: string; slug: string };
   enabledForStudent?: boolean;
+  levelLabel?: string | null;
+  lockState?: string | null;
+  lockReason?: string | null;
+  prerequisiteAssessment?: { slug: string; title: string } | null;
   universityRewards?: Array<{
     slug: string;
     shortName: string;
@@ -246,6 +250,7 @@ export default function AssessmentDetailPage() {
                 {assessment.subject?.name ?? 'Assessment'}
               </p>
               <div className="assessment-preview-badges">
+                {assessment.levelLabel ? <Badge>{assessment.levelLabel}</Badge> : null}
                 <Badge>{DIFFICULTY_LABELS[assessment.difficulty]}</Badge>
                 <Badge variant={trustBadgeVariant(assessment.trustLevel)}>
                   {TRUST_LEVEL_SHORT_LABELS[assessment.trustLevel]}
@@ -295,7 +300,10 @@ export default function AssessmentDetailPage() {
 
             {isSignedIn && assessment.enabledForStudent === false ? (
               <Alert>
-                This assessment is not offered by any of your selected universities.
+                {assessment.lockReason ??
+                  (assessment.prerequisiteAssessment
+                    ? `Complete ${assessment.prerequisiteAssessment.title} first.`
+                    : 'This assessment is not offered by any of your selected universities.')}
               </Alert>
             ) : (
               <Button block onClick={startAssessment}>

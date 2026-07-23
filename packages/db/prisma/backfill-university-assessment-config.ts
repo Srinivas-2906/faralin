@@ -1,5 +1,8 @@
 import { AssessmentCategory, PrismaClient } from '@prisma/client';
-import { assessmentTemplateDefs } from './data/assessment-templates';
+import {
+  assessmentSeriesDefs,
+  assessmentTemplateDefs,
+} from './data/assessment-templates';
 import { universityDefs } from './data/universities';
 import { buildAssessmentRule, getTierEconomics } from '@faralin/types';
 
@@ -15,21 +18,32 @@ async function ensureCoCurricularSubject() {
   });
 }
 
-async function upsertTemplateAssessments(subjectId: string) {
-  let created = 0;
-  for (const def of assessmentTemplateDefs) {
-    const { questions, subjectSlug: _subjectSlug, category, ...assessmentData } = def;
-    const existing = await prisma.assessment.findUnique({ where: { slug: def.slug } });
-    if (existing) continue;
+async function upsertTemplateAssessment(subjectId: string, def: (typeof assessmentTemplateDefs)[number]) {
+  const { questions, subjectSlug: _subjectSlug, category, seriesSlug, levelOrder, ...assessmentData } = def;
+  const assessment = await prisma.assessment.upsert({
+    where: { slug: def.slug },
+    create: {
+      ...assessmentData,
+      category,
+      seriesSlug: seriesSlug ?? null,
+      levelOrder: levelOrder ?? null,
+      subjectId,
+    },
+    update: {
+      title: assessmentData.title,
+      description: assessmentData.description,
+      category,
+      seriesSlug: seriesSlug ?? null,
+      levelOrder: levelOrder ?? null,
+      estimatedFaralinMin: assessmentData.estimatedFaralinMin,
+      estimatedFaralinMax: assessmentData.estimatedFaralinMax,
+    },
+  });
 
-    const assessment = await prisma.assessment.create({
-      data: {
-        ...assessmentData,
-        category,
-        subjectId,
-      },
-    });
-
+  const existingQuestions = await prisma.assessmentQuestion.count({
+    where: { assessmentId: assessment.id },
+  });
+  if (existingQuestions === 0) {
     for (let i = 0; i < questions.length; i++) {
       const q = questions[i];
       await prisma.assessmentQuestion.create({
@@ -43,9 +57,52 @@ async function upsertTemplateAssessments(subjectId: string) {
         },
       });
     }
-    created++;
+  }
+
+  return assessment;
+}
+
+async function upsertTemplateAssessments(subjectId: string) {
+  let created = 0;
+  for (const def of assessmentTemplateDefs) {
+    const before = await prisma.assessment.findUnique({ where: { slug: def.slug } });
+    await upsertTemplateAssessment(subjectId, def);
+    if (!before) created++;
   }
   return created;
+}
+
+async function backfillSeriesUnlocks() {
+  let updated = 0;
+  const assessments = await prisma.assessment.findMany({
+    where: { seriesSlug: { not: null }, levelOrder: { not: null } },
+    select: { id: true, seriesSlug: true, levelOrder: true },
+  });
+
+  const bySeries = new Map<string, typeof assessments>();
+  for (const a of assessments) {
+    if (!a.seriesSlug || a.levelOrder == null) continue;
+    const list = bySeries.get(a.seriesSlug) ?? [];
+    list.push(a);
+    bySeries.set(a.seriesSlug, list);
+  }
+
+  for (const series of assessmentSeriesDefs) {
+    const levels = [...(bySeries.get(series.seriesSlug) ?? [])].sort(
+      (a, b) => (a.levelOrder ?? 0) - (b.levelOrder ?? 0),
+    );
+    for (let i = 1; i < levels.length; i++) {
+      const prev = levels[i - 1];
+      const current = levels[i];
+      const result = await prisma.universityAssessmentConfig.updateMany({
+        where: { assessmentId: current.id, unlocksAfterAssessmentId: null },
+        data: { unlocksAfterAssessmentId: prev.id },
+      });
+      updated += result.count;
+    }
+  }
+
+  return updated;
 }
 
 async function ensureAssessmentRule(universityId: string, assessmentId: string, slug: string) {
@@ -109,6 +166,9 @@ async function main() {
   const subject = await ensureCoCurricularSubject();
   const templatesCreated = await upsertTemplateAssessments(subject.id);
   console.log(`Template assessments created: ${templatesCreated}`);
+
+  const unlocksUpdated = await backfillSeriesUnlocks();
+  console.log(`Series unlock configs updated: ${unlocksUpdated}`);
 
   const assessments = await prisma.assessment.findMany({
     select: { id: true, category: true },

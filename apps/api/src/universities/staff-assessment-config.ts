@@ -1,5 +1,5 @@
 import { AssessmentCategory, Prisma } from '@faralin/db';
-import { buildAssessmentRule, getTierEconomics } from '@faralin/types';
+import { buildAssessmentRule, getTierEconomics, type AssessmentSeriesGroup } from '@faralin/types';
 import { NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { buildAssessmentBreakdown } from './staff-analytics';
@@ -32,6 +32,7 @@ export interface UpdateAssessmentConfigDto {
   availableTo?: string | null;
   affectsBursaryEligibility?: boolean;
   bonusRules?: BonusRule[] | null;
+  unlocksAfterAssessmentId?: string | null;
 }
 
 export interface UpdateAssessmentRewardDto {
@@ -104,6 +105,10 @@ export async function buildStaffAssessmentLibrary(prisma: PrismaService, univers
               availableTo: config.availableTo?.toISOString() ?? null,
               affectsBursaryEligibility: config.affectsBursaryEligibility,
               bonusRules: (config.bonusRules as BonusRule[] | null) ?? [],
+              unlocksAfterAssessmentId: config.unlocksAfterAssessmentId,
+              unlocksAfterTitle: config.unlocksAfterAssessmentId
+                ? assessments.find((a) => a.id === config.unlocksAfterAssessmentId)?.title ?? null
+                : null,
             }
           : {
               enabled: false,
@@ -113,13 +118,60 @@ export async function buildStaffAssessmentLibrary(prisma: PrismaService, univers
               availableTo: null,
               affectsBursaryEligibility: true,
               bonusRules: [],
+              unlocksAfterAssessmentId: null,
+              unlocksAfterTitle: null,
             },
         reward: mapRule(rule),
+        seriesSlug: assessment.seriesSlug,
+        levelOrder: assessment.levelOrder,
+        levelLabel: assessment.levelOrder != null ? `Level ${assessment.levelOrder}` : null,
       };
     }),
   }));
 
   return { categories };
+}
+
+export async function buildStaffAssessmentSeries(
+  prisma: PrismaService,
+  universityId: string,
+): Promise<{ series: AssessmentSeriesGroup[] }> {
+  const assessments = await prisma.assessment.findMany({
+    where: { isActive: true, seriesSlug: { not: null }, levelOrder: { not: null } },
+    orderBy: [{ seriesSlug: 'asc' }, { levelOrder: 'asc' }],
+  });
+  const configs = await prisma.universityAssessmentConfig.findMany({
+    where: { universityId, assessmentId: { in: assessments.map((a) => a.id) } },
+  });
+  const configByAssessment = Object.fromEntries(configs.map((c) => [c.assessmentId, c]));
+
+  const bySeries = new Map<string, AssessmentSeriesGroup>();
+  for (const assessment of assessments) {
+    if (!assessment.seriesSlug || assessment.levelOrder == null) continue;
+    const existing = bySeries.get(assessment.seriesSlug) ?? {
+      seriesSlug: assessment.seriesSlug,
+      title: assessment.title.replace(/ — .+$/, ''),
+      levels: [],
+    };
+    const config = configByAssessment[assessment.id];
+    existing.levels.push({
+      id: assessment.id,
+      slug: assessment.slug,
+      title: assessment.title,
+      levelOrder: assessment.levelOrder,
+      levelLabel: `Level ${assessment.levelOrder}`,
+      enabled: config?.enabled ?? false,
+      unlocksAfterAssessmentId: config?.unlocksAfterAssessmentId ?? null,
+    });
+    bySeries.set(assessment.seriesSlug, existing);
+  }
+
+  return {
+    series: Array.from(bySeries.values()).map((s) => ({
+      ...s,
+      levels: s.levels.sort((a, b) => a.levelOrder - b.levelOrder),
+    })),
+  };
 }
 
 export async function updateStaffAssessmentConfig(
@@ -150,6 +202,11 @@ export async function updateStaffAssessmentConfig(
         ? Prisma.JsonNull
         : (dto.bonusRules as unknown as Prisma.InputJsonValue);
   }
+  if (dto.unlocksAfterAssessmentId !== undefined) {
+    data.unlocksAfter = dto.unlocksAfterAssessmentId
+      ? { connect: { id: dto.unlocksAfterAssessmentId } }
+      : { disconnect: true };
+  }
 
   return prisma.universityAssessmentConfig.upsert({
     where: { universityId_assessmentId: { universityId, assessmentId } },
@@ -162,6 +219,7 @@ export async function updateStaffAssessmentConfig(
       availableFrom: dto.availableFrom ? new Date(dto.availableFrom) : null,
       availableTo: dto.availableTo ? new Date(dto.availableTo) : null,
       affectsBursaryEligibility: dto.affectsBursaryEligibility ?? true,
+      unlocksAfterAssessmentId: dto.unlocksAfterAssessmentId ?? null,
       bonusRules:
         dto.bonusRules != null
           ? (dto.bonusRules as unknown as Prisma.InputJsonValue)
@@ -265,6 +323,10 @@ export async function buildStaffActiveAssessments(
         categoryLabel: ASSESSMENT_CATEGORY_LABELS[assessment.category],
         subjectName: assessment.subject.name,
         isCompulsory: config.isCompulsory,
+        levelOrder: assessment.levelOrder,
+        levelLabel: assessment.levelOrder != null ? `Level ${assessment.levelOrder}` : null,
+        seriesSlug: assessment.seriesSlug,
+        unlocksAfterAssessmentId: config.unlocksAfterAssessmentId,
         baseReward: rule?.baseAmount ?? null,
         studentsCompleted: stats?.studentsCompleted ?? 0,
         completionRate: stats?.completionRate ?? 0,
@@ -308,8 +370,12 @@ export async function buildStaffTrackLibrary(prisma: PrismaService, universityId
         difficultyBand: track.difficultyBand,
         maxFaralins: track.maxFaralins,
         config: config
-          ? { enabled: config.enabled, isCompulsory: config.isCompulsory }
-          : { enabled: false, isCompulsory: false },
+          ? {
+              enabled: config.enabled,
+              isCompulsory: config.isCompulsory,
+              affectsBursaryEligibility: config.affectsBursaryEligibility,
+            }
+          : { enabled: false, isCompulsory: false, affectsBursaryEligibility: true },
         baseReward: rule?.baseAmount ?? track.maxFaralins,
       };
     }),
@@ -320,7 +386,7 @@ export async function updateStaffTrackConfig(
   prisma: PrismaService,
   universityId: string,
   problemTrackId: string,
-  dto: { enabled?: boolean; isCompulsory?: boolean },
+  dto: { enabled?: boolean; isCompulsory?: boolean; affectsBursaryEligibility?: boolean },
 ) {
   const track = await prisma.problemTrack.findUnique({ where: { id: problemTrackId } });
   if (!track) throw new NotFoundException('Problem track not found');
@@ -332,10 +398,14 @@ export async function updateStaffTrackConfig(
       problemTrackId,
       enabled: dto.enabled ?? false,
       isCompulsory: dto.isCompulsory ?? false,
+      affectsBursaryEligibility: dto.affectsBursaryEligibility ?? true,
     },
     update: {
       ...(dto.enabled !== undefined ? { enabled: dto.enabled } : {}),
       ...(dto.isCompulsory !== undefined ? { isCompulsory: dto.isCompulsory } : {}),
+      ...(dto.affectsBursaryEligibility !== undefined
+        ? { affectsBursaryEligibility: dto.affectsBursaryEligibility }
+        : {}),
     },
   });
 }

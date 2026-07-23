@@ -11,6 +11,7 @@ import {
 } from '@faralin/db';
 import { PrismaService } from '../prisma/prisma.service';
 import type { BonusRule } from '../universities/staff-assessment-config';
+import { computeRecognitionTier } from '../universities/recognition-tiers';
 
 interface RuleMatchContext {
   assessmentId?: string;
@@ -136,6 +137,54 @@ export class FaralinEngineService {
           },
         });
       }
+    }
+  }
+
+  async processSectionMilestone(
+    attemptId: string,
+    sectionId: string,
+    rewardFaralins: number,
+  ): Promise<void> {
+    const attempt = await this.prisma.problemTrackAttempt.findUnique({
+      where: { id: attemptId },
+      include: {
+        problemTrack: true,
+        studentProfile: { include: { universitySelections: true } },
+      },
+    });
+    if (!attempt || attempt.isVoided) return;
+
+    const existing = await this.prisma.faralinTransaction.count({
+      where: {
+        problemTrackAttemptId: attemptId,
+        reason: `section:${sectionId}`,
+      },
+    });
+    if (existing > 0) return;
+
+    for (const selection of attempt.studentProfile.universitySelections) {
+      const trackConfig = await this.prisma.universityProblemTrackConfig.findUnique({
+        where: {
+          universityId_problemTrackId: {
+            universityId: selection.universityId,
+            problemTrackId: attempt.problemTrackId,
+          },
+        },
+      });
+      if (!trackConfig?.enabled) continue;
+
+      await this.prisma.faralinTransaction.create({
+        data: {
+          studentProfileId: attempt.studentProfileId,
+          universityId: selection.universityId,
+          problemTrackAttemptId: attemptId,
+          type: FaralinTransactionType.EARNED,
+          status: FaralinTransactionStatus.CONDITIONAL,
+          trustLevel: attempt.problemTrack.trustLevel,
+          amount: rewardFaralins,
+          reason: `section:${sectionId}`,
+        },
+      });
     }
   }
 
@@ -374,14 +423,24 @@ export class PortfolioService {
     startOfMonth.setDate(1);
     startOfMonth.setHours(0, 0, 0, 0);
 
-    const [transactions, monthTransactions, attempts, trackAttempts, trackArtifacts, selections] =
+    const selections = await this.prisma.studentUniversitySelection.findMany({
+      where: { studentProfileId },
+      include: { university: { include: { conversionRule: true } } },
+    });
+    const universityIds = selections.map((s) => s.universityId);
+
+    const [transactions, monthTransactions, attempts, trackAttempts, trackArtifacts, assessmentConfigs, trackConfigs, tierConfigs] =
       await Promise.all([
       this.prisma.faralinTransaction.findMany({
         where: {
           studentProfileId,
           status: { in: ['CONDITIONAL', 'CONFIRMED', 'CONVERTED'] },
         },
-        include: { university: { include: { conversionRule: true } } },
+        include: {
+          university: { include: { conversionRule: true } },
+          assessmentAttempt: { select: { assessmentId: true } },
+          problemTrackAttempt: { select: { problemTrackId: true } },
+        },
       }),
       this.prisma.faralinTransaction.aggregate({
         where: {
@@ -407,11 +466,23 @@ export class PortfolioService {
         orderBy: { completedAt: 'desc' },
         take: 10,
       }),
-      this.prisma.studentUniversitySelection.findMany({
-        where: { studentProfileId },
-        include: { university: { include: { conversionRule: true } } },
+      this.prisma.universityAssessmentConfig.findMany({
+        where: { universityId: { in: universityIds } },
+      }),
+      this.prisma.universityProblemTrackConfig.findMany({
+        where: { universityId: { in: universityIds } },
+      }),
+      this.prisma.universityRecognitionTierConfig.findMany({
+        where: { universityId: { in: universityIds } },
       }),
     ]);
+
+    const assessmentHear = Object.fromEntries(
+      assessmentConfigs.map((c) => [`${c.universityId}:${c.assessmentId}`, c.affectsBursaryEligibility]),
+    );
+    const trackHear = Object.fromEntries(
+      trackConfigs.map((c) => [`${c.universityId}:${c.problemTrackId}`, c.affectsBursaryEligibility]),
+    );
 
     const byUniversityMap = new Map<
       string,
@@ -421,6 +492,7 @@ export class PortfolioService {
         universitySlug: string;
         totalFaralins: number;
         verifiedFaralins: number;
+        hearEligibleFaralins: number;
         conversionRule: { faralinsPerGbp: number; disclaimerText: string; minVerifiedPercent: number } | null;
       }
     >();
@@ -433,11 +505,21 @@ export class PortfolioService {
         universitySlug: tx.university.slug,
         totalFaralins: 0,
         verifiedFaralins: 0,
+        hearEligibleFaralins: 0,
         conversionRule: tx.university.conversionRule,
       };
       existing.totalFaralins += tx.amount;
       if (tx.trustLevel !== 'PRACTICE') {
         existing.verifiedFaralins += tx.amount;
+        let hearEligible = true;
+        if (tx.assessmentAttempt?.assessmentId) {
+          hearEligible =
+            assessmentHear[`${tx.universityId}:${tx.assessmentAttempt.assessmentId}`] ?? true;
+        } else if (tx.problemTrackAttempt?.problemTrackId) {
+          hearEligible =
+            trackHear[`${tx.universityId}:${tx.problemTrackAttempt.problemTrackId}`] ?? true;
+        }
+        if (hearEligible) existing.hearEligibleFaralins += tx.amount;
       }
       byUniversityMap.set(key, existing);
     }
@@ -450,6 +532,7 @@ export class PortfolioService {
           universitySlug: sel.university.slug,
           totalFaralins: 0,
           verifiedFaralins: 0,
+          hearEligibleFaralins: 0,
           conversionRule: sel.university.conversionRule,
         });
       }
@@ -461,12 +544,27 @@ export class PortfolioService {
         ? Math.round((u.verifiedFaralins / rule.faralinsPerGbp) * 100) / 100
         : 0;
 
+      const uniTiers = tierConfigs
+        .filter((t) => t.universityId === u.universityId)
+        .map((t) => ({
+          tier: t.tier,
+          minVerifiedFaralins: t.minVerifiedFaralins,
+          benefitsSummary: t.benefitsSummary,
+        }));
+      const recognition = computeRecognitionTier(u.verifiedFaralins, uniTiers);
+
       return {
         universityId: u.universityId,
         universityName: u.universityName,
         universitySlug: u.universitySlug,
         totalFaralins: u.totalFaralins,
         verifiedFaralins: u.verifiedFaralins,
+        hearEligibleFaralins: u.hearEligibleFaralins,
+        recognitionTier: recognition.currentTier,
+        recognitionTierLabel: recognition.currentLabel,
+        nextRecognitionTier: recognition.nextTier,
+        nextRecognitionThreshold: recognition.nextThreshold,
+        recognitionProgressPercent: recognition.progressPercent,
         estimatedBursaryGbp,
         faralinsPerGbp: rule?.faralinsPerGbp ?? null,
         disclaimer:
@@ -476,10 +574,12 @@ export class PortfolioService {
     });
 
     const totalFaralins = byUniversity.reduce((sum, u) => sum + u.totalFaralins, 0);
+    const hearEligibleFaralins = byUniversity.reduce((sum, u) => sum + u.hearEligibleFaralins, 0);
     const estimatedBursaryGbp = byUniversity.reduce((sum, u) => sum + u.estimatedBursaryGbp, 0);
 
     return {
       totalFaralins,
+      hearEligibleFaralins,
       faralinsThisMonth: monthTransactions._sum.amount ?? 0,
       assessmentsCompleted: attempts,
       tracksCompleted: trackAttempts,

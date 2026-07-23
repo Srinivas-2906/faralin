@@ -10,6 +10,12 @@ import { ProblemTracksService } from './problem-tracks.service';
 export class ProblemTracksController {
   constructor(private tracks: ProblemTracksService) {}
 
+  @Get('journeys/me')
+  @Roles(UserRole.STUDENT)
+  journeysMe(@CurrentUser() user: AuthUser) {
+    return this.tracks.listJourneysForStudent(user.studentProfileId!);
+  }
+
   @Public()
   @Get()
   list(@Query('subject') subject?: string, @Query('difficulty') difficulty?: string) {

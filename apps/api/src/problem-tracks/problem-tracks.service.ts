@@ -132,6 +132,11 @@ export class ProblemTracksService {
       );
     }
 
+    const journeyBlock = await this.checkJourneyAccess(studentProfileId, track.slug);
+    if (journeyBlock) {
+      throw new ForbiddenException(journeyBlock);
+    }
+
     const inProgress = await this.prisma.problemTrackAttempt.findFirst({
       where: {
         studentProfileId,
@@ -230,7 +235,124 @@ export class ProblemTracksService {
       include: { stepResponses: { orderBy: { sortOrder: 'asc' } } },
     });
 
+    if (isComplete && section.sectionRewardFaralins && section.sectionRewardFaralins > 0) {
+      await this.faralinEngine.processSectionMilestone(
+        attemptId,
+        sectionId,
+        section.sectionRewardFaralins,
+      );
+    }
+
     return this.formatAttempt(updated, attempt.problemTrack);
+  }
+
+  private async checkJourneyAccess(studentProfileId: string, trackSlug: string) {
+    const universityIds = await getStudentEnabledUniversityIds(this.prisma, studentProfileId);
+    const configs = await this.prisma.universityProblemTrackJourneyConfig.findMany({
+      where: { universityId: { in: universityIds }, enabled: true },
+      include: { journey: true },
+    });
+
+    const relevant = configs.filter((c) => {
+      const milestones = c.journey.milestones as Array<{ trackSlug: string; sortOrder: number }>;
+      return milestones.some((m) => m.trackSlug === trackSlug);
+    });
+    if (relevant.length === 0) return null;
+
+    const completedSlugs = new Set(
+      (
+        await this.prisma.problemTrackAttempt.findMany({
+          where: {
+            studentProfileId,
+            completedAt: { not: null },
+            isVoided: false,
+            status: { in: ['SCORED', 'APPROVED', 'MODERATION_PENDING'] },
+          },
+          include: { problemTrack: { select: { slug: true } } },
+        })
+      ).map((a) => a.problemTrack.slug),
+    );
+
+    for (const config of relevant) {
+      const milestones = (config.journey.milestones as Array<{ trackSlug: string; sortOrder: number; label: string }>)
+        .sort((a, b) => a.sortOrder - b.sortOrder);
+      const target = milestones.find((m) => m.trackSlug === trackSlug);
+      if (!target) continue;
+      const incompletePrior = milestones
+        .filter((m) => m.sortOrder < target.sortOrder)
+        .find((m) => !completedSlugs.has(m.trackSlug));
+      if (incompletePrior) {
+        return `Complete ${incompletePrior.label} in the journey first.`;
+      }
+    }
+
+    return null;
+  }
+
+  async listJourneysForStudent(studentProfileId: string) {
+    const universityIds = await getStudentEnabledUniversityIds(this.prisma, studentProfileId);
+    if (universityIds.length === 0) return [];
+
+    const configs = await this.prisma.universityProblemTrackJourneyConfig.findMany({
+      where: { universityId: { in: universityIds }, enabled: true },
+      include: {
+        journey: true,
+        university: { select: { slug: true, shortName: true, name: true } },
+      },
+    });
+
+    const completedTrackSlugs = new Set(
+      (
+        await this.prisma.problemTrackAttempt.findMany({
+          where: {
+            studentProfileId,
+            completedAt: { not: null },
+            isVoided: false,
+            status: { in: ['SCORED', 'APPROVED', 'MODERATION_PENDING'] },
+          },
+          include: { problemTrack: { select: { slug: true } } },
+        })
+      ).map((a) => a.problemTrack.slug),
+    );
+
+    const byJourney = new Map<string, unknown>();
+    for (const config of configs) {
+      const milestones = config.journey.milestones as Array<{
+        trackSlug: string;
+        sortOrder: number;
+        label: string;
+        bonusFaralins?: number;
+        badgeLabel?: string;
+      }>;
+      const enriched = milestones
+        .sort((a, b) => a.sortOrder - b.sortOrder)
+        .map((m, index) => {
+          const completed = completedTrackSlugs.has(m.trackSlug);
+          const priorComplete = milestones
+            .filter((x) => x.sortOrder < m.sortOrder)
+            .every((x) => completedTrackSlugs.has(x.trackSlug));
+          return {
+            ...m,
+            lockState: completed ? 'COMPLETED' : priorComplete ? 'AVAILABLE' : 'LOCKED',
+          };
+        });
+
+      byJourney.set(config.journeyId, {
+        id: config.journey.id,
+        slug: config.journey.slug,
+        title: config.journey.title,
+        description: config.journey.description,
+        milestones: enriched,
+        availableUniversities: [
+          {
+            slug: config.university.slug,
+            shortName: config.university.shortName ?? config.university.name,
+          },
+        ],
+      });
+    }
+
+    return Array.from(byJourney.values());
   }
 
   async getAiFeedback(

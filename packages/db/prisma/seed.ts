@@ -7,6 +7,7 @@ import {
 } from '@prisma/client';
 import { assessmentDefs } from './data/assessments';
 import { assessmentTemplateDefs } from './data/assessment-templates';
+import { problemTrackJourneyDefs } from './data/problem-track-journeys';
 import { universityDefs } from './data/universities';
 import { buildAssessmentRule, getTierEconomics } from '@faralin/types';
 import { courseDefs, getLessonVideoUrl } from './data/courses';
@@ -273,11 +274,13 @@ async function main() {
   }
 
   for (const def of assessmentTemplateDefs) {
-    const { questions, subjectSlug: _subjectSlug, category, ...assessmentData } = def;
+    const { questions, subjectSlug: _subjectSlug, category, seriesSlug, levelOrder, ...assessmentData } = def;
     const assessment = await prisma.assessment.create({
       data: {
         ...assessmentData,
         category,
+        seriesSlug: seriesSlug ?? null,
+        levelOrder: levelOrder ?? null,
         subjectId: subjectMap['co-curricular'].id,
       },
     });
@@ -349,6 +352,55 @@ async function main() {
         },
       });
     }
+  }
+
+  for (const journeyDef of problemTrackJourneyDefs) {
+    const journey = await prisma.problemTrackJourney.upsert({
+      where: { slug: journeyDef.slug },
+      create: {
+        slug: journeyDef.slug,
+        title: journeyDef.title,
+        description: journeyDef.description,
+        milestones: journeyDef.milestones,
+      },
+      update: {
+        title: journeyDef.title,
+        description: journeyDef.description,
+        milestones: journeyDef.milestones,
+      },
+    });
+
+    for (const university of universities) {
+      await prisma.universityProblemTrackJourneyConfig.upsert({
+        where: {
+          universityId_journeyId: { universityId: university.id, journeyId: journey.id },
+        },
+        create: { universityId: university.id, journeyId: journey.id, enabled: false },
+        update: {},
+      });
+    }
+  }
+
+  for (const university of universities) {
+    for (const tier of ['EXPLORER', 'BUILDER', 'ACHIEVER', 'CHAMPION'] as const) {
+      const thresholds = { EXPLORER: 0, BUILDER: 500, ACHIEVER: 1500, CHAMPION: 3000 };
+      await prisma.universityRecognitionTierConfig.upsert({
+        where: { universityId_tier: { universityId: university.id, tier } },
+        create: {
+          universityId: university.id,
+          tier,
+          minVerifiedFaralins: thresholds[tier],
+          benefitsSummary: `${tier.charAt(0)}${tier.slice(1).toLowerCase()} recognition level`,
+        },
+        update: {},
+      });
+    }
+
+    await prisma.universityLeaderboardConfig.upsert({
+      where: { universityId: university.id },
+      create: { universityId: university.id, enabled: false },
+      update: {},
+    });
   }
 
   console.log(`Seeded ${subjects.length} subjects`);

@@ -94,6 +94,7 @@ export interface ProblemTrackSection {
     forbidden: string[];
   };
   unlockRules?: { requiresSectionId?: string }[];
+  sectionRewardFaralins?: number;
 }
 
 export interface RubricCategory {
@@ -237,3 +238,5 @@ export const SUPPORT_REQUESTER_TYPE_LABELS = {
   UNIVERSITY_STAFF: 'University staff',
   INTERNAL: 'Internal',
 } as const;
+
+export * from './assessment-access';

@@ -3,6 +3,8 @@ import type { AssessmentSeedDef } from './assessments';
 
 export type TemplateSeedDef = AssessmentSeedDef & {
   category: AssessmentCategory;
+  seriesSlug?: string;
+  levelOrder?: number;
 };
 
 type McqOptions = [string, string, string, string];
@@ -29,6 +31,7 @@ function tpl(
   description: string,
   min: number,
   max: number,
+  series?: { seriesSlug: string; levelOrder: number },
 ): TemplateSeedDef {
   return {
     slug,
@@ -42,25 +45,66 @@ function tpl(
     estimatedFaralinMax: max,
     isTimed: false,
     questions: templateQuestions(title),
+    ...(series ? { seriesSlug: series.seriesSlug, levelOrder: series.levelOrder } : {}),
   };
 }
 
+/** Level series used for Phase 2A progression chains */
+export const assessmentSeriesDefs = [
+  {
+    seriesSlug: 'cv-builder',
+    title: 'CV Builder',
+    levels: [
+      tpl('cv-builder-skills', 'CV Builder', AssessmentCategory.EMPLOYABILITY, 'Build a strong CV structure and highlight achievements clearly.', 80, 200, { seriesSlug: 'cv-builder', levelOrder: 1 }),
+      tpl('cv-builder-advanced', 'CV Builder — Advanced', AssessmentCategory.EMPLOYABILITY, 'Tailor your CV for roles and demonstrate impact with evidence.', 100, 240, { seriesSlug: 'cv-builder', levelOrder: 2 }),
+      tpl('cv-builder-portfolio', 'CV Builder — Portfolio', AssessmentCategory.EMPLOYABILITY, 'Integrate portfolio links and prepare a polished application package.', 120, 280, { seriesSlug: 'cv-builder', levelOrder: 3 }),
+    ],
+  },
+  {
+    seriesSlug: 'ai-literacy',
+    title: 'AI Literacy',
+    levels: [
+      tpl('ai-literacy', 'AI Literacy', AssessmentCategory.DIGITAL_SKILLS, 'Use AI tools responsibly for learning and productivity.', 100, 300, { seriesSlug: 'ai-literacy', levelOrder: 1 }),
+      tpl('ai-literacy-advanced', 'AI Literacy — Advanced', AssessmentCategory.DIGITAL_SKILLS, 'Apply AI workflows to research, drafting, and revision with integrity.', 120, 320, { seriesSlug: 'ai-literacy', levelOrder: 2 }),
+      tpl('ai-literacy-ethics', 'AI Literacy — Ethics', AssessmentCategory.DIGITAL_SKILLS, 'Evaluate bias, attribution, and responsible AI use in academic work.', 110, 280, { seriesSlug: 'ai-literacy', levelOrder: 3 }),
+    ],
+  },
+  {
+    seriesSlug: 'budgeting',
+    title: 'Budgeting',
+    levels: [
+      tpl('budgeting-basics', 'Budgeting', AssessmentCategory.FINANCIAL_WELLBEING, 'Build a student budget and track spending responsibly.', 70, 180, { seriesSlug: 'budgeting', levelOrder: 1 }),
+      tpl('budgeting-advanced', 'Budgeting — Advanced', AssessmentCategory.FINANCIAL_WELLBEING, 'Plan termly finances and handle irregular income.', 90, 210, { seriesSlug: 'budgeting', levelOrder: 2 }),
+      tpl('budgeting-investing', 'Budgeting — Investing Basics', AssessmentCategory.FINANCIAL_WELLBEING, 'Understand saving, investing basics, and long-term planning.', 100, 230, { seriesSlug: 'budgeting', levelOrder: 3 }),
+    ],
+  },
+  {
+    seriesSlug: 'academic-writing',
+    title: 'Academic Writing',
+    levels: [
+      tpl('academic-writing', 'Academic Writing', AssessmentCategory.ACADEMIC_SKILLS, 'Structure arguments and write clearly for university study.', 90, 220, { seriesSlug: 'academic-writing', levelOrder: 1 }),
+      tpl('academic-writing-essays', 'Academic Writing — Essays', AssessmentCategory.ACADEMIC_SKILLS, 'Develop thesis-driven essays with strong evidence.', 110, 250, { seriesSlug: 'academic-writing', levelOrder: 2 }),
+      tpl('academic-writing-dissertation', 'Academic Writing — Dissertation Prep', AssessmentCategory.ACADEMIC_SKILLS, 'Plan longer projects and manage academic writing at scale.', 130, 290, { seriesSlug: 'academic-writing', levelOrder: 3 }),
+    ],
+  },
+] as const;
+
 export const assessmentTemplateDefs: TemplateSeedDef[] = [
-  // Employability
-  tpl('cv-builder-skills', 'CV Builder', AssessmentCategory.EMPLOYABILITY, 'Build a strong CV structure and highlight achievements clearly.', 80, 200),
+  // Employability (standalone + series level 1)
+  ...assessmentSeriesDefs.find((s) => s.seriesSlug === 'cv-builder')!.levels,
   tpl('interview-skills', 'Interview Skills', AssessmentCategory.EMPLOYABILITY, 'Prepare for interviews with structured responses and professional communication.', 90, 220),
   tpl('linkedin-profile', 'LinkedIn Profile', AssessmentCategory.EMPLOYABILITY, 'Create a professional online profile that supports career discovery.', 70, 180),
   tpl('networking-basics', 'Networking', AssessmentCategory.EMPLOYABILITY, 'Develop confident networking habits for events and online communities.', 60, 160),
   tpl('career-planning', 'Career Planning', AssessmentCategory.EMPLOYABILITY, 'Explore career pathways and set realistic development goals.', 100, 250),
 
   // Academic skills
+  ...assessmentSeriesDefs.find((s) => s.seriesSlug === 'academic-writing')!.levels,
   tpl('referencing-skills', 'Referencing', AssessmentCategory.ACADEMIC_SKILLS, 'Understand citation basics and academic integrity.', 70, 170),
-  tpl('academic-writing', 'Academic Writing', AssessmentCategory.ACADEMIC_SKILLS, 'Structure arguments and write clearly for university study.', 90, 220),
   tpl('time-management', 'Time Management', AssessmentCategory.ACADEMIC_SKILLS, 'Plan study schedules and manage deadlines effectively.', 60, 150),
   tpl('research-skills', 'Research Skills', AssessmentCategory.ACADEMIC_SKILLS, 'Find credible sources and evaluate evidence.', 80, 200),
 
   // Financial wellbeing
-  tpl('budgeting-basics', 'Budgeting', AssessmentCategory.FINANCIAL_WELLBEING, 'Build a student budget and track spending responsibly.', 70, 180),
+  ...assessmentSeriesDefs.find((s) => s.seriesSlug === 'budgeting')!.levels,
   tpl('student-finance', 'Student Finance', AssessmentCategory.FINANCIAL_WELLBEING, 'Understand loans, grants, and student funding basics.', 80, 190),
   tpl('saving-habits', 'Saving', AssessmentCategory.FINANCIAL_WELLBEING, 'Develop practical saving habits during university life.', 60, 150),
   tpl('credit-score-awareness', 'Credit Score', AssessmentCategory.FINANCIAL_WELLBEING, 'Learn how credit works and avoid common pitfalls.', 70, 170),
@@ -72,7 +116,7 @@ export const assessmentTemplateDefs: TemplateSeedDef[] = [
   tpl('mindfulness-basics', 'Mindfulness', AssessmentCategory.MENTAL_WELLBEING, 'Practice mindfulness techniques for focus and calm.', 50, 130),
 
   // Digital skills
-  tpl('ai-literacy', 'AI Literacy', AssessmentCategory.DIGITAL_SKILLS, 'Use AI tools responsibly for learning and productivity.', 100, 300),
+  ...assessmentSeriesDefs.find((s) => s.seriesSlug === 'ai-literacy')!.levels,
   tpl('cyber-security', 'Cyber Security', AssessmentCategory.DIGITAL_SKILLS, 'Protect accounts, data, and identity online.', 70, 180),
   tpl('microsoft-office', 'Microsoft Office', AssessmentCategory.DIGITAL_SKILLS, 'Core productivity skills for documents, sheets, and slides.', 60, 150),
   tpl('digital-identity', 'Digital Identity', AssessmentCategory.DIGITAL_SKILLS, 'Manage your professional digital footprint.', 60, 160),

@@ -8,6 +8,7 @@ import {
 import {
   buildStaffActiveAssessments,
   buildStaffAssessmentLibrary,
+  buildStaffAssessmentSeries,
   buildStaffTrackLibrary,
   updateStaffAssessmentConfig,
   updateStaffAssessmentReward,
@@ -15,6 +16,15 @@ import {
   type UpdateAssessmentConfigDto,
   type UpdateAssessmentRewardDto,
 } from './staff-assessment-config';
+import {
+  buildHearExportCsv,
+  buildStaffJourneyLibrary,
+  buildStaffLeaderboardConfig,
+  buildStaffRecognitionTiers,
+  updateStaffJourneyConfig,
+  updateStaffLeaderboardConfig,
+  updateStaffRecognitionTiers,
+} from './staff-phase2-config';
 import {
   buildAssessmentBreakdown,
   buildEngagementMetrics,
@@ -208,6 +218,10 @@ export class UniversitiesService {
     return buildStaffAssessmentLibrary(this.prisma, universityId);
   }
 
+  getStaffAssessmentSeries(universityId: string) {
+    return buildStaffAssessmentSeries(this.prisma, universityId);
+  }
+
   async getStaffActiveAssessments(universityId: string) {
     const students = await buildStaffStudentRoster(this.prisma, universityId);
     const followerStudentIds = students.map((s) => s.studentProfileId);
@@ -237,9 +251,88 @@ export class UniversitiesService {
   patchStaffTrackConfig(
     universityId: string,
     problemTrackId: string,
-    dto: { enabled?: boolean; isCompulsory?: boolean },
+    dto: { enabled?: boolean; isCompulsory?: boolean; affectsBursaryEligibility?: boolean },
   ) {
     return updateStaffTrackConfig(this.prisma, universityId, problemTrackId, dto);
+  }
+
+  getStaffJourneyLibrary(universityId: string) {
+    return buildStaffJourneyLibrary(this.prisma, universityId);
+  }
+
+  patchStaffJourneyConfig(
+    universityId: string,
+    journeyId: string,
+    dto: { enabled?: boolean; bonusRules?: unknown },
+  ) {
+    return updateStaffJourneyConfig(this.prisma, universityId, journeyId, dto);
+  }
+
+  getStaffRecognitionTiers(universityId: string) {
+    return buildStaffRecognitionTiers(this.prisma, universityId);
+  }
+
+  patchStaffRecognitionTiers(
+    universityId: string,
+    tiers: Array<{ tier: string; minVerifiedFaralins: number; benefitsSummary?: string | null }>,
+  ) {
+    return updateStaffRecognitionTiers(this.prisma, universityId, tiers);
+  }
+
+  getStaffLeaderboardConfig(universityId: string) {
+    return buildStaffLeaderboardConfig(this.prisma, universityId);
+  }
+
+  patchStaffLeaderboardConfig(
+    universityId: string,
+    dto: { enabled?: boolean; scope?: string; optInRequired?: boolean },
+  ) {
+    return updateStaffLeaderboardConfig(this.prisma, universityId, dto);
+  }
+
+  getStaffHearExport(universityId: string) {
+    return buildHearExportCsv(this.prisma, universityId);
+  }
+
+  async getPublicLeaderboard(universitySlug: string) {
+    const university = await this.prisma.university.findUnique({ where: { slug: universitySlug } });
+    if (!university) throw new NotFoundException('University not found');
+
+    const config = await this.prisma.universityLeaderboardConfig.findUnique({
+      where: { universityId: university.id },
+    });
+    if (!config?.enabled) return { enabled: false, entries: [] };
+
+    const followers = await this.prisma.application.findMany({
+      where: { universityId: university.id, status: 'FOLLOWER' },
+      include: {
+        studentProfile: {
+          select: {
+            anonymousId: true,
+            leaderboardOptIn: true,
+            faralinTransactions: {
+              where: {
+                universityId: university.id,
+                status: { in: ['CONDITIONAL', 'CONFIRMED', 'CONVERTED'] },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const entries = followers
+      .filter((f) => !config.optInRequired || f.studentProfile.leaderboardOptIn)
+      .map((f) => ({
+        anonymousId: f.studentProfile.anonymousId.slice(0, 8),
+        verifiedFaralins: f.studentProfile.faralinTransactions
+          .filter((tx) => tx.trustLevel !== 'PRACTICE')
+          .reduce((sum, tx) => sum + tx.amount, 0),
+      }))
+      .sort((a, b) => b.verifiedFaralins - a.verifiedFaralins)
+      .slice(0, 20);
+
+    return { enabled: true, entries };
   }
 
   requireUniversityAccess(userUniversityId: string | undefined, targetUniversityId: string) {

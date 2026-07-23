@@ -39,9 +39,20 @@ export class StudentsController {
       schoolName?: string;
       yearGroup?: number;
       onboardingComplete?: boolean;
+      leaderboardOptIn?: boolean;
     },
   ) {
     return this.students.updateProfile(this.requireProfile(user), body);
+  }
+
+  @Patch('me/leaderboard-opt-in')
+  updateLeaderboardOptIn(
+    @CurrentUser() user: AuthUser,
+    @Body() body: { leaderboardOptIn: boolean },
+  ) {
+    return this.students.updateProfile(this.requireProfile(user), {
+      leaderboardOptIn: body.leaderboardOptIn,
+    });
   }
 
   @Get('dashboard')

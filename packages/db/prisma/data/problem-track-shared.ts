@@ -23,6 +23,7 @@ export type ProblemTrackSection = {
   }>;
   aiPolicy: { allowed: string[]; forbidden: string[] };
   unlockRules?: { requiresSectionId?: string }[];
+  sectionRewardFaralins?: number;
 };
 
 export const defaultScienceRubric: RubricCategory[] = [

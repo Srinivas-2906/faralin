@@ -12,7 +12,15 @@ interface LibraryAssessment {
   title: string;
   category: string;
   subjectName: string;
-  config: { enabled: boolean; isCompulsory: boolean };
+  levelLabel?: string | null;
+  seriesSlug?: string | null;
+  config: {
+    enabled: boolean;
+    isCompulsory: boolean;
+    affectsBursaryEligibility?: boolean;
+    unlocksAfterAssessmentId?: string | null;
+    unlocksAfterTitle?: string | null;
+  };
   reward: { baseAmount: number } | null;
 }
 
@@ -106,6 +114,16 @@ export default function AssessmentLibraryPage() {
             <ResponsiveTable<LibraryAssessment>
               columns={[
                 { key: 'title', header: 'Assessment', render: (row) => row.title },
+                {
+                  key: 'level',
+                  header: 'Level',
+                  render: (row) => row.levelLabel ?? '—',
+                },
+                {
+                  key: 'prerequisite',
+                  header: 'Prerequisite',
+                  render: (row) => row.config.unlocksAfterTitle ?? '—',
+                },
                 {
                   key: 'category',
                   header: 'Category',

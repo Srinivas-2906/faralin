@@ -79,6 +79,13 @@ enum AssessmentCategory {
   ACADEMIC_SUBJECT
 }
 
+enum StudentRecognitionTier {
+  EXPLORER
+  BUILDER
+  ACHIEVER
+  CHAMPION
+}
+
 enum FaralinTrustLevel {
   PRACTICE
   VERIFIED
@@ -226,6 +233,7 @@ model StudentProfile {
   schoolName         String?
   yearGroup          Int?
   onboardingComplete Boolean            @default(false)
+  leaderboardOptIn   Boolean            @default(false)
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
 
@@ -271,6 +279,9 @@ model University {
   supportTickets      SupportTicket[]
   assessmentConfigs   UniversityAssessmentConfig[]
   problemTrackConfigs UniversityProblemTrackConfig[]
+  recognitionTierConfigs UniversityRecognitionTierConfig[]
+  journeyConfigs      UniversityProblemTrackJourneyConfig[]
+  leaderboardConfig   UniversityLeaderboardConfig?
 }
 
 model StudentUniversitySelection {
@@ -557,20 +568,76 @@ model UniversityAssessmentConfig {
 }
 
 model UniversityProblemTrackConfig {
-  id             String  @id @default(cuid())
-  universityId   String
-  problemTrackId String
-  enabled        Boolean @default(false)
-  isCompulsory   Boolean @default(false)
-  bonusRules     Json?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id                        String  @id @default(cuid())
+  universityId              String
+  problemTrackId            String
+  enabled                   Boolean @default(false)
+  isCompulsory              Boolean @default(false)
+  affectsBursaryEligibility Boolean @default(true)
+  bonusRules                Json?
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
 
   university   University   @relation(fields: [universityId], references: [id], onDelete: Cascade)
   problemTrack ProblemTrack @relation(fields: [problemTrackId], references: [id], onDelete: Cascade)
 
   @@unique([universityId, problemTrackId])
   @@index([universityId, enabled])
+}
+
+model ProblemTrackJourney {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  title       String
+  description String?
+  milestones  Json
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  universityConfigs UniversityProblemTrackJourneyConfig[]
+}
+
+model UniversityProblemTrackJourneyConfig {
+  id           String  @id @default(cuid())
+  universityId String
+  journeyId    String
+  enabled      Boolean @default(false)
+  bonusRules   Json?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  university University         @relation(fields: [universityId], references: [id], onDelete: Cascade)
+  journey    ProblemTrackJourney @relation(fields: [journeyId], references: [id], onDelete: Cascade)
+
+  @@unique([universityId, journeyId])
+  @@index([universityId, enabled])
+}
+
+model UniversityRecognitionTierConfig {
+  id                  String                 @id @default(cuid())
+  universityId        String
+  tier                StudentRecognitionTier
+  minVerifiedFaralins Int
+  benefitsSummary     String?
+  createdAt           DateTime               @default(now())
+  updatedAt           DateTime               @updatedAt
+
+  university University @relation(fields: [universityId], references: [id], onDelete: Cascade)
+
+  @@unique([universityId, tier])
+}
+
+model UniversityLeaderboardConfig {
+  id              String  @id @default(cuid())
+  universityId    String  @unique
+  enabled         Boolean @default(false)
+  scope           String  @default("VERIFIED_FARALINS")
+  optInRequired   Boolean @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  university University @relation(fields: [universityId], references: [id], onDelete: Cascade)
 }
 
 model FaralinTransaction {

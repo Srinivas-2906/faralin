@@ -22,6 +22,8 @@
     "sync:university-faralin-rules:ci": "tsx prisma/sync-university-faralin-rules.ts",
     "backfill:university-assessment-config": "dotenv -e ../../.env -- tsx prisma/backfill-university-assessment-config.ts",
     "backfill:university-assessment-config:ci": "tsx prisma/backfill-university-assessment-config.ts",
+    "backfill:institutional-engagement-phase2": "dotenv -e ../../.env -- tsx prisma/backfill-institutional-engagement-phase2.ts",
+    "backfill:institutional-engagement-phase2:ci": "tsx prisma/backfill-institutional-engagement-phase2.ts",
     "seed:ci": "tsx prisma/seed.ts",
     "studio": "dotenv -e ../../.env -- prisma studio"
   },

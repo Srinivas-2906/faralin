@@ -669,3 +669,31 @@
     flex-wrap: nowrap;
   }
 }
+
+.portal-tier-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.portal-tier-row {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: 8rem 1fr 2fr;
+  align-items: end;
+}
+
+.portal-tier-row label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.875rem;
+}
+
+.portal-tier-row input {
+  padding: 0.5rem 0.65rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--faralin-border, rgba(255, 255, 255, 0.12));
+  background: transparent;
+  color: inherit;
+}
