@@ -169,8 +169,9 @@ export default function ApplicationsPage() {
           </div>
         )}
 
-        <Card style={{ marginBottom: 'var(--section-gap)' }}>
-          <div className="portal-toolbar">
+        <div className="portal-stack">
+        <Card>
+          <div className="portal-card-toolbar">
             <input
               type="search"
               className="portal-search"
@@ -202,7 +203,7 @@ export default function ApplicationsPage() {
           </Card>
         ) : tab === 'all' ? (
           Object.entries(grouped).map(([status, rows]) => (
-            <Card key={status} style={{ marginBottom: 'var(--section-gap)' }}>
+            <Card key={status}>
               <h2 className="section-title">
                 {STATUS_OPTIONS.find((option) => option.value === status)?.label ??
                   status.replace(/_/g, ' ')}{' '}
@@ -307,6 +308,7 @@ export default function ApplicationsPage() {
             />
           </Card>
         )}
+        </div>
       </div>
     </div>
   );

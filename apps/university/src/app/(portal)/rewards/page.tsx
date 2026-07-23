@@ -118,87 +118,91 @@ export default function RewardsPage() {
             <EmptyState compact message="Enable assessments in the library to configure rewards." />
           </Card>
         ) : (
-          <div className="portal-rewards-list">
-            {assessments.map((assessment) => {
-              const scoreAbove =
-                assessment.config.bonusRules.find((r) => r.type === 'SCORE_ABOVE') ?? null;
-              const perfect =
-                assessment.config.bonusRules.find((r) => r.type === 'PERFECT_SCORE') ?? null;
-              const firstAttempt =
-                assessment.config.bonusRules.find((r) => r.type === 'FIRST_ATTEMPT') ?? null;
+          <Card>
+            <div className="portal-rewards-list">
+              {assessments.map((assessment) => {
+                const scoreAbove =
+                  assessment.config.bonusRules.find((r) => r.type === 'SCORE_ABOVE') ?? null;
+                const perfect =
+                  assessment.config.bonusRules.find((r) => r.type === 'PERFECT_SCORE') ?? null;
+                const firstAttempt =
+                  assessment.config.bonusRules.find((r) => r.type === 'FIRST_ATTEMPT') ?? null;
 
-              return (
-                <Card key={assessment.id} className="portal-reward-card">
-                  <h2 className="section-title">{assessment.title}</h2>
-                  <form
-                    className="portal-reward-form"
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      saveReward(assessment, new FormData(e.currentTarget));
-                    }}
-                  >
-                    <div className="form-row">
-                      <label htmlFor={`base-${assessment.id}`}>Base reward (Faralins)</label>
-                      <input
-                        id={`base-${assessment.id}`}
-                        name="baseAmount"
-                        type="number"
-                        min={0}
-                        defaultValue={assessment.reward?.baseAmount ?? 100}
-                        required
-                      />
-                    </div>
-                    <div className="portal-reward-bonus-grid">
-                      <div className="form-row">
-                        <label htmlFor={`score-th-${assessment.id}`}>Score above %</label>
-                        <input
-                          id={`score-th-${assessment.id}`}
-                          name="scoreAboveThreshold"
-                          type="number"
-                          min={0}
-                          max={100}
-                          defaultValue={scoreAbove?.threshold ?? 80}
-                        />
+                return (
+                  <div key={assessment.id} className="portal-reward-row">
+                    <form
+                      className="portal-reward-form"
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        saveReward(assessment, new FormData(e.currentTarget));
+                      }}
+                    >
+                      <div className="portal-reward-header">
+                        <h2 className="section-title">{assessment.title}</h2>
+                        <div className="form-row portal-reward-base">
+                          <label htmlFor={`base-${assessment.id}`}>Base reward (Faralins)</label>
+                          <input
+                            id={`base-${assessment.id}`}
+                            name="baseAmount"
+                            type="number"
+                            min={0}
+                            defaultValue={assessment.reward?.baseAmount ?? 100}
+                            required
+                          />
+                        </div>
                       </div>
-                      <div className="form-row">
-                        <label htmlFor={`score-bonus-${assessment.id}`}>Score bonus</label>
-                        <input
-                          id={`score-bonus-${assessment.id}`}
-                          name="scoreAboveBonus"
-                          type="number"
-                          min={0}
-                          defaultValue={scoreAbove?.amount ?? 0}
-                        />
+                      <div className="portal-reward-bonus-grid">
+                        <div className="form-row">
+                          <label htmlFor={`score-th-${assessment.id}`}>Score above %</label>
+                          <input
+                            id={`score-th-${assessment.id}`}
+                            name="scoreAboveThreshold"
+                            type="number"
+                            min={0}
+                            max={100}
+                            defaultValue={scoreAbove?.threshold ?? 80}
+                          />
+                        </div>
+                        <div className="form-row">
+                          <label htmlFor={`score-bonus-${assessment.id}`}>Score bonus</label>
+                          <input
+                            id={`score-bonus-${assessment.id}`}
+                            name="scoreAboveBonus"
+                            type="number"
+                            min={0}
+                            defaultValue={scoreAbove?.amount ?? 0}
+                          />
+                        </div>
+                        <div className="form-row">
+                          <label htmlFor={`perfect-${assessment.id}`}>Perfect score bonus</label>
+                          <input
+                            id={`perfect-${assessment.id}`}
+                            name="perfectBonus"
+                            type="number"
+                            min={0}
+                            defaultValue={perfect?.amount ?? 0}
+                          />
+                        </div>
+                        <div className="form-row">
+                          <label htmlFor={`first-${assessment.id}`}>First attempt bonus</label>
+                          <input
+                            id={`first-${assessment.id}`}
+                            name="firstAttemptBonus"
+                            type="number"
+                            min={0}
+                            defaultValue={firstAttempt?.amount ?? 0}
+                          />
+                        </div>
                       </div>
-                      <div className="form-row">
-                        <label htmlFor={`perfect-${assessment.id}`}>Perfect score bonus</label>
-                        <input
-                          id={`perfect-${assessment.id}`}
-                          name="perfectBonus"
-                          type="number"
-                          min={0}
-                          defaultValue={perfect?.amount ?? 0}
-                        />
-                      </div>
-                      <div className="form-row">
-                        <label htmlFor={`first-${assessment.id}`}>First attempt bonus</label>
-                        <input
-                          id={`first-${assessment.id}`}
-                          name="firstAttemptBonus"
-                          type="number"
-                          min={0}
-                          defaultValue={firstAttempt?.amount ?? 0}
-                        />
-                      </div>
-                    </div>
-                    <Button type="submit" disabled={savingId === assessment.id}>
-                      {savingId === assessment.id ? 'Saving…' : 'Save reward rules'}
-                    </Button>
-                  </form>
-                </Card>
-              );
-            })}
-          </div>
+                      <Button type="submit" disabled={savingId === assessment.id}>
+                        {savingId === assessment.id ? 'Saving…' : 'Save reward rules'}
+                      </Button>
+                    </form>
+                  </div>
+                );
+              })}
+            </div>
+          </Card>
         )}
       </div>
     </div>

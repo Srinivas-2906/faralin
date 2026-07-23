@@ -42,7 +42,8 @@ export default function UniversitySupportPage() {
           }
         />
 
-        <Card style={{ marginBottom: 'var(--section-gap)' }}>
+        <div className="portal-stack">
+        <Card>
           <p style={{ color: 'var(--faralin-muted)', marginBottom: '1rem' }}>
             Ask our assistant for portal guidance, or talk to a Faralin support agent for complex issues.
           </p>
@@ -70,6 +71,7 @@ export default function UniversitySupportPage() {
             />
           )}
         </Card>
+        </div>
 
         <p style={{ marginTop: '1rem' }}>
           <Link href="/dashboard">Back to dashboard</Link>

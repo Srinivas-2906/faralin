@@ -174,6 +174,7 @@ export default function DashboardPage() {
           }
         />
 
+        <div className="portal-stack">
         <h2 className="section-title portal-section-heading">Student engagement</h2>
         <div className="stat-grid portal-stat-grid portal-engagement-grid">
           <StatCard label="Registered followers" value={engagement.totalRegistered.toLocaleString()} />
@@ -224,7 +225,7 @@ export default function DashboardPage() {
           liability.
         </p>
 
-        <div className="stat-grid portal-stat-grid" style={{ marginBottom: 'var(--section-gap)' }}>
+        <div className="stat-grid portal-stat-grid">
           <StatCard
             label="Students following"
             value={followerCount}
@@ -235,7 +236,7 @@ export default function DashboardPage() {
           <StatCard label="Upcoming events" value={contentEngagement.events} />
         </div>
 
-        <Card className="portal-assessment-card" style={{ marginBottom: 'var(--section-gap)' }}>
+        <Card className="portal-assessment-card">
           <h2 className="section-title">Assessment breakdown</h2>
           <div className="portal-assessment-summary">
             <span>
@@ -302,7 +303,7 @@ export default function DashboardPage() {
           )}
         </Card>
 
-        <Card style={{ marginBottom: 'var(--section-gap)' }}>
+        <Card>
           <h2 className="section-title">Conversion funnel</h2>
           <div className="portal-funnel-horizontal">
             {FUNNEL_STEPS.map((step, index) => {
@@ -368,6 +369,7 @@ export default function DashboardPage() {
               />
             )}
           </Card>
+        </div>
         </div>
       </div>
     </div>

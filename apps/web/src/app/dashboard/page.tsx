@@ -9,6 +9,7 @@ import { DashboardCompletedTracks } from '@/components/dashboard-completed-track
 import { DashboardCombinedRecommended } from '@/components/dashboard-problem-tracks';
 import type { ProblemTrackListItem } from '@/components/problem-tracks/track-card';
 import { DashboardUpdateItem } from '@/components/dashboard-update-item';
+import { DashboardStatsBar } from '@/components/dashboard-stats-bar';
 import { getUserDisplayName } from '@/lib/user-display-name';
 
 function toAssessmentListItem(a: {
@@ -95,45 +96,14 @@ export default async function DashboardPage() {
             <span className="dashboard-greeting-name">{displayName}</span>
           </h1>
           {dashboard ? (
-            <div
-              className="assessments-stats assessments-stats--compact"
-              aria-label="Dashboard statistics"
-            >
-              <div className="assessments-stat">
-                <span className="assessments-stat-value">
-                  {dashboard.portfolio.totalFaralins.toLocaleString()}
-                </span>
-                <span className="assessments-stat-label">Total Faralins</span>
-              </div>
-              <div className="assessments-stat">
-                <span className="assessments-stat-value">
-                  £{dashboard.portfolio.estimatedBursaryGbp.toFixed(2)}
-                </span>
-                <span className="assessments-stat-label">Est. bursary</span>
-              </div>
-              <div className="assessments-stat">
-                <span className="assessments-stat-value">
-                  {dashboard.portfolio.tracksCompleted ?? 0}
-                </span>
-                <span className="assessments-stat-label">Problem Tracks</span>
-              </div>
-              <div className="assessments-stat">
-                <span className="assessments-stat-value">
-                  {dashboard.portfolio.assessmentsCompleted}
-                </span>
-                <span className="assessments-stat-label">Assessments</span>
-              </div>
-              <div className="assessments-stat">
-                <span className="assessments-stat-value">{verifiedTotal.toLocaleString()}</span>
-                <span className="assessments-stat-label">Verified</span>
-              </div>
-              <div className="assessments-stat">
-                <span className="assessments-stat-value">
-                  {(dashboard.portfolio.hearEligibleFaralins ?? 0).toLocaleString()}
-                </span>
-                <span className="assessments-stat-label">HEAR eligible</span>
-              </div>
-            </div>
+            <DashboardStatsBar
+              totalFaralins={dashboard.portfolio.totalFaralins}
+              estimatedBursaryGbp={dashboard.portfolio.estimatedBursaryGbp}
+              tracksCompleted={dashboard.portfolio.tracksCompleted ?? 0}
+              assessmentsCompleted={dashboard.portfolio.assessmentsCompleted}
+              verifiedTotal={verifiedTotal}
+              hearEligibleFaralins={dashboard.portfolio.hearEligibleFaralins ?? 0}
+            />
           ) : null}
         </div>
 

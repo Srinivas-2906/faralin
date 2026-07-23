@@ -3476,6 +3476,56 @@ a.nav-sign-in {
   grid-template-columns: repeat(5, 1fr);
 }
 
+.dashboard-page .dashboard-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.dashboard-page .dashboard-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  flex: 1 1 calc(33.333% - 0.5rem);
+  min-width: 0;
+  padding: 0.625rem 1rem;
+  background: #fff;
+  border: 1px solid rgba(0, 33, 71, 0.08);
+  border-radius: 8px;
+}
+
+.dashboard-page .dashboard-stat-value {
+  font-family: var(--font-serif), Raleway, system-ui, sans-serif;
+  font-size: var(--text-lg);
+  font-weight: 500;
+  line-height: 1.2;
+  color: var(--faralin-ink);
+  overflow-wrap: anywhere;
+}
+
+.dashboard-page .dashboard-stat-value--accent {
+  color: var(--faralin-copper);
+}
+
+.dashboard-page .dashboard-stat-label {
+  font-size: var(--text-2xs);
+  line-height: 1.35;
+  color: rgba(0, 33, 71, 0.55);
+  overflow-wrap: break-word;
+}
+
+@media (max-width: 1023px) {
+  .dashboard-page .dashboard-stat {
+    flex-basis: calc(50% - 0.5rem);
+  }
+}
+
+@media (max-width: 479px) {
+  .dashboard-page .dashboard-stat {
+    flex-basis: 100%;
+  }
+}
+
 .dashboard-stats-row .assessments-stats--compact .assessments-stat {
   padding: 0.4rem 0.35rem;
   gap: 0.05rem;

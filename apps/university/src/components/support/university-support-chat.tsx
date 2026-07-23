@@ -115,8 +115,9 @@ export function UniversitySupportChat() {
           </div>
         ) : null}
 
+        <div className="portal-stack">
         {session ? (
-          <Card style={{ marginBottom: 'var(--section-gap)' }}>
+          <Card>
             {!showLiveChat ? (
               <>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1rem' }}>
@@ -175,6 +176,7 @@ export function UniversitySupportChat() {
             />
           )}
         </Card>
+        </div>
 
         <p style={{ marginTop: '1rem' }}>
           <Link href="/dashboard">Back to dashboard</Link>

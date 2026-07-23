@@ -136,6 +136,7 @@ export default function StudentDetailPage() {
           }
         />
 
+        <div className="portal-stack">
         <div className="portal-student-detail-grid">
           <Card className="portal-student-detail-summary">
             <h2 className="section-title">Summary</h2>
@@ -201,7 +202,7 @@ export default function StudentDetailPage() {
           </Card>
         </div>
 
-        <Card style={{ marginBottom: 'var(--section-gap)' }}>
+        <Card>
           <h2 className="section-title">Assessments completed</h2>
           {assessmentsCompleted.length === 0 ? (
             <EmptyState compact message="No completed assessments yet." />
@@ -262,6 +263,7 @@ export default function StudentDetailPage() {
             </ul>
           )}
         </Card>
+        </div>
       </div>
     </div>
   );

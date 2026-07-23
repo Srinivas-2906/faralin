@@ -85,8 +85,8 @@ export default function AssessmentLibraryPage() {
           }
         />
 
-        <Card style={{ marginBottom: 'var(--section-gap)' }}>
-          <div className="portal-toolbar">
+        <Card>
+          <div className="portal-card-toolbar">
             <label className="portal-filter">
               Category
               <select
@@ -103,9 +103,7 @@ export default function AssessmentLibraryPage() {
               </select>
             </label>
           </div>
-        </Card>
 
-        <Card>
           {error ? (
             <EmptyState compact message={error} />
           ) : filtered.length === 0 ? (

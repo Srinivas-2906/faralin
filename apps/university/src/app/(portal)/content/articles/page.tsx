@@ -137,7 +137,8 @@ export default function ArticlesPage() {
         )}
 
         {showForm && (
-          <Card style={{ marginBottom: 'var(--section-gap)' }}>
+          <div className="portal-stack">
+          <Card>
             <form className="form-stack" onSubmit={handleCreate}>
               <div className="form-row">
                 <label htmlFor="article-type">Type</label>
@@ -199,6 +200,7 @@ export default function ArticlesPage() {
               <Button type="submit">Create article</Button>
             </form>
           </Card>
+          </div>
         )}
 
         <Card>

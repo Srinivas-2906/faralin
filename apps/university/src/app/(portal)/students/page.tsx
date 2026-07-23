@@ -108,8 +108,8 @@ export default function StudentsPage() {
           }
         />
 
-        <Card style={{ marginBottom: 'var(--section-gap)' }}>
-          <div className="portal-toolbar">
+        <Card>
+          <div className="portal-card-toolbar">
             <label className="portal-filter">
               Pipeline
               <select
@@ -140,9 +140,7 @@ export default function StudentsPage() {
               </select>
             </label>
           </div>
-        </Card>
 
-        <Card>
           {error ? (
             <EmptyState compact message={error} />
           ) : sortedStudents.length === 0 ? (

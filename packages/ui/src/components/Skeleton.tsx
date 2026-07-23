@@ -74,10 +74,10 @@ export function DashboardSkeleton() {
       <div className="container-wide">
         <div className="dashboard-stats-row" aria-hidden="true">
           <Skeleton variant="title" width="12rem" height="1.5rem" className="dashboard-greeting" />
-          <div className="assessments-stats">
+          <div className="dashboard-stats">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="assessments-stat">
-                <Skeleton variant="title" width="3rem" style={{ marginBottom: '0.35rem' }} />
+              <div key={i} className="dashboard-stat">
+                <Skeleton variant="title" width="3rem" style={{ marginBottom: '0.25rem' }} />
                 <Skeleton variant="text" width="4.5rem" />
               </div>
             ))}

@@ -139,7 +139,8 @@ export default function EventsPage() {
         )}
 
         {showForm && (
-          <Card style={{ marginBottom: 'var(--section-gap)' }}>
+          <div className="portal-stack">
+          <Card>
             <form className="form-stack" onSubmit={handleCreate}>
               <div className="form-row">
                 <label htmlFor="event-type">Type</label>
@@ -212,6 +213,7 @@ export default function EventsPage() {
               <Button type="submit">Create event</Button>
             </form>
           </Card>
+          </div>
         )}
 
         <Card>
