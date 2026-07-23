@@ -5,6 +5,7 @@ import { PrismaService } from '../prisma/prisma.service';
 export type StaffStudentRow = ReturnType<typeof mapStudentWithProfile> & {
   studentProfileId: string;
   totalFaralins: number;
+  verifiedFaralins: number;
   subjectNames: string[];
   performanceBand: 'developing' | 'steady' | 'strong' | 'exceptional';
   applicationStatus: ApplicationStatus | 'FOLLOWER';
@@ -25,7 +26,7 @@ export async function buildStaffStudentRoster(
   prisma: PrismaService,
   universityId: string,
 ): Promise<StaffStudentRow[]> {
-  const [selections, faralinTotals] = await Promise.all([
+  const [selections, faralinTotals, verifiedTotals] = await Promise.all([
     prisma.studentUniversitySelection.findMany({
       where: { universityId },
       include: {
@@ -46,15 +47,28 @@ export async function buildStaffStudentRoster(
       where: { universityId },
       _sum: { amount: true },
     }),
+    prisma.faralinTransaction.groupBy({
+      by: ['studentProfileId'],
+      where: {
+        universityId,
+        trustLevel: { not: 'PRACTICE' },
+        status: { in: ['CONDITIONAL', 'CONFIRMED'] },
+      },
+      _sum: { amount: true },
+    }),
   ]);
 
   const faralinByStudent = Object.fromEntries(
     faralinTotals.map((row) => [row.studentProfileId, row._sum.amount ?? 0]),
   );
+  const verifiedByStudent = Object.fromEntries(
+    verifiedTotals.map((row) => [row.studentProfileId, row._sum.amount ?? 0]),
+  );
 
   return selections.map((selection) => {
     const profile = selection.studentProfile;
     const totalFaralins = faralinByStudent[profile.id] ?? 0;
+    const verifiedFaralins = verifiedByStudent[profile.id] ?? 0;
     const application = profile.applications[0];
     const mapped = mapStudentWithProfile(profile, {
       subjectSlugs: profile.subjects.map((s) => s.subject.slug),
@@ -66,6 +80,7 @@ export async function buildStaffStudentRoster(
       ...mapped,
       studentProfileId: profile.id,
       totalFaralins,
+      verifiedFaralins,
       subjectNames: profile.subjects.map((s) => s.subject.name),
       performanceBand: getPerformanceBand(totalFaralins, profile.assessmentAttempts.length),
       applicationStatus: application?.status ?? ApplicationStatus.FOLLOWER,

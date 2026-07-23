@@ -39,6 +39,16 @@ export class UniversitiesController {
     return this.universities.getStaffStudents(user.universityId!);
   }
 
+  @Get('staff/students/:anonymousId')
+  @Roles(UserRole.UNIVERSITY_STAFF)
+  getStaffStudentDetail(
+    @CurrentUser() user: AuthUser,
+    @Param('anonymousId') anonymousId: string,
+  ) {
+    this.universities.requireUniversityAccess(user.universityId, user.universityId!);
+    return this.universities.getStaffStudentDetail(user.universityId!, anonymousId);
+  }
+
   @Get('staff/dashboard')
   @Roles(UserRole.UNIVERSITY_STAFF)
   getStaffDashboard(@CurrentUser() user: AuthUser) {

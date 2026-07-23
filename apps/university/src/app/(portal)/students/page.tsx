@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { Badge, Button, Card, EmptyState, PageHeader, ResponsiveTable, SkeletonTable } from '@faralin/ui';
 import { AccessDenied } from '@/components/access-denied';
@@ -12,6 +13,7 @@ interface StudentRow {
   subjectNames: string[];
   assessmentsCompleted: number;
   totalFaralins: number;
+  verifiedFaralins: number;
   performanceBand: string;
   applicationStatus: string;
   firstName?: string;
@@ -148,7 +150,15 @@ export default function StudentsPage() {
           ) : (
             <ResponsiveTable<StudentRow>
               columns={[
-                { key: 'id', header: 'Anonymous ID', render: (s) => s.anonymousId },
+                {
+                  key: 'id',
+                  header: 'Anonymous ID',
+                  render: (s) => (
+                    <Link href={`/students/${s.anonymousId}`} className="portal-student-link">
+                      {s.anonymousId}
+                    </Link>
+                  ),
+                },
                 {
                   key: 'subjects',
                   header: 'Subjects',
@@ -159,6 +169,11 @@ export default function StudentsPage() {
                   key: 'faralins',
                   header: 'Faralins',
                   render: (s) => s.totalFaralins.toLocaleString(),
+                },
+                {
+                  key: 'verified',
+                  header: 'Verified',
+                  render: (s) => s.verifiedFaralins.toLocaleString(),
                 },
                 {
                   key: 'band',

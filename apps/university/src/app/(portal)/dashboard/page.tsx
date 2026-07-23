@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import {
   Badge,
   Button,
@@ -38,6 +39,14 @@ interface AssessmentBreakdownRow {
   completionRate: number;
 }
 
+interface EngagementMetrics {
+  totalRegistered: number;
+  activeThisWeek: number;
+  activeThisMonth: number;
+  engagementRatePercent: number;
+  activitiesPerActiveStudent: number;
+}
+
 interface DashboardData {
   university: { name: string };
   funnel: {
@@ -57,6 +66,7 @@ interface DashboardData {
   }>;
   estimatedFutureBursaryGbp: number;
   faralinDistribution: FaralinDistribution;
+  engagement: EngagementMetrics;
   assessmentSummary: AssessmentSummary;
   assessmentBreakdown: AssessmentBreakdownRow[];
   eventRegistrations: number;
@@ -128,6 +138,7 @@ export default function DashboardPage() {
     subjectInterests,
     topPerformers,
     faralinDistribution,
+    engagement,
     assessmentSummary,
     assessmentBreakdown,
     eventRegistrations,
@@ -160,6 +171,25 @@ export default function DashboardPage() {
             </div>
           }
         />
+
+        <h2 className="section-title portal-section-heading">Student engagement</h2>
+        <div className="stat-grid portal-stat-grid portal-engagement-grid">
+          <StatCard label="Registered followers" value={engagement.totalRegistered.toLocaleString()} />
+          <StatCard label="Active this week" value={engagement.activeThisWeek.toLocaleString()} />
+          <StatCard label="Active this month" value={engagement.activeThisMonth.toLocaleString()} />
+          <StatCard
+            label="Engagement rate"
+            value={`${engagement.engagementRatePercent}%`}
+          />
+          <StatCard
+            label="Activities per active student"
+            value={engagement.activitiesPerActiveStudent.toLocaleString()}
+          />
+        </div>
+        <p className="portal-faralin-disclaimer">
+          Active = completed assessment, Faralin earn, problem track, or event registration this
+          period.
+        </p>
 
         <h2 className="section-title portal-section-heading">Faralin distribution</h2>
         <div className="stat-grid portal-stat-grid portal-faralin-grid">
@@ -304,7 +334,11 @@ export default function DashboardPage() {
                 performanceBand: string;
               }>
                 columns={[
-                  { key: 'id', header: 'Anonymous ID', render: (s) => s.anonymousId },
+                  { key: 'id', header: 'Anonymous ID', render: (s) => (
+                    <Link href={`/students/${s.anonymousId}`} className="portal-student-link">
+                      {s.anonymousId}
+                    </Link>
+                  ) },
                   {
                     key: 'faralins',
                     header: 'Faralins',

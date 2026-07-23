@@ -482,6 +482,117 @@
   resize: vertical;
 }
 
+.portal-student-link {
+  color: var(--faralin-copper, #b87333);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.portal-student-link:hover {
+  text-decoration: underline;
+}
+
+.portal-engagement-grid {
+  margin-bottom: 0.5rem;
+}
+
+.portal-student-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--section-gap);
+  margin-bottom: var(--section-gap);
+}
+
+.portal-detail-list {
+  display: grid;
+  gap: 0.875rem;
+  margin: 0;
+}
+
+.portal-detail-list div {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.portal-detail-list dt {
+  font-size: 0.8125rem;
+  color: var(--faralin-muted);
+}
+
+.portal-detail-list dd {
+  margin: 0;
+  font-weight: 500;
+}
+
+.portal-student-faralin-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.portal-detail-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.portal-detail-stat-label {
+  font-size: 0.8125rem;
+  color: var(--faralin-muted);
+}
+
+.portal-activity-timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+}
+
+.portal-activity-timeline li {
+  display: grid;
+  grid-template-columns: 7rem 1fr auto;
+  gap: 0.75rem;
+  align-items: start;
+  padding-bottom: 0.875rem;
+  border-bottom: 1px solid var(--faralin-border, rgba(15, 23, 42, 0.08));
+}
+
+.portal-activity-timeline li:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.portal-activity-type {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--faralin-muted);
+}
+
+.portal-activity-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.portal-activity-time {
+  font-size: 0.8125rem;
+  color: var(--faralin-muted);
+  white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  .portal-student-detail-grid,
+  .portal-student-faralin-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .portal-activity-timeline li {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 768px) {
   .portal-mobile-header {
     display: flex;

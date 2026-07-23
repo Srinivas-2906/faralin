@@ -7,7 +7,9 @@ import {
 } from './staff-roster';
 import {
   buildAssessmentBreakdown,
+  buildEngagementMetrics,
   buildFaralinDistribution,
+  buildStaffStudentDetail,
 } from './staff-analytics';
 
 @Injectable()
@@ -124,7 +126,7 @@ export class UniversitiesService {
 
     const followerStudentIds = students.map((s) => s.studentProfileId);
 
-    const [faralinDistribution, assessmentAnalytics] = await Promise.all([
+    const [faralinDistribution, assessmentAnalytics, engagement] = await Promise.all([
       buildFaralinDistribution(
         this.prisma,
         universityId,
@@ -132,6 +134,7 @@ export class UniversitiesService {
         followerCount,
       ),
       buildAssessmentBreakdown(this.prisma, universityId, followerStudentIds),
+      buildEngagementMetrics(this.prisma, universityId, followerStudentIds),
     ]);
 
     const estimatedFutureBursaryGbp = faralinDistribution.outstandingLiabilityGbp;
@@ -155,10 +158,29 @@ export class UniversitiesService {
       contentEngagement: { articles, events },
       estimatedFutureBursaryGbp,
       faralinDistribution,
+      engagement,
       assessmentSummary: assessmentAnalytics.summary,
       assessmentBreakdown: assessmentAnalytics.breakdown,
       students: students.slice(0, 50),
     };
+  }
+
+  async getStaffStudentDetail(universityId: string, anonymousId: string) {
+    const university = await this.prisma.university.findUnique({
+      where: { id: universityId },
+      include: { conversionRule: true },
+    });
+    if (!university) throw new NotFoundException('University not found');
+
+    const detail = await buildStaffStudentDetail(
+      this.prisma,
+      universityId,
+      anonymousId,
+      university.conversionRule,
+    );
+    if (!detail) throw new NotFoundException('Student not found or not following this university');
+
+    return { university, ...detail };
   }
 
   requireUniversityAccess(userUniversityId: string | undefined, targetUniversityId: string) {
