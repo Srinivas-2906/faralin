@@ -16,6 +16,7 @@ export function AssessmentsCatalog({ assessments }: { assessments: AssessmentLis
   const trust = searchParams.get('trust') ?? '';
   const difficulty = searchParams.get('difficulty') ?? '';
   const subject = searchParams.get('subject') ?? '';
+  const category = searchParams.get('category') ?? '';
   const subjectsParam = searchParams.get('subjects') ?? '';
   const subjectSlugs = subjectsParam
     .split(',')
@@ -24,13 +25,14 @@ export function AssessmentsCatalog({ assessments }: { assessments: AssessmentLis
 
   const filtered = useMemo(() => {
     return assessments.filter((a) => {
+      if (category && a.category !== category) return false;
       if (subjectSlugs.length > 0 && !subjectSlugs.includes(a.subject.slug)) return false;
       if (trust && a.trustLevel !== trust) return false;
       if (difficulty && a.difficulty !== difficulty) return false;
       if (subject && a.subject.slug !== subject) return false;
       return true;
     });
-  }, [assessments, trust, difficulty, subject, subjectsParam]);
+  }, [assessments, trust, difficulty, subject, category, subjectsParam]);
 
   const rows = useMemo(() => chunk(filtered, columns), [filtered, columns]);
 

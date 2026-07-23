@@ -1,7 +1,8 @@
 import { Suspense } from 'react';
 import { AssessmentsCatalogInsight } from '@/components/catalog-insight';
 import { HomeWideBanner } from '@/components/home-wide-banner';
-import { AssessmentsCatalog, type AssessmentListItem } from '@/components/assessments-catalog';
+import { AssessmentsCatalogLoader } from '@/components/assessments-catalog-loader';
+import type { AssessmentListItem } from '@/components/assessments-catalog';
 import { AssessmentsFilters } from '@/components/assessments-filters';
 import { getSubjectImage } from '@/lib/media';
 
@@ -50,7 +51,7 @@ export default async function AssessmentsPage() {
           </div>
 
           <Suspense fallback={null}>
-            <AssessmentsCatalog assessments={assessments} />
+            <AssessmentsCatalogLoader assessments={assessments} />
           </Suspense>
         </div>
       </div>

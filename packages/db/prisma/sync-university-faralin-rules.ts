@@ -18,6 +18,7 @@ const subjectDefs = [
   { slug: 'computer-science', name: 'Computer Science' },
   { slug: 'psychology', name: 'Psychology' },
   { slug: 'geography', name: 'Geography' },
+  { slug: 'co-curricular', name: 'Co-curricular Skills' },
 ];
 
 async function upsertUniversity(def: (typeof universityDefs)[number]) {

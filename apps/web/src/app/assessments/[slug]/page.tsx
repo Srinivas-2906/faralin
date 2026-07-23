@@ -40,6 +40,13 @@ interface Assessment {
   isTimed: boolean;
   questions: Question[];
   subject?: { name: string; slug: string };
+  enabledForStudent?: boolean;
+  universityRewards?: Array<{
+    slug: string;
+    shortName: string;
+    enabled: boolean;
+    baseAmount: number | null;
+  }>;
 }
 
 function formatCountdown(seconds: number) {
@@ -63,6 +70,7 @@ export default function AssessmentDetailPage() {
     accuracyPercent: number;
     score: number;
     maxScore: number;
+    faralinsEarned?: Array<{ universitySlug: string; universityName: string; amount: number }>;
   } | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -77,12 +85,20 @@ export default function AssessmentDetailPage() {
   currentQuestionRef.current = currentQuestion;
 
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'}/api/assessments/${slug}`)
-      .then((r) => r.json())
-      .then(setAssessment)
-      .catch(() => setError('Failed to load assessment'))
-      .finally(() => setLoading(false));
-  }, [slug]);
+    (async () => {
+      try {
+        const token = isSignedIn ? await getToken() : undefined;
+        const data = await apiFetch<Assessment>(`/assessments/${slug}`, {
+          token: token ?? undefined,
+        });
+        setAssessment(data);
+      } catch {
+        setError('Failed to load assessment');
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [slug, isSignedIn, getToken]);
 
   const submitAssessment = useCallback(async () => {
     if (!attemptId || !assessment || submitting) return;
@@ -94,6 +110,7 @@ export default function AssessmentDetailPage() {
         accuracyPercent: number;
         score: number;
         maxScore: number;
+        faralinsEarned?: Array<{ universitySlug: string; universityName: string; amount: number }>;
       }>(`/assessments/attempts/${attemptId}/submit`, {
         method: 'POST',
         token: token ?? undefined,
@@ -109,6 +126,7 @@ export default function AssessmentDetailPage() {
         accuracyPercent: Number(completed.accuracyPercent),
         score: Number(completed.score),
         maxScore: Number(completed.maxScore),
+        faralinsEarned: completed.faralinsEarned,
       });
       setPhase('done');
     } catch (e) {
@@ -246,6 +264,24 @@ export default function AssessmentDetailPage() {
               </p>
             </header>
 
+            {assessment.universityRewards && assessment.universityRewards.length > 0 ? (
+              <div className="assessment-university-rewards">
+                <p className="assessment-preview-eyebrow">Rewards at your universities</p>
+                <ul>
+                  {assessment.universityRewards.map((reward) => (
+                    <li key={reward.slug}>
+                      {reward.shortName}:{' '}
+                      {reward.enabled
+                        ? reward.baseAmount != null
+                          ? `${reward.baseAmount} Faralins base`
+                          : 'Enabled'
+                        : 'Not offered'}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+
             <p className="disclaimer assessment-preview-timing">
               Each question allows {QUESTION_TIME_SECONDS} seconds. Unanswered questions are skipped
               automatically.
@@ -257,9 +293,15 @@ export default function AssessmentDetailPage() {
 
             {error && <Alert className="assessment-preview-alert">{error}</Alert>}
 
-            <Button block onClick={startAssessment}>
-              Begin assessment
-            </Button>
+            {isSignedIn && assessment.enabledForStudent === false ? (
+              <Alert>
+                This assessment is not offered by any of your selected universities.
+              </Alert>
+            ) : (
+              <Button block onClick={startAssessment}>
+                Begin assessment
+              </Button>
+            )}
           </Card>
         )}
 
@@ -375,6 +417,20 @@ export default function AssessmentDetailPage() {
             <p className="text-muted" style={{ marginBottom: '1.5rem' }}>
               {result.score} / {result.maxScore} points
             </p>
+            {result.faralinsEarned && result.faralinsEarned.length > 0 ? (
+              <div style={{ marginBottom: '1.5rem' }}>
+                <p className="text-muted" style={{ marginBottom: '0.5rem' }}>
+                  Faralins earned
+                </p>
+                <ul>
+                  {result.faralinsEarned.map((entry) => (
+                    <li key={entry.universitySlug}>
+                      {entry.universityName}: {entry.amount.toLocaleString()} Faralins
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
             <div className="cluster" style={{ justifyContent: 'center' }}>
               <Link href="/dashboard" className="btn btn-primary">
                 View dashboard

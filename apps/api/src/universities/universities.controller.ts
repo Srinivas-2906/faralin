@@ -1,4 +1,4 @@
-import { Controller, Get, Param } from '@nestjs/common';
+import { Controller, Get, Param, Patch, Body } from '@nestjs/common';
 import { UserRole } from '@faralin/db';
 import { Public } from '../auth/public.decorator';
 import { Roles } from '../auth/roles.decorator';
@@ -47,6 +47,60 @@ export class UniversitiesController {
   ) {
     this.universities.requireUniversityAccess(user.universityId, user.universityId!);
     return this.universities.getStaffStudentDetail(user.universityId!, anonymousId);
+  }
+
+  @Get('staff/assessments/library')
+  @Roles(UserRole.UNIVERSITY_STAFF)
+  getStaffAssessmentLibrary(@CurrentUser() user: AuthUser) {
+    this.universities.requireUniversityAccess(user.universityId, user.universityId!);
+    return this.universities.getStaffAssessmentLibrary(user.universityId!);
+  }
+
+  @Get('staff/assessments/active')
+  @Roles(UserRole.UNIVERSITY_STAFF)
+  getStaffActiveAssessments(@CurrentUser() user: AuthUser) {
+    this.universities.requireUniversityAccess(user.universityId, user.universityId!);
+    return this.universities.getStaffActiveAssessments(user.universityId!);
+  }
+
+  @Patch('staff/assessments/:assessmentId/config')
+  @Roles(UserRole.UNIVERSITY_STAFF)
+  patchStaffAssessmentConfig(
+    @CurrentUser() user: AuthUser,
+    @Param('assessmentId') assessmentId: string,
+    @Body() body: Record<string, unknown>,
+  ) {
+    this.universities.requireUniversityAccess(user.universityId, user.universityId!);
+    return this.universities.patchStaffAssessmentConfig(user.universityId!, assessmentId, body);
+  }
+
+  @Patch('staff/assessments/:assessmentId/reward')
+  @Roles(UserRole.UNIVERSITY_STAFF)
+  patchStaffAssessmentReward(
+    @CurrentUser() user: AuthUser,
+    @Param('assessmentId') assessmentId: string,
+    @Body() body: { baseAmount: number; scoreMultiplier?: number; improvementBonus?: number },
+  ) {
+    this.universities.requireUniversityAccess(user.universityId, user.universityId!);
+    return this.universities.patchStaffAssessmentReward(user.universityId!, assessmentId, body);
+  }
+
+  @Get('staff/tracks/library')
+  @Roles(UserRole.UNIVERSITY_STAFF)
+  getStaffTrackLibrary(@CurrentUser() user: AuthUser) {
+    this.universities.requireUniversityAccess(user.universityId, user.universityId!);
+    return this.universities.getStaffTrackLibrary(user.universityId!);
+  }
+
+  @Patch('staff/tracks/:trackId/config')
+  @Roles(UserRole.UNIVERSITY_STAFF)
+  patchStaffTrackConfig(
+    @CurrentUser() user: AuthUser,
+    @Param('trackId') trackId: string,
+    @Body() body: { enabled?: boolean; isCompulsory?: boolean },
+  ) {
+    this.universities.requireUniversityAccess(user.universityId, user.universityId!);
+    return this.universities.patchStaffTrackConfig(user.universityId!, trackId, body);
   }
 
   @Get('staff/dashboard')

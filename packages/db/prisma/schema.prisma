@@ -67,6 +67,18 @@ enum AssessmentDifficulty {
   ADVANCED
 }
 
+enum AssessmentCategory {
+  EMPLOYABILITY
+  ACADEMIC_SKILLS
+  FINANCIAL_WELLBEING
+  MENTAL_WELLBEING
+  DIGITAL_SKILLS
+  SUSTAINABILITY
+  DIVERSITY_INCLUSION
+  STUDENT_LIFE
+  ACADEMIC_SUBJECT
+}
+
 enum FaralinTrustLevel {
   PRACTICE
   VERIFIED
@@ -257,6 +269,8 @@ model University {
   staff               UniversityStaffProfile[]
   partnership         UniversityPartnership?
   supportTickets      SupportTicket[]
+  assessmentConfigs   UniversityAssessmentConfig[]
+  problemTrackConfigs UniversityProblemTrackConfig[]
 }
 
 model StudentUniversitySelection {
@@ -311,13 +325,18 @@ model Assessment {
   isActive            Boolean              @default(true)
   estimatedFaralinMin Int
   estimatedFaralinMax Int
+  category            AssessmentCategory   @default(ACADEMIC_SUBJECT)
+  seriesSlug          String?
+  levelOrder          Int?
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt
 
-  subject   Subject              @relation(fields: [subjectId], references: [id])
-  questions AssessmentQuestion[]
-  attempts  AssessmentAttempt[]
-  faralinRules FaralinRule[]
+  subject              Subject                        @relation(fields: [subjectId], references: [id])
+  questions            AssessmentQuestion[]
+  attempts             AssessmentAttempt[]
+  faralinRules         FaralinRule[]
+  universityConfigs    UniversityAssessmentConfig[]
+  unlocksForConfigs    UniversityAssessmentConfig[]   @relation("AssessmentUnlock")
 }
 
 model AssessmentQuestion {
@@ -407,6 +426,7 @@ model ProblemTrack {
   subject  Subject               @relation(fields: [subjectId], references: [id])
   attempts ProblemTrackAttempt[]
   faralinRules FaralinRule[]
+  universityConfigs UniversityProblemTrackConfig[]
 
   @@index([subjectId, difficultyBand])
 }
@@ -511,6 +531,46 @@ model FaralinRule {
   subject      Subject?      @relation(fields: [subjectId], references: [id])
 
   @@index([universityId, isActive])
+}
+
+model UniversityAssessmentConfig {
+  id                        String    @id @default(cuid())
+  universityId              String
+  assessmentId              String
+  enabled                   Boolean   @default(false)
+  isCompulsory              Boolean   @default(false)
+  yearGroups                Int[]     @default([])
+  availableFrom             DateTime?
+  availableTo               DateTime?
+  affectsBursaryEligibility Boolean   @default(true)
+  bonusRules                Json?
+  unlocksAfterAssessmentId  String?
+  createdAt                 DateTime  @default(now())
+  updatedAt                 DateTime  @updatedAt
+
+  university   University  @relation(fields: [universityId], references: [id], onDelete: Cascade)
+  assessment   Assessment  @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  unlocksAfter Assessment? @relation("AssessmentUnlock", fields: [unlocksAfterAssessmentId], references: [id])
+
+  @@unique([universityId, assessmentId])
+  @@index([universityId, enabled])
+}
+
+model UniversityProblemTrackConfig {
+  id             String  @id @default(cuid())
+  universityId   String
+  problemTrackId String
+  enabled        Boolean @default(false)
+  isCompulsory   Boolean @default(false)
+  bonusRules     Json?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  university   University   @relation(fields: [universityId], references: [id], onDelete: Cascade)
+  problemTrack ProblemTrack @relation(fields: [problemTrackId], references: [id], onDelete: Cascade)
+
+  @@unique([universityId, problemTrackId])
+  @@index([universityId, enabled])
 }
 
 model FaralinTransaction {

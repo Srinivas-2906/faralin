@@ -15,6 +15,10 @@ import { FaralinEngineService } from '../faralin/faralin-engine.service';
 import { AiTutorService } from './ai-tutor.service';
 import { RubricScorerService } from './rubric-scorer.service';
 import { TrustService } from './trust.service';
+import {
+  getStudentEnabledUniversityIds,
+  isTrackEnabledForStudent,
+} from '../universities/staff-assessment-config';
 
 function parseSections(json: unknown): ProblemTrackSection[] {
   return json as unknown as ProblemTrackSection[];
@@ -50,6 +54,50 @@ export class ProblemTracksService {
     });
   }
 
+  async listTracksForStudent(studentProfileId: string, difficulty?: string) {
+    const universityIds = await getStudentEnabledUniversityIds(this.prisma, studentProfileId);
+    if (universityIds.length === 0) return [];
+
+    const enabledConfigs = await this.prisma.universityProblemTrackConfig.findMany({
+      where: { universityId: { in: universityIds }, enabled: true },
+      include: {
+        problemTrack: { include: { subject: true } },
+        university: { select: { id: true, slug: true, shortName: true, name: true } },
+      },
+    });
+
+    const byTrack = new Map<string, Record<string, unknown>>();
+    for (const config of enabledConfigs) {
+      if (difficulty && config.problemTrack.difficultyBand !== difficulty) continue;
+      const track = config.problemTrack;
+      if (!track.isActive) continue;
+
+      const existing = byTrack.get(track.id);
+      const uniEntry = {
+        universityId: config.university.id,
+        slug: config.university.slug,
+        shortName: config.university.shortName ?? config.university.name,
+      };
+
+      if (existing) {
+        const unis = existing.availableUniversities as typeof uniEntry[];
+        if (!unis.some((u) => u.universityId === uniEntry.universityId)) {
+          unis.push(uniEntry);
+        }
+        continue;
+      }
+
+      byTrack.set(track.id, {
+        ...track,
+        availableUniversities: [uniEntry],
+      });
+    }
+
+    return Array.from(byTrack.values()).sort((a, b) =>
+      String(a.title).localeCompare(String(b.title)),
+    );
+  }
+
   async getTrack(slug: string, includeSections = true) {
     const track = await this.prisma.problemTrack.findUnique({
       where: { slug },
@@ -76,6 +124,13 @@ export class ProblemTracksService {
   async startAttempt(studentProfileId: string, slug: string) {
     const track = await this.prisma.problemTrack.findUnique({ where: { slug } });
     if (!track || !track.isActive) throw new NotFoundException('Problem track not found');
+
+    const enabled = await isTrackEnabledForStudent(this.prisma, studentProfileId, track.id);
+    if (!enabled) {
+      throw new ForbiddenException(
+        'This problem track is not offered by any of your selected universities.',
+      );
+    }
 
     const inProgress = await this.prisma.problemTrackAttempt.findFirst({
       where: {

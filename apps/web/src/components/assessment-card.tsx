@@ -17,7 +17,10 @@ export interface AssessmentListItem {
   estimatedFaralinMax: number;
   durationMinutes: number | null;
   isTimed: boolean;
+  category?: string;
   subject: { name: string; slug: string };
+  availableUniversities?: Array<{ universityId: string; slug: string; shortName: string }>;
+  previewReward?: number | null;
 }
 
 export function trustBadgeVariant(trustLevel: AssessmentListItem['trustLevel']) {
@@ -59,8 +62,15 @@ export function AssessmentCard({
         <div className="media-card-eyebrow">{assessment.subject.name}</div>
         <div className="media-card-title">{assessment.title}</div>
         <div className="media-card-meta">
-          {`${assessment.estimatedFaralinMin}–${assessment.estimatedFaralinMax} Faralins`}
+          {assessment.previewReward != null
+            ? `From ${assessment.previewReward} Faralins`
+            : `${assessment.estimatedFaralinMin}–${assessment.estimatedFaralinMax} Faralins`}
         </div>
+        {assessment.availableUniversities && assessment.availableUniversities.length > 0 ? (
+          <div className="media-card-meta assessment-availability">
+            Available at {assessment.availableUniversities.map((u) => u.shortName).join(', ')}
+          </div>
+        ) : null}
       </div>
     </a>
   );

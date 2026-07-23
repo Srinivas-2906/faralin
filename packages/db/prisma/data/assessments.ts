@@ -23,7 +23,8 @@ export type AssessmentSeedDef = {
     | 'economics'
     | 'computer-science'
     | 'psychology'
-    | 'geography';
+    | 'geography'
+    | 'co-curricular';
   difficulty: AssessmentDifficulty;
   trustLevel: FaralinTrustLevel;
   estimatedFaralinMin: number;

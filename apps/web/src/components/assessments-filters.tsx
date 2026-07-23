@@ -18,6 +18,19 @@ const DIFFICULTY_FILTERS = [
   { value: 'ADVANCED', label: 'Advanced' },
 ] as const;
 
+const CATEGORY_FILTERS = [
+  { value: '', label: 'All categories' },
+  { value: 'EMPLOYABILITY', label: 'Employability' },
+  { value: 'ACADEMIC_SKILLS', label: 'Academic Skills' },
+  { value: 'FINANCIAL_WELLBEING', label: 'Financial Wellbeing' },
+  { value: 'MENTAL_WELLBEING', label: 'Mental Wellbeing' },
+  { value: 'DIGITAL_SKILLS', label: 'Digital Skills' },
+  { value: 'SUSTAINABILITY', label: 'Sustainability' },
+  { value: 'DIVERSITY_INCLUSION', label: 'Diversity & Inclusion' },
+  { value: 'STUDENT_LIFE', label: 'Student Life' },
+  { value: 'ACADEMIC_SUBJECT', label: 'Academic Subject' },
+] as const;
+
 interface AssessmentsFiltersProps {
   subjects: Array<{ slug: string; name: string }>;
 }
@@ -29,18 +42,19 @@ export function AssessmentsFilters({ subjects }: AssessmentsFiltersProps) {
   const trust = searchParams.get('trust') ?? '';
   const difficulty = searchParams.get('difficulty') ?? '';
   const subject = searchParams.get('subject') ?? '';
+  const category = searchParams.get('category') ?? '';
 
-  const hasActiveFilters = Boolean(trust || difficulty || subject);
+  const hasActiveFilters = Boolean(trust || difficulty || subject || category);
   const activeFilterCount = useMemo(
-    () => [trust, difficulty, subject].filter(Boolean).length,
-    [trust, difficulty, subject],
+    () => [trust, difficulty, subject, category].filter(Boolean).length,
+    [trust, difficulty, subject, category],
   );
 
   const [filtersOpen, setFiltersOpen] = useState(false);
   const filterRef = useRef<HTMLDivElement>(null);
 
   const setFilter = useCallback(
-    (key: 'trust' | 'difficulty' | 'subject', value: string) => {
+    (key: 'trust' | 'difficulty' | 'subject' | 'category', value: string) => {
       const params = new URLSearchParams(searchParams.toString());
       if (value) {
         params.set(key, value);
@@ -121,6 +135,21 @@ export function AssessmentsFilters({ subjects }: AssessmentsFiltersProps) {
                     key={f.value || 'all-difficulty'}
                     selected={difficulty === f.value}
                     onClick={() => setFilter('difficulty', f.value)}
+                  >
+                    {f.label}
+                  </Chip>
+                ))}
+              </div>
+            </div>
+
+            <div className="assessments-filters-head">
+              <p className="assessments-filters-label">Category</p>
+              <div className="cluster-sm assessments-filter-chips" role="group" aria-label="Filter by category">
+                {CATEGORY_FILTERS.map((f) => (
+                  <Chip
+                    key={f.value || 'all-category'}
+                    selected={category === f.value}
+                    onClick={() => setFilter('category', f.value)}
                   >
                     {f.label}
                   </Chip>

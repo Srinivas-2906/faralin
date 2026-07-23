@@ -3,8 +3,10 @@ import {
   UserRole,
   ArticleType,
   EventType,
+  AssessmentCategory,
 } from '@prisma/client';
 import { assessmentDefs } from './data/assessments';
+import { assessmentTemplateDefs } from './data/assessment-templates';
 import { universityDefs } from './data/universities';
 import { buildAssessmentRule, getTierEconomics } from '@faralin/types';
 import { courseDefs, getLessonVideoUrl } from './data/courses';
@@ -38,6 +40,8 @@ async function main() {
   await prisma.assessmentAttempt.deleteMany();
   await prisma.assessmentQuestion.deleteMany();
   await prisma.faralinRule.deleteMany();
+  await prisma.universityProblemTrackConfig.deleteMany();
+  await prisma.universityAssessmentConfig.deleteMany();
   await prisma.application.deleteMany();
   await prisma.event.deleteMany();
   await prisma.article.deleteMany();
@@ -66,6 +70,7 @@ async function main() {
       { slug: 'computer-science', name: 'Computer Science' },
       { slug: 'psychology', name: 'Psychology' },
       { slug: 'geography', name: 'Geography' },
+      { slug: 'co-curricular', name: 'Co-curricular Skills' },
     ].map((s) => prisma.subject.create({ data: s })),
   );
 
@@ -228,6 +233,7 @@ async function main() {
     const assessment = await prisma.assessment.create({
       data: {
         ...assessmentData,
+        category: AssessmentCategory.ACADEMIC_SUBJECT,
         subjectId: subjectMap[subjectSlug].id,
       },
     });
@@ -254,6 +260,57 @@ async function main() {
           universityId: university.id,
           assessmentId: assessment.id,
           ...assessmentRule,
+        },
+      });
+      await prisma.universityAssessmentConfig.create({
+        data: {
+          universityId: university.id,
+          assessmentId: assessment.id,
+          enabled: true,
+        },
+      });
+    }
+  }
+
+  for (const def of assessmentTemplateDefs) {
+    const { questions, subjectSlug: _subjectSlug, category, ...assessmentData } = def;
+    const assessment = await prisma.assessment.create({
+      data: {
+        ...assessmentData,
+        category,
+        subjectId: subjectMap['co-curricular'].id,
+      },
+    });
+
+    for (let i = 0; i < questions.length; i++) {
+      const q = questions[i];
+      await prisma.assessmentQuestion.create({
+        data: {
+          assessmentId: assessment.id,
+          sortOrder: i + 1,
+          prompt: q.prompt,
+          questionType: q.questionType,
+          options: q.options ?? undefined,
+          correctAnswer: q.correctAnswer,
+        },
+      });
+    }
+
+    for (const university of universities) {
+      const economics = getTierEconomics(university.slug);
+      const assessmentRule = buildAssessmentRule(economics);
+      await prisma.faralinRule.create({
+        data: {
+          universityId: university.id,
+          assessmentId: assessment.id,
+          ...assessmentRule,
+        },
+      });
+      await prisma.universityAssessmentConfig.create({
+        data: {
+          universityId: university.id,
+          assessmentId: assessment.id,
+          enabled: false,
         },
       });
     }
@@ -284,12 +341,20 @@ async function main() {
           difficultyMultiplier: 1.0,
         },
       });
+      await prisma.universityProblemTrackConfig.create({
+        data: {
+          universityId: university.id,
+          problemTrackId: track.id,
+          enabled: true,
+        },
+      });
     }
   }
 
   console.log(`Seeded ${subjects.length} subjects`);
   console.log(`Seeded ${universities.length} universities`);
-  console.log(`Seeded ${assessmentDefs.length} assessments`);
+  console.log(`Seeded ${assessmentDefs.length} academic assessments`);
+  console.log(`Seeded ${assessmentTemplateDefs.length} co-curricular templates`);
   console.log(`Seeded ${problemTrackDefs.length} problem tracks`);
   console.log(`Seeded ${knowledgeArticleDefs.length} knowledge articles`);
   console.log(`Seeded ${courseDefs.length} courses`);

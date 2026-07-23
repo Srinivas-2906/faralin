@@ -482,6 +482,34 @@
   resize: vertical;
 }
 
+.portal-rewards-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--section-gap);
+}
+
+.portal-reward-card .section-title {
+  margin-bottom: 1rem;
+}
+
+.portal-reward-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.portal-reward-bonus-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+@media (max-width: 768px) {
+  .portal-reward-bonus-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .portal-student-link {
   color: var(--faralin-copper, #b87333);
   font-weight: 600;

@@ -22,10 +22,12 @@ export interface AssessmentBreakdownRow {
   slug: string;
   title: string;
   subjectName: string;
+  assigned: number;
   studentsCompleted: number;
   averageScorePercent: number | null;
   averageFaralins: number;
   completionRate: number;
+  averageTimeMinutes: number | null;
 }
 
 export interface EngagementMetrics {
@@ -149,7 +151,10 @@ export async function buildAssessmentBreakdown(
   prisma: PrismaService,
   universityId: string,
   followerStudentIds: string[],
+  enabledAssessmentIds?: string[],
 ): Promise<{ summary: AssessmentSummary; breakdown: AssessmentBreakdownRow[] }> {
+  const assigned = followerStudentIds.length;
+
   if (followerStudentIds.length === 0) {
     return {
       summary: {
@@ -163,7 +168,12 @@ export async function buildAssessmentBreakdown(
 
   const [attempts, faralinByAttempt] = await Promise.all([
     prisma.assessmentAttempt.findMany({
-      where: { studentProfileId: { in: followerStudentIds } },
+      where: {
+        studentProfileId: { in: followerStudentIds },
+        ...(enabledAssessmentIds?.length
+          ? { assessmentId: { in: enabledAssessmentIds } }
+          : {}),
+      },
       include: {
         assessment: { include: { subject: true } },
       },
@@ -197,6 +207,8 @@ export async function buildAssessmentBreakdown(
     faralinSum: number;
     faralinCount: number;
     completedStudentIds: Set<string>;
+    durationSumMs: number;
+    durationCount: number;
   };
 
   const byAssessment = new Map<string, AssessmentAgg>();
@@ -216,6 +228,8 @@ export async function buildAssessmentBreakdown(
         faralinSum: 0,
         faralinCount: 0,
         completedStudentIds: new Set(),
+        durationSumMs: 0,
+        durationCount: 0,
       };
       byAssessment.set(assessmentId, agg);
     }
@@ -236,6 +250,14 @@ export async function buildAssessmentBreakdown(
         agg.faralinSum += amount;
         agg.faralinCount += 1;
       }
+
+      if (attempt.completedAt) {
+        const durationMs = attempt.completedAt.getTime() - attempt.startedAt.getTime();
+        if (durationMs > 0) {
+          agg.durationSumMs += durationMs;
+          agg.durationCount += 1;
+        }
+      }
     }
   }
 
@@ -254,6 +276,7 @@ export async function buildAssessmentBreakdown(
       slug: agg.slug,
       title: agg.title,
       subjectName: agg.subjectName,
+      assigned,
       studentsCompleted: agg.completedStudentIds.size,
       averageScorePercent:
         agg.scoreCount > 0 ? Math.round(agg.scoreSum / agg.scoreCount) : null,
@@ -261,6 +284,10 @@ export async function buildAssessmentBreakdown(
         agg.faralinCount > 0 ? Math.round(agg.faralinSum / agg.faralinCount) : 0,
       completionRate:
         agg.started > 0 ? Math.round((agg.completed / agg.started) * 100) : 0,
+      averageTimeMinutes:
+        agg.durationCount > 0
+          ? Math.round(agg.durationSumMs / agg.durationCount / 60000)
+          : null,
     });
   }
 

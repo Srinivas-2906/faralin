@@ -10,6 +10,7 @@ import {
   Prisma,
 } from '@faralin/db';
 import { PrismaService } from '../prisma/prisma.service';
+import type { BonusRule } from '../universities/staff-assessment-config';
 
 interface RuleMatchContext {
   assessmentId?: string;
@@ -47,7 +48,28 @@ export class FaralinEngineService {
     const accuracy = Number(attempt.accuracyPercent ?? 0);
     const improvement = Number(attempt.improvementDelta ?? 0);
 
+    const priorAttempts = await this.prisma.assessmentAttempt.count({
+      where: {
+        studentProfileId: attempt.studentProfileId,
+        assessmentId: attempt.assessmentId,
+        completedAt: { not: null },
+        isVoided: false,
+        id: { not: attemptId },
+      },
+    });
+    const isFirstAttempt = priorAttempts === 0;
+
     for (const selection of selections) {
+      const config = await this.prisma.universityAssessmentConfig.findUnique({
+        where: {
+          universityId_assessmentId: {
+            universityId: selection.universityId,
+            assessmentId: attempt.assessmentId,
+          },
+        },
+      });
+      if (!config?.enabled) continue;
+
       const rule = await this.findBestRule(selection.universityId, {
         assessmentId: attempt.assessmentId,
         subjectId: attempt.assessment.subjectId,
@@ -57,7 +79,12 @@ export class FaralinEngineService {
 
       if (!rule) continue;
 
-      const amount = this.calculateAmount(rule, accuracy, improvement);
+      const baseAmount = this.calculateAmount(rule, accuracy, improvement);
+      const bonusAmount = this.applyBonusRules(
+        (config.bonusRules as BonusRule[] | null) ?? [],
+        { accuracyPercent: accuracy, isFirstAttempt },
+      );
+      const amount = baseAmount + bonusAmount;
       if (amount <= 0) continue;
 
       const currentBalance = await this.getUniversityBalance(
@@ -84,6 +111,7 @@ export class FaralinEngineService {
             scoreMultiplier: Number(rule.scoreMultiplier),
             improvementBonus: rule.improvementBonus,
             difficultyMultiplier: Number(rule.difficultyMultiplier),
+            bonusAmount,
           },
         },
       });
@@ -137,6 +165,16 @@ export class FaralinEngineService {
     const rubricScore = Number(attempt.rubricScore ?? 0);
 
     for (const selection of selections) {
+      const trackConfig = await this.prisma.universityProblemTrackConfig.findUnique({
+        where: {
+          universityId_problemTrackId: {
+            universityId: selection.universityId,
+            problemTrackId: attempt.problemTrackId,
+          },
+        },
+      });
+      if (!trackConfig?.enabled) continue;
+
       const rule = await this.findBestTrackRule(selection.universityId, {
         problemTrackId: attempt.problemTrackId,
         subjectId: attempt.problemTrack.subjectId,
@@ -292,6 +330,23 @@ export class FaralinEngineService {
       improvementDelta > 0 ? rule.improvementBonus * Math.min(improvementDelta / 20, 1) : 0;
 
     return Math.round(difficultyComponent + improvementComponent);
+  }
+
+  applyBonusRules(
+    rules: BonusRule[],
+    ctx: { accuracyPercent: number; isFirstAttempt: boolean },
+  ): number {
+    let bonus = 0;
+    for (const rule of rules) {
+      if (rule.type === 'SCORE_ABOVE' && rule.threshold != null) {
+        if (ctx.accuracyPercent >= rule.threshold) bonus += rule.amount;
+      } else if (rule.type === 'PERFECT_SCORE' && ctx.accuracyPercent >= 100) {
+        bonus += rule.amount;
+      } else if (rule.type === 'FIRST_ATTEMPT' && ctx.isFirstAttempt) {
+        bonus += rule.amount;
+      }
+    }
+    return bonus;
   }
 
   private async getUniversityBalance(

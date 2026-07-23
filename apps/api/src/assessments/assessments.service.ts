@@ -1,10 +1,16 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { AssessmentCategory } from '@faralin/db';
 import { PrismaService } from '../prisma/prisma.service';
 import { FaralinEngineService } from '../faralin/faralin-engine.service';
+import {
+  getStudentEnabledUniversityIds,
+  isAssessmentEnabledForStudent,
+} from '../universities/staff-assessment-config';
 
 @Injectable()
 export class AssessmentsService {
@@ -13,18 +19,103 @@ export class AssessmentsService {
     private faralinEngine: FaralinEngineService,
   ) {}
 
-  async listAssessments(subjectSlug?: string) {
+  async listAssessments(subjectSlug?: string, category?: string) {
     return this.prisma.assessment.findMany({
       where: {
         isActive: true,
         ...(subjectSlug ? { subject: { slug: subjectSlug } } : {}),
+        ...(category ? { category: category as AssessmentCategory } : {}),
       },
       include: { subject: true },
-      orderBy: { title: 'asc' },
+      orderBy: [{ category: 'asc' }, { title: 'asc' }],
     });
   }
 
-  async getAssessment(slug: string) {
+  async listAssessmentsForStudent(studentProfileId: string, category?: string) {
+    const universityIds = await getStudentEnabledUniversityIds(this.prisma, studentProfileId);
+    if (universityIds.length === 0) return [];
+
+    const enabledConfigs = await this.prisma.universityAssessmentConfig.findMany({
+      where: { universityId: { in: universityIds }, enabled: true },
+      include: {
+        university: { select: { id: true, slug: true, shortName: true, name: true } },
+        assessment: { include: { subject: true } },
+      },
+    });
+
+    const byAssessment = new Map<string, ReturnType<AssessmentsService['mapStudentAssessmentItem']>>();
+
+    for (const config of enabledConfigs) {
+      if (category && config.assessment.category !== category) continue;
+
+      const uniEntry = {
+        universityId: config.university.id,
+        slug: config.university.slug,
+        shortName: config.university.shortName ?? config.university.name,
+      };
+
+      const existing = byAssessment.get(config.assessmentId);
+      if (existing) {
+        if (!existing.availableUniversities.some((u) => u.universityId === uniEntry.universityId)) {
+          existing.availableUniversities.push(uniEntry);
+        }
+        continue;
+      }
+
+      const rule = await this.prisma.faralinRule.findFirst({
+        where: {
+          universityId: config.universityId,
+          assessmentId: config.assessmentId,
+          isActive: true,
+        },
+      });
+
+      byAssessment.set(
+        config.assessmentId,
+        this.mapStudentAssessmentItem(config.assessment, uniEntry, rule?.baseAmount ?? null),
+      );
+    }
+
+    return Array.from(byAssessment.values()).sort((a, b) => a.title.localeCompare(b.title));
+  }
+
+  private mapStudentAssessmentItem(
+    assessment: {
+      id: string;
+      slug: string;
+      title: string;
+      description: string | null;
+      category: AssessmentCategory;
+      difficulty: string;
+      trustLevel: string;
+      estimatedFaralinMin: number;
+      estimatedFaralinMax: number;
+      isTimed: boolean;
+      durationMinutes: number | null;
+      subject: { slug: string; name: string };
+    },
+    uniEntry: { universityId: string; slug: string; shortName: string },
+    baseReward: number | null,
+  ) {
+    return {
+      id: assessment.id,
+      slug: assessment.slug,
+      title: assessment.title,
+      description: assessment.description,
+      category: assessment.category,
+      difficulty: assessment.difficulty,
+      trustLevel: assessment.trustLevel,
+      estimatedFaralinMin: assessment.estimatedFaralinMin,
+      estimatedFaralinMax: assessment.estimatedFaralinMax,
+      isTimed: assessment.isTimed,
+      durationMinutes: assessment.durationMinutes,
+      subject: assessment.subject,
+      availableUniversities: [uniEntry],
+      previewReward: baseReward,
+    };
+  }
+
+  async getAssessment(slug: string, studentProfileId?: string) {
     const assessment = await this.prisma.assessment.findUnique({
       where: { slug },
       include: {
@@ -44,7 +135,54 @@ export class AssessmentsService {
     });
 
     if (!assessment) throw new NotFoundException('Assessment not found');
-    return assessment;
+
+    let universityRewards: Array<{
+      universityId: string;
+      slug: string;
+      shortName: string;
+      enabled: boolean;
+      baseAmount: number | null;
+    }> = [];
+    let enabledForStudent = true;
+
+    if (studentProfileId) {
+      const universityIds = await getStudentEnabledUniversityIds(this.prisma, studentProfileId);
+      const selections = await this.prisma.university.findMany({
+        where: { id: { in: universityIds } },
+        select: { id: true, slug: true, shortName: true, name: true },
+      });
+
+      universityRewards = await Promise.all(
+        selections.map(async (uni) => {
+          const config = await this.prisma.universityAssessmentConfig.findUnique({
+            where: {
+              universityId_assessmentId: {
+                universityId: uni.id,
+                assessmentId: assessment.id,
+              },
+            },
+          });
+          const rule = await this.prisma.faralinRule.findFirst({
+            where: {
+              universityId: uni.id,
+              assessmentId: assessment.id,
+              isActive: true,
+            },
+          });
+          return {
+            universityId: uni.id,
+            slug: uni.slug,
+            shortName: uni.shortName ?? uni.name,
+            enabled: config?.enabled ?? false,
+            baseAmount: rule?.baseAmount ?? null,
+          };
+        }),
+      );
+
+      enabledForStudent = universityRewards.some((r) => r.enabled);
+    }
+
+    return { ...assessment, universityRewards, enabledForStudent };
   }
 
   async startAttempt(studentProfileId: string, assessmentSlug: string) {
@@ -54,6 +192,17 @@ export class AssessmentsService {
 
     if (!assessment || !assessment.isActive) {
       throw new NotFoundException('Assessment not found');
+    }
+
+    const enabled = await isAssessmentEnabledForStudent(
+      this.prisma,
+      studentProfileId,
+      assessment.id,
+    );
+    if (!enabled) {
+      throw new ForbiddenException(
+        'This assessment is not offered by any of your selected universities.',
+      );
     }
 
     const inProgress = await this.prisma.assessmentAttempt.findFirst({
@@ -170,7 +319,21 @@ export class AssessmentsService {
 
     await this.faralinEngine.processAttemptCompletion(attemptId);
 
-    return completed;
+    const transactions = await this.prisma.faralinTransaction.findMany({
+      where: { assessmentAttemptId: attemptId },
+      include: {
+        university: { select: { slug: true, shortName: true, name: true } },
+      },
+    });
+
+    return {
+      ...completed,
+      faralinsEarned: transactions.map((tx) => ({
+        universitySlug: tx.university.slug,
+        universityName: tx.university.shortName ?? tx.university.name,
+        amount: tx.amount,
+      })),
+    };
   }
 
   private checkAnswer(

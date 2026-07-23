@@ -33,10 +33,12 @@ interface AssessmentBreakdownRow {
   slug: string;
   title: string;
   subjectName: string;
+  assigned: number;
   studentsCompleted: number;
   averageScorePercent: number | null;
   averageFaralins: number;
   completionRate: number;
+  averageTimeMinutes: number | null;
 }
 
 interface EngagementMetrics {
@@ -157,7 +159,7 @@ export default function DashboardPage() {
       <div className="container">
         <PageHeader
           title={university.name}
-          description="University dashboard · Anonymous student view"
+          description="Assessment-centric dashboard · Anonymous student view"
           actions={
             <div className="portal-page-actions">
               {lastUpdated ? (
@@ -263,8 +265,13 @@ export default function DashboardPage() {
                 },
                 {
                   key: 'students',
-                  header: 'Students',
+                  header: 'Completed',
                   render: (row) => row.studentsCompleted.toLocaleString(),
+                },
+                {
+                  key: 'assigned',
+                  header: 'Assigned',
+                  render: (row) => row.assigned.toLocaleString(),
                 },
                 {
                   key: 'score',
@@ -281,6 +288,12 @@ export default function DashboardPage() {
                   key: 'completion',
                   header: 'Completion',
                   render: (row) => `${row.completionRate}%`,
+                },
+                {
+                  key: 'time',
+                  header: 'Avg time',
+                  render: (row) =>
+                    row.averageTimeMinutes != null ? `${row.averageTimeMinutes} mins` : '—',
                 },
               ]}
               data={assessmentBreakdown}

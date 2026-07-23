@@ -6,6 +6,16 @@ import {
   buildSubjectInterests,
 } from './staff-roster';
 import {
+  buildStaffActiveAssessments,
+  buildStaffAssessmentLibrary,
+  buildStaffTrackLibrary,
+  updateStaffAssessmentConfig,
+  updateStaffAssessmentReward,
+  updateStaffTrackConfig,
+  type UpdateAssessmentConfigDto,
+  type UpdateAssessmentRewardDto,
+} from './staff-assessment-config';
+import {
   buildAssessmentBreakdown,
   buildEngagementMetrics,
   buildFaralinDistribution,
@@ -126,6 +136,12 @@ export class UniversitiesService {
 
     const followerStudentIds = students.map((s) => s.studentProfileId);
 
+    const enabledConfigs = await this.prisma.universityAssessmentConfig.findMany({
+      where: { universityId, enabled: true },
+      select: { assessmentId: true },
+    });
+    const enabledAssessmentIds = enabledConfigs.map((c) => c.assessmentId);
+
     const [faralinDistribution, assessmentAnalytics, engagement] = await Promise.all([
       buildFaralinDistribution(
         this.prisma,
@@ -133,7 +149,12 @@ export class UniversitiesService {
         university.conversionRule,
         followerCount,
       ),
-      buildAssessmentBreakdown(this.prisma, universityId, followerStudentIds),
+      buildAssessmentBreakdown(
+        this.prisma,
+        universityId,
+        followerStudentIds,
+        enabledAssessmentIds,
+      ),
       buildEngagementMetrics(this.prisma, universityId, followerStudentIds),
     ]);
 
@@ -181,6 +202,44 @@ export class UniversitiesService {
     if (!detail) throw new NotFoundException('Student not found or not following this university');
 
     return { university, ...detail };
+  }
+
+  getStaffAssessmentLibrary(universityId: string) {
+    return buildStaffAssessmentLibrary(this.prisma, universityId);
+  }
+
+  async getStaffActiveAssessments(universityId: string) {
+    const students = await buildStaffStudentRoster(this.prisma, universityId);
+    const followerStudentIds = students.map((s) => s.studentProfileId);
+    return buildStaffActiveAssessments(this.prisma, universityId, followerStudentIds);
+  }
+
+  patchStaffAssessmentConfig(
+    universityId: string,
+    assessmentId: string,
+    dto: UpdateAssessmentConfigDto,
+  ) {
+    return updateStaffAssessmentConfig(this.prisma, universityId, assessmentId, dto);
+  }
+
+  patchStaffAssessmentReward(
+    universityId: string,
+    assessmentId: string,
+    dto: UpdateAssessmentRewardDto,
+  ) {
+    return updateStaffAssessmentReward(this.prisma, universityId, assessmentId, dto);
+  }
+
+  getStaffTrackLibrary(universityId: string) {
+    return buildStaffTrackLibrary(this.prisma, universityId);
+  }
+
+  patchStaffTrackConfig(
+    universityId: string,
+    problemTrackId: string,
+    dto: { enabled?: boolean; isCompulsory?: boolean },
+  ) {
+    return updateStaffTrackConfig(this.prisma, universityId, problemTrackId, dto);
   }
 
   requireUniversityAccess(userUniversityId: string | undefined, targetUniversityId: string) {

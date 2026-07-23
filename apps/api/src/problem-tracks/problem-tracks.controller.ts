@@ -16,6 +16,12 @@ export class ProblemTracksController {
     return this.tracks.listTracks(subject, difficulty);
   }
 
+  @Get('catalog/me')
+  @Roles(UserRole.STUDENT)
+  catalogMe(@CurrentUser() user: AuthUser, @Query('difficulty') difficulty?: string) {
+    return this.tracks.listTracksForStudent(user.studentProfileId!, difficulty);
+  }
+
   @Get('attempts/:attemptId')
   @Roles(UserRole.STUDENT)
   getAttempt(@CurrentUser() user: AuthUser, @Param('attemptId') attemptId: string) {

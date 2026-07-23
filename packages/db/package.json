@@ -20,6 +20,8 @@
     "seed:universities:ci": "tsx prisma/seed-universities.ts",
     "sync:university-faralin-rules": "dotenv -e ../../.env -- tsx prisma/sync-university-faralin-rules.ts",
     "sync:university-faralin-rules:ci": "tsx prisma/sync-university-faralin-rules.ts",
+    "backfill:university-assessment-config": "dotenv -e ../../.env -- tsx prisma/backfill-university-assessment-config.ts",
+    "backfill:university-assessment-config:ci": "tsx prisma/backfill-university-assessment-config.ts",
     "seed:ci": "tsx prisma/seed.ts",
     "studio": "dotenv -e ../../.env -- prisma studio"
   },

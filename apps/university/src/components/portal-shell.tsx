@@ -12,6 +12,10 @@ import { useStaffApi } from '@/lib/use-staff-api';
 const navLinks = [
   { href: '/dashboard', label: 'Dashboard', icon: '◉' },
   { href: '/students', label: 'Students', icon: '◎' },
+  { href: '/assessments/library', label: 'Assessment Library', icon: '▦' },
+  { href: '/assessments/active', label: 'Active Assessments', icon: '▣' },
+  { href: '/tracks', label: 'Problem Trackers', icon: '↝' },
+  { href: '/rewards', label: 'Rewards', icon: '◆' },
   { href: '/applications', label: 'Applications', icon: '◈', countKey: 'applications' as const },
   { href: '/content/articles', label: 'Articles', icon: '▤' },
   { href: '/content/events', label: 'Events', icon: '◷' },
