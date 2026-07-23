@@ -27,7 +27,7 @@ steps:
         set -euo pipefail
         IMAGE="${_REGION}-docker.pkg.dev/$PROJECT_ID/${_ARTIFACT_REPO}/${_DBJOB_IMAGE}:$BUILD_ID"
         CONN="$(gcloud sql instances describe faralin-pg --project "$PROJECT_ID" --format='value(connectionName)')"
-        SYNC_CMD="pnpm --filter @faralin/db run generate:ci && pnpm --filter @faralin/db run sync:university-faralin-rules:ci && pnpm --filter @faralin/db run backfill:university-assessment-config:ci && pnpm --filter @faralin/db run backfill:institutional-engagement-phase2:ci"
+        SYNC_CMD="pnpm --filter @faralin/db run generate:ci && pnpm --filter @faralin/db run sync:university-faralin-rules:ci && pnpm --filter @faralin/db run backfill:university-assessment-config:ci && pnpm --filter @faralin/db run backfill:institutional-engagement-phase2:ci && pnpm --filter @faralin/db run backfill:support-categories:ci"
         gcloud run jobs update faralin-sync-university-faralin-rules \
           --project "$PROJECT_ID" \
           --region asia-south1 \

@@ -13,6 +13,7 @@ import { buildAssessmentRule, getTierEconomics } from '@faralin/types';
 import { courseDefs, getLessonVideoUrl } from './data/courses';
 import { knowledgeArticleDefs } from './data/knowledge-articles';
 import { problemTrackDefs } from './data/problem-tracks';
+import { supportCategoryDefs } from './data/support-categories';
 import { seedStudentPipeline } from './seed-student-pipeline';
 
 const prisma = new PrismaClient();
@@ -110,18 +111,7 @@ async function main() {
   });
 
   const supportCategories = await Promise.all(
-    [
-      { slug: 'account', name: 'Account', description: 'Login, profile, and access issues', sortOrder: 1 },
-      { slug: 'payments', name: 'Payments', description: 'Bursary, Faralin conversion, and billing', sortOrder: 2 },
-      {
-        slug: 'university-partnership',
-        name: 'University partnership',
-        description: 'Partnership and institutional enquiries',
-        sortOrder: 3,
-      },
-      { slug: 'technical', name: 'Technical', description: 'Platform bugs and technical issues', sortOrder: 4 },
-      { slug: 'general', name: 'General', description: 'General enquiries and other topics', sortOrder: 5 },
-    ].map((category) => prisma.supportCategory.create({ data: category })),
+    supportCategoryDefs.map((category) => prisma.supportCategory.create({ data: category })),
   );
 
   for (let i = 1; i <= 5; i += 1) {
