@@ -51,7 +51,7 @@ export default async function AssessmentsPage() {
           </div>
 
           <Suspense fallback={null}>
-            <AssessmentsCatalogLoader assessments={assessments} />
+            <AssessmentsCatalogLoader initialAssessments={assessments} />
           </Suspense>
         </div>
       </div>
