@@ -7,7 +7,7 @@ export const STREAM_CHANNEL_TYPE = 'faralin-support';
 export const STREAM_AGENT_ROLE = 'admin';
 
 /** Grants for support channel members (students, staff, agents). */
-export const STREAM_SUPPORT_CHANNEL_GRANTS = {
+export const STREAM_SUPPORT_CHANNEL_GRANTS: Record<string, string[]> = {
   channel_member: [
     'read-channel',
     'read-channel-members',
@@ -28,7 +28,7 @@ export const STREAM_SUPPORT_CHANNEL_GRANTS = {
     'delete-reaction',
     'upload-attachment',
   ],
-} as const;
+};
 
 @Injectable()
 export class StreamChatService {
