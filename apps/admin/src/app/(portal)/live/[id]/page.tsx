@@ -28,6 +28,12 @@ interface LiveTicket {
   studentProfile: { anonymousId: string } | null;
 }
 
+function requesterContext(ticket: LiveTicket) {
+  if (ticket.university?.name) return ticket.university.name;
+  if (ticket.studentProfile?.anonymousId) return `Student ${ticket.studentProfile.anonymousId}`;
+  return null;
+}
+
 export default function LiveTicketPage() {
   const params = useParams<{ id: string }>();
   const { accessDenied: contextDenied } = useAdminContext();
@@ -36,6 +42,7 @@ export default function LiveTicketPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [joining, setJoining] = useState(false);
+  const [resolving, setResolving] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -70,8 +77,14 @@ export default function LiveTicketPage() {
   }
 
   async function resolveConversation() {
-    await adminFetch(`/support/live/${params.id}/resolve`, { method: 'POST' });
-    window.location.href = '/live';
+    setResolving(true);
+    try {
+      await adminFetch(`/support/live/${params.id}/resolve`, { method: 'POST' });
+      window.location.href = '/live';
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to resolve');
+      setResolving(false);
+    }
   }
 
   if (contextDenied || accessDenied) return <AccessDenied />;
@@ -89,6 +102,10 @@ export default function LiveTicketPage() {
     );
   }
 
+  const context = requesterContext(ticket);
+  const isWaiting = ticket.conversationPhase === 'WAITING_AGENT';
+  const isLive = ticket.conversationPhase === 'AGENT';
+
   return (
     <div className="page-section">
       <div className="container">
@@ -102,49 +119,53 @@ export default function LiveTicketPage() {
           }
         />
 
-        <div className="layout-two-col">
-          <Card>
-            {ticket.conversationPhase === 'WAITING_AGENT' ? (
-              <button
-                type="button"
-                className="btn btn-primary"
-                style={{ marginBottom: '1rem' }}
-                disabled={joining}
-                onClick={joinConversation}
-              >
-                {joining ? 'Joining…' : 'Join conversation'}
-              </button>
-            ) : null}
-            {ticket.conversationPhase === 'AGENT' ? (
-              <AdminLiveChat streamChannelId={ticket.streamChannelId} />
-            ) : ticket.conversationPhase === 'WAITING_AGENT' ? (
-              <p style={{ color: 'var(--faralin-muted)' }}>
-                Join the conversation to open the live chat window.
-              </p>
-            ) : null}
-          </Card>
+        <Card className="live-chat-card">
+          <div className="live-chat-toolbar">
+            <div className="live-chat-toolbar-meta">
+              <Badge variant={ticket.requesterType === 'STUDENT' ? 'verified' : 'copper'}>
+                {SUPPORT_REQUESTER_TYPE_LABELS[ticket.requesterType]}
+              </Badge>
+              <span className="live-chat-toolbar-name">{ticket.requesterName}</span>
+              {context ? <span className="live-chat-toolbar-context">{context}</span> : null}
+              <span className="live-chat-toolbar-phase">
+                {ticket.conversationPhase.replaceAll('_', ' ')}
+              </span>
+            </div>
 
-          <Card>
-            <h3 className="section-title">Requester</h3>
-            <Badge variant={ticket.requesterType === 'STUDENT' ? 'verified' : 'copper'}>
-              {SUPPORT_REQUESTER_TYPE_LABELS[ticket.requesterType]}
-            </Badge>
-            <p style={{ marginTop: '0.75rem' }}>{ticket.requesterName}</p>
-            {ticket.university ? <p>{ticket.university.name}</p> : null}
-            {ticket.studentProfile ? <p>Student ID: {ticket.studentProfile.anonymousId}</p> : null}
-            <p style={{ color: 'var(--faralin-muted)' }}>
-              Phase: {ticket.conversationPhase.replaceAll('_', ' ')}
+            <div className="live-chat-toolbar-actions">
+              {isWaiting ? (
+                <button
+                  type="button"
+                  className="btn btn-primary btn-sm"
+                  disabled={joining}
+                  onClick={joinConversation}
+                >
+                  {joining ? 'Joining…' : 'Join conversation'}
+                </button>
+              ) : null}
+              {isLive ? (
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  disabled={resolving}
+                  onClick={resolveConversation}
+                >
+                  {resolving ? 'Resolving…' : 'Mark resolved'}
+                </button>
+              ) : null}
+            </div>
+          </div>
+
+          {isLive ? (
+            <AdminLiveChat streamChannelId={ticket.streamChannelId} />
+          ) : (
+            <p className="live-chat-placeholder">
+              {isWaiting
+                ? 'Join the conversation to open the live chat window.'
+                : 'This conversation is not active.'}
             </p>
-            <button
-              type="button"
-              className="btn btn-secondary"
-              style={{ marginTop: '1rem' }}
-              onClick={resolveConversation}
-            >
-              Mark resolved
-            </button>
-          </Card>
-        </div>
+          )}
+        </Card>
       </div>
     </div>
   );

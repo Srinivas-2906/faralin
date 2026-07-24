@@ -121,7 +121,8 @@ export class SupportLiveService {
     await this.stream.addAgentToChannel(ticket.streamChannelId, user.id, agentName);
     await this.stream.postSystemMessage(
       ticket.streamChannelId,
-      `${agentName} joined the conversation.`,
+      'A support agent has joined.',
+      'requester',
     );
 
     const updated = await this.prisma.supportTicket.update({
@@ -242,6 +243,7 @@ export class SupportLiveService {
       await this.stream.postSystemMessage(
         ticket.streamChannelId,
         'This conversation has been marked resolved. Thank you for contacting Faralin support.',
+        'requester',
       );
     }
 

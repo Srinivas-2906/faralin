@@ -492,3 +492,107 @@
     flex-wrap: nowrap;
   }
 }
+
+/* Live chat — compact toolbar + Stream overrides */
+.live-chat-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.live-chat-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--faralin-border, #e2e8f0);
+  background: var(--faralin-surface, #fff);
+}
+
+.live-chat-toolbar-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  min-width: 0;
+}
+
+.live-chat-toolbar-name {
+  font-weight: 600;
+  font-size: 0.9375rem;
+}
+
+.live-chat-toolbar-context,
+.live-chat-toolbar-phase {
+  font-size: 0.8125rem;
+  color: var(--faralin-muted, #64748b);
+}
+
+.live-chat-toolbar-context::before {
+  content: '·';
+  margin-right: 0.5rem;
+}
+
+.live-chat-toolbar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.live-chat-toolbar .btn-sm {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.8125rem;
+}
+
+.live-chat-placeholder {
+  margin: 0;
+  padding: 2rem 1rem;
+  text-align: center;
+  color: var(--faralin-muted, #64748b);
+  font-size: 0.9375rem;
+}
+
+.admin-live-chat-loading,
+.admin-live-chat-error {
+  margin: 0;
+  padding: 1.5rem 1rem;
+  font-size: 0.9375rem;
+}
+
+.admin-live-chat-error {
+  color: #b91c1c;
+}
+
+.admin-live-chat {
+  min-height: 520px;
+}
+
+.admin-live-chat .str-chat {
+  --str-chat__primary-color: var(--faralin-copper, #b87333);
+  --str-chat__active-primary-color: var(--faralin-copper-dark, #9a6129);
+  --str-chat__border-radius-circle: 6px;
+  --str-chat__font-family: inherit;
+}
+
+.admin-live-chat .str-chat__window {
+  background: var(--faralin-surface, #fff);
+}
+
+.admin-live-chat .str-chat__main-panel {
+  padding: 0;
+}
+
+.admin-live-chat .str-chat__list {
+  padding: 0.75rem 1rem;
+}
+
+.admin-live-chat .str-chat__message-input {
+  padding: 0.75rem 1rem 1rem;
+  border-top: 1px solid var(--faralin-border, #e2e8f0);
+}
+
+.admin-live-chat .str-chat__message--system .str-chat__message-text {
+  color: var(--faralin-muted, #64748b);
+  font-size: 0.8125rem;
+}

@@ -6,6 +6,8 @@ export const STREAM_BOT_USER_ID = 'faralin-bot';
 export const STREAM_CHANNEL_TYPE = 'faralin-support';
 export const STREAM_AGENT_ROLE = 'admin';
 
+export type StreamSystemMessageAudience = 'requester' | 'all';
+
 /** Grants for support channel members (students, staff, agents). */
 export const STREAM_SUPPORT_CHANNEL_GRANTS: Record<string, string[]> = {
   channel_member: [
@@ -166,7 +168,11 @@ export class StreamChatService {
     await channel.addMembers([agentUserId]);
   }
 
-  async postSystemMessage(streamChannelId: string, text: string) {
+  async postSystemMessage(
+    streamChannelId: string,
+    text: string,
+    audience: StreamSystemMessageAudience = 'all',
+  ) {
     const client = this.getClient();
     const channel = client.channel(
       STREAM_CHANNEL_TYPE,
@@ -174,7 +180,11 @@ export class StreamChatService {
     );
     await channel.sendMessage({
       text,
-      user_id: STREAM_BOT_USER_ID,
-    });
+      type: 'system',
+      custom: {
+        faralinSystem: true,
+        audience,
+      },
+    } as Parameters<typeof channel.sendMessage>[0]);
   }
 }

@@ -358,6 +358,7 @@ export class SupportBotService {
     await this.stream.postSystemMessage(
       streamChannelId,
       'You have been connected to the support queue. An agent will join shortly.',
+      'requester',
     );
 
     const updated = await this.prisma.supportTicket.update({

@@ -5,13 +5,57 @@ import { StreamChat } from 'stream-chat';
 import {
   Chat,
   Channel,
-  ChannelHeader,
+  Message,
   MessageComposer,
   MessageList,
   Window,
+  type MessageUIComponentProps,
 } from 'stream-chat-react';
 import 'stream-chat-react/css/index.css';
 import { useAdminApi } from '@/lib/use-admin-api';
+
+const STREAM_BOT_USER_ID = 'faralin-bot';
+
+const LEGACY_STATUS_PATTERNS = [
+  /^You have been connected to the support queue\./,
+  / joined the conversation\.$/,
+  /^A support agent has joined\.$/,
+  /^This conversation has been marked resolved\./,
+];
+
+type FaralinMessageMeta = {
+  type?: string;
+  text?: string;
+  user?: { id?: string };
+  custom?: { faralinSystem?: boolean; audience?: string };
+};
+
+function shouldHideFromAgent(message: FaralinMessageMeta | null | undefined): boolean {
+  if (!message) return true;
+
+  const custom = message.custom as { faralinSystem?: boolean; audience?: string } | undefined;
+
+  if (custom?.faralinSystem && custom.audience === 'requester') {
+    return true;
+  }
+
+  if (message.type === 'system') {
+    return true;
+  }
+
+  if (message.user?.id === STREAM_BOT_USER_ID) {
+    return true;
+  }
+
+  const text = message.text?.trim() ?? '';
+  return LEGACY_STATUS_PATTERNS.some((pattern) => pattern.test(text));
+}
+
+function AgentMessage(props: MessageUIComponentProps) {
+  if (shouldHideFromAgent(props.message as FaralinMessageMeta)) return null;
+  if (!props.message) return null;
+  return <Message {...props} message={props.message} />;
+}
 
 export function AdminLiveChat({ streamChannelId }: { streamChannelId: string }) {
   const { adminFetch } = useAdminApi();
@@ -62,19 +106,18 @@ export function AdminLiveChat({ streamChannelId }: { streamChannelId: string }) 
     };
   }, [streamChannelId, adminFetch]);
 
-  if (error) return <p>{error}</p>;
-  if (!client) return <p>Connecting to conversation…</p>;
+  if (error) return <p className="admin-live-chat-error">{error}</p>;
+  if (!client) return <p className="admin-live-chat-loading">Connecting to conversation…</p>;
 
   const channelId = streamChannelId.includes(':') ? streamChannelId.split(':')[1] : streamChannelId;
   const channel = client.channel('faralin-support', channelId);
 
   return (
-    <div style={{ minHeight: '480px' }}>
+    <div className="admin-live-chat">
       <Chat client={client}>
         <Channel channel={channel}>
           <Window>
-            <ChannelHeader />
-            <MessageList />
+            <MessageList Message={AgentMessage} />
             <MessageComposer />
           </Window>
         </Channel>
