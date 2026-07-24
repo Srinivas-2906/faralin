@@ -115,7 +115,13 @@ export default function LiveTicketPage() {
                 {joining ? 'Joining…' : 'Join conversation'}
               </button>
             ) : null}
-            <AdminLiveChat streamChannelId={ticket.streamChannelId} />
+            {ticket.conversationPhase === 'AGENT' ? (
+              <AdminLiveChat streamChannelId={ticket.streamChannelId} />
+            ) : ticket.conversationPhase === 'WAITING_AGENT' ? (
+              <p style={{ color: 'var(--faralin-muted)' }}>
+                Join the conversation to open the live chat window.
+              </p>
+            ) : null}
           </Card>
 
           <Card>

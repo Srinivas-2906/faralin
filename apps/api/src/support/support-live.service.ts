@@ -47,10 +47,14 @@ export class SupportLiveService {
       displayName = `${dbUser.email} · ${dbUser.universityStaffProfile.university.shortName ?? dbUser.universityStaffProfile.university.name}`;
     }
 
-    await this.stream.upsertUser({
-      id: dbUser.id,
-      name: displayName,
-    });
+    if (this.isAgent(user)) {
+      await this.stream.upsertAgentUser({ id: dbUser.id, name: displayName });
+    } else {
+      await this.stream.upsertUser({
+        id: dbUser.id,
+        name: displayName,
+      });
+    }
 
     return {
       configured: true as const,

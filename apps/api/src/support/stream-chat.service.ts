@@ -4,6 +4,31 @@ import { StreamChat } from 'stream-chat';
 
 export const STREAM_BOT_USER_ID = 'faralin-bot';
 export const STREAM_CHANNEL_TYPE = 'faralin-support';
+export const STREAM_AGENT_ROLE = 'admin';
+
+/** Grants for support channel members (students, staff, agents). */
+export const STREAM_SUPPORT_CHANNEL_GRANTS = {
+  channel_member: [
+    'read-channel',
+    'read-channel-members',
+    'create-message',
+    'update-message-owner',
+    'delete-message-owner',
+    'create-reaction',
+    'delete-reaction',
+    'upload-attachment',
+  ],
+  user: [
+    'read-channel',
+    'read-channel-members',
+    'create-message',
+    'update-message-owner',
+    'delete-message-owner',
+    'create-reaction',
+    'delete-reaction',
+    'upload-attachment',
+  ],
+} as const;
 
 @Injectable()
 export class StreamChatService {
@@ -60,9 +85,39 @@ export class StreamChatService {
     });
   }
 
+  async upsertAgentUser(params: { id: string; name: string }) {
+    await this.upsertUser({ ...params, role: STREAM_AGENT_ROLE });
+  }
+
   createToken(userId: string) {
     const client = this.getClient();
     return client.createToken(userId);
+  }
+
+  async ensureChannelTypePermissions() {
+    const client = this.getClient();
+    const channelTypeConfig = {
+      typing_events: true,
+      read_events: true,
+      connect_events: true,
+      search: false,
+      reactions: true,
+      replies: false,
+      mutes: true,
+      quotes: false,
+      grants: STREAM_SUPPORT_CHANNEL_GRANTS,
+    };
+
+    try {
+      await client.createChannelType({ name: STREAM_CHANNEL_TYPE, ...channelTypeConfig });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      if (message.includes('already exists') || message.includes('code 4')) {
+        await client.updateChannelType(STREAM_CHANNEL_TYPE, channelTypeConfig);
+      } else {
+        throw err;
+      }
+    }
   }
 
   channelIdForTicket(ticketId: string) {
@@ -80,6 +135,7 @@ export class StreamChatService {
     anonymousId?: string | null;
   }) {
     const client = this.getClient();
+    await this.ensureChannelTypePermissions();
     await this.ensureBotUser();
     await this.upsertUser({ id: params.requesterUserId, name: params.requesterName });
 
@@ -102,7 +158,7 @@ export class StreamChatService {
 
   async addAgentToChannel(streamChannelId: string, agentUserId: string, agentName: string) {
     const client = this.getClient();
-    await this.upsertUser({ id: agentUserId, name: agentName });
+    await this.upsertAgentUser({ id: agentUserId, name: agentName });
     const channel = client.channel(
       STREAM_CHANNEL_TYPE,
       streamChannelId.split(':')[1] ?? streamChannelId,

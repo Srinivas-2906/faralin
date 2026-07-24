@@ -7,7 +7,11 @@
 import { config } from 'dotenv';
 import { resolve } from 'path';
 import { StreamChat } from 'stream-chat';
-import { STREAM_BOT_USER_ID, STREAM_CHANNEL_TYPE } from '../src/support/stream-chat.service';
+import {
+  STREAM_BOT_USER_ID,
+  STREAM_CHANNEL_TYPE,
+  STREAM_SUPPORT_CHANNEL_GRANTS,
+} from '../src/support/stream-chat.service';
 
 config({ path: resolve(__dirname, '../../../.env') });
 
@@ -31,16 +35,17 @@ async function main() {
     replies: false,
     mutes: true,
     quotes: false,
+    grants: STREAM_SUPPORT_CHANNEL_GRANTS,
   };
 
   try {
     await client.createChannelType({ name: STREAM_CHANNEL_TYPE, ...channelTypeConfig });
-    console.log(`Channel type "${STREAM_CHANNEL_TYPE}" created.`);
+    console.log(`Channel type "${STREAM_CHANNEL_TYPE}" created with member grants.`);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     if (message.includes('already exists') || message.includes('code 4')) {
       await client.updateChannelType(STREAM_CHANNEL_TYPE, channelTypeConfig);
-      console.log(`Channel type "${STREAM_CHANNEL_TYPE}" updated.`);
+      console.log(`Channel type "${STREAM_CHANNEL_TYPE}" updated with member grants.`);
     } else {
       throw err;
     }
