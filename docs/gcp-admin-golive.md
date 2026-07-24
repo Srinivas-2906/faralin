@@ -56,14 +56,42 @@ Until this record propagates, sign in at the Cloud Run URL:
 
 ## 4. SSL certificate
 
-Confirm `faralin-cert-v2` includes `admin.faralin.kaana.in`:
+Faralin uses managed cert **`faralin-cert-v3`** on the shared load balancer. It must include all four hostnames:
+
+- `faralin.kaana.in`
+- `api.faralin.kaana.in`
+- `university.faralin.kaana.in`
+- `admin.faralin.kaana.in`
+
+GCP managed certificates **cannot add domains to an existing cert**. If `admin.faralin.kaana.in` shows `NET::ERR_CERT_COMMON_NAME_INVALID`, recreate the cert:
 
 ```bash
-gcloud compute ssl-certificates describe faralin-cert-v2 --global \
+# Free quota if at limit (delete unused legacy cert first)
+gcloud compute ssl-certificates delete faralin-cert --global --project kaana-prod -q 2>/dev/null || true
+
+gcloud compute ssl-certificates create faralin-cert-v3 \
+  --domains=faralin.kaana.in,api.faralin.kaana.in,university.faralin.kaana.in,admin.faralin.kaana.in \
+  --global --project kaana-prod
+
+gcloud compute target-https-proxies update kaana-web-https-proxy-classic --global \
+  --project kaana-prod \
+  --ssl-certificates=kaana-all-cert,faralin-cert-v3,kaana-tracker-cert,ajitdentalclinic-cert,kaana-clinic-cert,dentacare-cert,aquafarm-cert,kaana-menu-cert
+```
+
+Wait until all domains are `ACTIVE`:
+
+```bash
+gcloud compute ssl-certificates describe faralin-cert-v3 --global --project kaana-prod \
   --format='yaml(managed.status,managed.domainStatus)'
 ```
 
-If the cert predates admin, recreate or add domain per `07-university-lb-routing.sh`.
+Then remove the old cert from the proxy and delete it:
+
+```bash
+gcloud compute ssl-certificates delete faralin-cert-v2 --global --project kaana-prod -q
+```
+
+Verify: `curl -I https://admin.faralin.kaana.in/sign-in` (no `-k`).
 
 ## 5. Clerk (Domains — not redirect URLs)
 

@@ -9,6 +9,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
+import { useAuth } from '@clerk/nextjs';
 import { useAdminApi } from '@/lib/use-admin-api';
 
 export interface AdminContextData {
@@ -36,12 +37,14 @@ interface AdminContextValue {
 const AdminContext = createContext<AdminContextValue | null>(null);
 
 export function AdminProvider({ children }: { children: ReactNode }) {
+  const { isLoaded, isSignedIn } = useAuth();
   const { adminFetch, accessDenied } = useAdminApi();
   const [context, setContext] = useState<AdminContextData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   const refreshContext = useCallback(async () => {
+    if (!isLoaded || !isSignedIn) return;
     setLoading(true);
     setError('');
     try {
@@ -52,11 +55,16 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     } finally {
       setLoading(false);
     }
-  }, [adminFetch]);
+  }, [adminFetch, isLoaded, isSignedIn]);
 
   useEffect(() => {
+    if (!isLoaded) return;
+    if (!isSignedIn) {
+      setLoading(false);
+      return;
+    }
     refreshContext();
-  }, [refreshContext]);
+  }, [isLoaded, isSignedIn, refreshContext]);
 
   const value = useMemo(
     () => ({ context, loading, error, accessDenied, refreshContext }),
@@ -75,6 +83,7 @@ export function useAdminContext() {
 }
 
 export function useAdminData<T>(path: string, refreshIntervalMs?: number) {
+  const { isLoaded, isSignedIn } = useAuth();
   const { adminFetch, accessDenied } = useAdminApi();
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);
@@ -86,6 +95,7 @@ export function useAdminData<T>(path: string, refreshIntervalMs?: number) {
       setLoading(false);
       return;
     }
+    if (!isLoaded || !isSignedIn) return;
     setLoading(true);
     setError('');
     try {
@@ -99,15 +109,20 @@ export function useAdminData<T>(path: string, refreshIntervalMs?: number) {
     } finally {
       setLoading(false);
     }
-  }, [path, adminFetch]);
+  }, [path, adminFetch, isLoaded, isSignedIn]);
 
   useEffect(() => {
     if (!path) {
       setLoading(false);
       return;
     }
+    if (!isLoaded) return;
+    if (!isSignedIn) {
+      setLoading(false);
+      return;
+    }
     refresh();
-  }, [refresh, path]);
+  }, [refresh, path, isLoaded, isSignedIn]);
 
   useEffect(() => {
     if (!path || !refreshIntervalMs || refreshIntervalMs <= 0) return;

@@ -9,6 +9,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
+import { useAuth } from '@clerk/nextjs';
 import { useStaffApi } from '@/lib/use-staff-api';
 
 export interface PortalContextData {
@@ -36,12 +37,14 @@ interface PortalContextValue {
 const PortalContext = createContext<PortalContextValue | null>(null);
 
 export function PortalProvider({ children }: { children: ReactNode }) {
+  const { isLoaded, isSignedIn } = useAuth();
   const { staffFetch, accessDenied } = useStaffApi();
   const [context, setContext] = useState<PortalContextData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   const refreshContext = useCallback(async () => {
+    if (!isLoaded || !isSignedIn) return;
     setLoading(true);
     setError('');
     try {
@@ -52,11 +55,16 @@ export function PortalProvider({ children }: { children: ReactNode }) {
     } finally {
       setLoading(false);
     }
-  }, [staffFetch]);
+  }, [staffFetch, isLoaded, isSignedIn]);
 
   useEffect(() => {
+    if (!isLoaded) return;
+    if (!isSignedIn) {
+      setLoading(false);
+      return;
+    }
     refreshContext();
-  }, [refreshContext]);
+  }, [isLoaded, isSignedIn, refreshContext]);
 
   const value = useMemo(
     () => ({ context, loading, error, accessDenied, refreshContext }),
@@ -75,6 +83,7 @@ export function usePortalContext() {
 }
 
 export function usePortalData<T>(path: string, refreshIntervalMs?: number) {
+  const { isLoaded, isSignedIn } = useAuth();
   const { staffFetch, accessDenied } = useStaffApi();
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);
@@ -82,6 +91,7 @@ export function usePortalData<T>(path: string, refreshIntervalMs?: number) {
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   const refresh = useCallback(async () => {
+    if (!isLoaded || !isSignedIn) return;
     setLoading(true);
     setError('');
     try {
@@ -95,11 +105,16 @@ export function usePortalData<T>(path: string, refreshIntervalMs?: number) {
     } finally {
       setLoading(false);
     }
-  }, [path, staffFetch]);
+  }, [path, staffFetch, isLoaded, isSignedIn]);
 
   useEffect(() => {
+    if (!isLoaded) return;
+    if (!isSignedIn) {
+      setLoading(false);
+      return;
+    }
     refresh();
-  }, [refresh]);
+  }, [refresh, isLoaded, isSignedIn]);
 
   useEffect(() => {
     if (!refreshIntervalMs || refreshIntervalMs <= 0) return;

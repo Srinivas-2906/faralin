@@ -7,6 +7,8 @@ REGION="${REGION:-asia-south1}"
 URL_MAP="${URL_MAP:-kaana-web-map-multi}"
 HTTPS_PROXY="${HTTPS_PROXY:-kaana-web-https-proxy-classic}"
 LB_IP="${LB_IP:-34.36.130.96}"
+FARALIN_CERT="${FARALIN_CERT:-faralin-cert-v3}"
+FARALIN_DOMAINS="faralin.kaana.in,api.faralin.kaana.in,university.faralin.kaana.in,admin.faralin.kaana.in"
 
 gcloud config set project "${PROJECT_ID}" >/dev/null
 
@@ -42,12 +44,16 @@ gcloud compute url-maps add-path-matcher "${URL_MAP}" \
   --path-matcher-name=faralin-admin --default-service=faralin-admin-backend \
   --new-hosts=admin.faralin.kaana.in >/dev/null 2>&1 || true
 
-gcloud compute ssl-certificates describe faralin-cert-v2 --global >/dev/null 2>&1 || \
-  gcloud compute ssl-certificates create faralin-cert-v2 \
-    --domains=faralin.kaana.in,api.faralin.kaana.in,university.faralin.kaana.in,admin.faralin.kaana.in --global
+# GCP managed certs cannot add SANs to an existing cert. When adding a hostname,
+# create a new cert (e.g. faralin-cert-v3), attach it to the proxy, wait for
+# ACTIVE, then remove the old cert. Project SSL cert quota is 10 — delete unused
+# certs (e.g. legacy faralin-cert) before creating a replacement.
+gcloud compute ssl-certificates describe "${FARALIN_CERT}" --global >/dev/null 2>&1 || \
+  gcloud compute ssl-certificates create "${FARALIN_CERT}" \
+    --domains="${FARALIN_DOMAINS}" --global
 
 gcloud compute target-https-proxies update "${HTTPS_PROXY}" --global \
-  --ssl-certificates=kaana-all-cert,faralin-cert-v2,kaana-tracker-cert,ajitdentalclinic-cert,kaana-clinic-cert,dentacare-cert,aquafarm-cert,kaana-menu-cert
+  --ssl-certificates=kaana-all-cert,${FARALIN_CERT},kaana-tracker-cert,ajitdentalclinic-cert,kaana-clinic-cert,dentacare-cert,aquafarm-cert,kaana-menu-cert
 
 echo ""
 echo "Load balancer configured."
@@ -62,6 +68,6 @@ echo "  Name: admin.faralin"
 echo "  Value: ${LB_IP}"
 echo "  TTL: 300"
 echo ""
-echo "SSL cert status:"
-gcloud compute ssl-certificates describe faralin-cert-v2 --global \
+echo "SSL cert status (${FARALIN_CERT}):"
+gcloud compute ssl-certificates describe "${FARALIN_CERT}" --global \
   --format='yaml(managed.status,managed.domainStatus)'

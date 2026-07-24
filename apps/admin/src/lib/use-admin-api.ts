@@ -14,14 +14,19 @@ function isAccessDeniedError(message: string) {
 }
 
 export function useAdminApi() {
-  const { getToken } = useAuth();
+  const { getToken, isLoaded, isSignedIn } = useAuth();
   const [accessDenied, setAccessDenied] = useState(false);
 
   const adminFetch = useCallback(
     async <T,>(path: string, options: RequestInit & { token?: string } = {}): Promise<T | null> => {
       try {
         setAccessDenied(false);
-        const token = options.token ?? (await getToken()) ?? undefined;
+        if (!options.token) {
+          if (!isLoaded) return null;
+          if (!isSignedIn) return null;
+        }
+        const token = options.token ?? (await getToken());
+        if (!token) throw new Error('Not authenticated');
         return await apiFetch<T>(path, { ...options, token });
       } catch (e) {
         const message = e instanceof Error ? e.message : 'Request failed';
@@ -32,7 +37,7 @@ export function useAdminApi() {
         throw e;
       }
     },
-    [getToken],
+    [getToken, isLoaded, isSignedIn],
   );
 
   return { adminFetch, accessDenied };
