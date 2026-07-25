@@ -107,7 +107,7 @@ export default function LiveTicketPage() {
   const isLive = ticket.conversationPhase === 'AGENT';
 
   return (
-    <div className="page-section">
+    <div className="page-section live-chat-page">
       <div className="container">
         <PageHeader
           title={ticket.ticketNumber}

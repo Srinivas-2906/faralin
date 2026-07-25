@@ -6,6 +6,7 @@ import {
   Button,
   Card,
   EmptyState,
+  Modal,
   PageHeader,
   ResponsiveTable,
   SkeletonTable,
@@ -32,7 +33,9 @@ export default function ArticlesPage() {
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [showForm, setShowForm] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [page, setPage] = useState(1);
+  const pageSize = 15;
   const [form, setForm] = useState({
     type: 'ADVICE',
     title: '',
@@ -65,7 +68,7 @@ export default function ArticlesPage() {
         method: 'POST',
         body: JSON.stringify(form),
       });
-      setShowForm(false);
+      setModalOpen(false);
       setForm({ type: 'ADVICE', title: '', slug: '', excerpt: '', content: '', isPublished: false });
       await load();
     } catch (err) {
@@ -123,8 +126,8 @@ export default function ArticlesPage() {
               <Button type="button" variant="secondary" onClick={() => load()}>
                 Refresh
               </Button>
-              <Button type="button" onClick={() => setShowForm((v) => !v)}>
-                {showForm ? 'Cancel' : 'New article'}
+              <Button type="button" onClick={() => setModalOpen(true)}>
+                New article
               </Button>
             </div>
           }
@@ -136,72 +139,81 @@ export default function ArticlesPage() {
           </div>
         )}
 
-        {showForm && (
-          <div className="portal-stack">
-          <Card>
-            <form className="form-stack" onSubmit={handleCreate}>
-              <div className="form-row">
-                <label htmlFor="article-type">Type</label>
-                <select
-                  id="article-type"
-                  value={form.type}
-                  onChange={(e) => setForm((f) => ({ ...f, type: e.target.value }))}
-                >
-                  {ARTICLE_TYPES.map((t) => (
-                    <option key={t} value={t}>
-                      {t.replace(/_/g, ' ')}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="form-row">
-                <label htmlFor="article-title">Title</label>
-                <input
-                  id="article-title"
-                  required
-                  value={form.title}
-                  onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-                />
-              </div>
-              <div className="form-row">
-                <label htmlFor="article-slug">Slug</label>
-                <input
-                  id="article-slug"
-                  required
-                  value={form.slug}
-                  onChange={(e) => setForm((f) => ({ ...f, slug: e.target.value }))}
-                />
-              </div>
-              <div className="form-row">
-                <label htmlFor="article-excerpt">Excerpt</label>
-                <input
-                  id="article-excerpt"
-                  value={form.excerpt}
-                  onChange={(e) => setForm((f) => ({ ...f, excerpt: e.target.value }))}
-                />
-              </div>
-              <div className="form-row">
-                <label htmlFor="article-content">Content</label>
-                <textarea
-                  id="article-content"
-                  required
-                  value={form.content}
-                  onChange={(e) => setForm((f) => ({ ...f, content: e.target.value }))}
-                />
-              </div>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <input
-                  type="checkbox"
-                  checked={form.isPublished}
-                  onChange={(e) => setForm((f) => ({ ...f, isPublished: e.target.checked }))}
-                />
-                Publish immediately
-              </label>
-              <Button type="submit">Create article</Button>
-            </form>
-          </Card>
-          </div>
-        )}
+        <Modal
+          open={modalOpen}
+          onClose={() => setModalOpen(false)}
+          title="New article"
+          footer={
+            <>
+              <Button type="button" variant="secondary" onClick={() => setModalOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" form="create-article-form">
+                Create article
+              </Button>
+            </>
+          }
+        >
+          <form id="create-article-form" className="form-stack" onSubmit={handleCreate}>
+            <div className="form-row">
+              <label htmlFor="article-type">Type</label>
+              <select
+                id="article-type"
+                value={form.type}
+                onChange={(e) => setForm((f) => ({ ...f, type: e.target.value }))}
+              >
+                {ARTICLE_TYPES.map((t) => (
+                  <option key={t} value={t}>
+                    {t.replace(/_/g, ' ')}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="form-row">
+              <label htmlFor="article-title">Title</label>
+              <input
+                id="article-title"
+                required
+                value={form.title}
+                onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
+              />
+            </div>
+            <div className="form-row">
+              <label htmlFor="article-slug">Slug</label>
+              <input
+                id="article-slug"
+                required
+                value={form.slug}
+                onChange={(e) => setForm((f) => ({ ...f, slug: e.target.value }))}
+              />
+            </div>
+            <div className="form-row">
+              <label htmlFor="article-excerpt">Excerpt</label>
+              <input
+                id="article-excerpt"
+                value={form.excerpt}
+                onChange={(e) => setForm((f) => ({ ...f, excerpt: e.target.value }))}
+              />
+            </div>
+            <div className="form-row">
+              <label htmlFor="article-content">Content</label>
+              <textarea
+                id="article-content"
+                required
+                value={form.content}
+                onChange={(e) => setForm((f) => ({ ...f, content: e.target.value }))}
+              />
+            </div>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <input
+                type="checkbox"
+                checked={form.isPublished}
+                onChange={(e) => setForm((f) => ({ ...f, isPublished: e.target.checked }))}
+              />
+              Publish immediately
+            </label>
+          </form>
+        </Modal>
 
         <Card>
           {articles.length === 0 ? (
@@ -231,6 +243,11 @@ export default function ArticlesPage() {
               ]}
               data={articles}
               getRowKey={(a) => a.id}
+              paginated
+              page={page}
+              pageSize={pageSize}
+              onPageChange={setPage}
+              maxHeight="520px"
             />
           )}
         </Card>

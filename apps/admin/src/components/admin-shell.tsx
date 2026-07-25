@@ -33,6 +33,15 @@ const platformNav: NavLink[] = [
   { href: '/platform/agents', label: 'Support agents', icon: '◎' },
 ];
 
+function readCollapsedSections(storageKey: string) {
+  if (typeof window === 'undefined') return {} as Record<string, boolean>;
+  try {
+    return JSON.parse(window.localStorage.getItem(storageKey) ?? '{}') as Record<string, boolean>;
+  } catch {
+    return {};
+  }
+}
+
 function isActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
@@ -45,6 +54,19 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   const [openCount, setOpenCount] = useState<number | null>(null);
   const [mineCount, setMineCount] = useState<number | null>(null);
   const [liveCount, setLiveCount] = useState<number | null>(null);
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    setCollapsed(readCollapsedSections('admin-nav-collapsed'));
+  }, []);
+
+  function toggleSection(title: string) {
+    setCollapsed((prev) => {
+      const next = { ...prev, [title]: !prev[title] };
+      window.localStorage.setItem('admin-nav-collapsed', JSON.stringify(next));
+      return next;
+    });
+  }
 
   useEffect(() => {
     if (!context) return;
@@ -105,19 +127,20 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           )}
         </div>
 
-        {navSections.map((section) => (
-          <div key={section.title} style={{ marginBottom: '1rem' }}>
-            <p
-              style={{
-                fontSize: '0.6875rem',
-                letterSpacing: '0.08em',
-                textTransform: 'uppercase',
-                color: 'var(--faralin-muted)',
-                padding: '0 0.75rem 0.375rem',
-              }}
+        {navSections.map((section) => {
+          const isCollapsed = collapsed[section.title] ?? false;
+          return (
+          <div key={section.title} className="admin-nav-section">
+            <button
+              type="button"
+              className="admin-nav-section-toggle"
+              aria-expanded={!isCollapsed}
+              onClick={() => toggleSection(section.title)}
             >
-              {section.title}
-            </p>
+              <span>{section.title}</span>
+              <span aria-hidden="true">{isCollapsed ? '▸' : '▾'}</span>
+            </button>
+            {!isCollapsed ? (
             <nav
               id={section.title === 'Support' ? 'admin-sidebar-nav' : undefined}
               className="admin-sidebar-nav"
@@ -150,8 +173,10 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                 );
               })}
             </nav>
+            ) : null}
           </div>
-        ))}
+          );
+        })}
 
         <div className="admin-sidebar-footer">
           {context?.user.email ? (

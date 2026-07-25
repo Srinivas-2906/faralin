@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import { TICKET_CHANNEL_LABELS, TICKET_PRIORITY_LABELS } from '@faralin/types';
-import { Alert, Card, PageHeader } from '@faralin/ui';
+import { Alert, Button, Card, Modal, PageHeader, Tabs } from '@faralin/ui';
 import { AccessDenied } from '@/components/access-denied';
 import { AdminPageSkeleton } from '@/components/admin-page-skeleton';
 import { useAdminContext } from '@/components/admin-provider';
@@ -29,6 +29,8 @@ export default function NewTicketPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [tab, setTab] = useState('case');
+  const [studentModalOpen, setStudentModalOpen] = useState(false);
   const [studentQuery, setStudentQuery] = useState('');
   const [studentResults, setStudentResults] = useState<StudentResult[]>([]);
   const [form, setForm] = useState({
@@ -119,144 +121,184 @@ export default function NewTicketPage() {
             </div>
           ) : null}
 
+          <div className="page-toolbar">
+            <Tabs
+              ariaLabel="New ticket sections"
+              activeId={tab}
+              onChange={setTab}
+              tabs={[
+                { id: 'case', label: 'Case details' },
+                { id: 'requester', label: 'Requester' },
+              ]}
+            />
+          </div>
+
           <form className="form-stack" onSubmit={submit}>
-            <div className="form-row">
-              <label htmlFor="subject">Subject</label>
-              <input
-                id="subject"
-                required
-                value={form.subject}
-                onChange={(e) => setForm({ ...form, subject: e.target.value })}
-              />
-            </div>
-
-            <div className="form-row">
-              <label htmlFor="description">Description</label>
-              <textarea
-                id="description"
-                required
-                value={form.description}
-                onChange={(e) => setForm({ ...form, description: e.target.value })}
-              />
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-              <div className="form-row">
-                <label htmlFor="category">Category</label>
-                <select
-                  id="category"
-                  required
-                  value={form.categoryId}
-                  onChange={(e) => setForm({ ...form, categoryId: e.target.value })}
-                >
-                  {categories.map((category) => (
-                    <option key={category.id} value={category.id}>
-                      {category.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="form-row">
-                <label htmlFor="priority">Priority</label>
-                <select
-                  id="priority"
-                  value={form.priority}
-                  onChange={(e) => setForm({ ...form, priority: e.target.value })}
-                >
-                  {Object.entries(TICKET_PRIORITY_LABELS).map(([value, label]) => (
-                    <option key={value} value={value}>
-                      {label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="form-row">
-                <label htmlFor="channel">Channel</label>
-                <select
-                  id="channel"
-                  value={form.channel}
-                  onChange={(e) => setForm({ ...form, channel: e.target.value })}
-                >
-                  {Object.entries(TICKET_CHANNEL_LABELS).map(([value, label]) => (
-                    <option key={value} value={value}>
-                      {label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <h3 className="section-title">Requester</h3>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-              <div className="form-row">
-                <label htmlFor="requesterName">Name</label>
-                <input
-                  id="requesterName"
-                  required
-                  value={form.requesterName}
-                  onChange={(e) => setForm({ ...form, requesterName: e.target.value })}
-                />
-              </div>
-              <div className="form-row">
-                <label htmlFor="requesterEmail">Email</label>
-                <input
-                  id="requesterEmail"
-                  type="email"
-                  value={form.requesterEmail}
-                  onChange={(e) => setForm({ ...form, requesterEmail: e.target.value })}
-                />
-              </div>
-              <div className="form-row">
-                <label htmlFor="requesterPhone">Phone</label>
-                <input
-                  id="requesterPhone"
-                  value={form.requesterPhone}
-                  onChange={(e) => setForm({ ...form, requesterPhone: e.target.value })}
-                />
-              </div>
-            </div>
-
-            <div className="form-row">
-              <label htmlFor="studentSearch">Link student (optional)</label>
-              <input
-                id="studentSearch"
-                placeholder="Search by email or anonymous ID"
-                value={studentQuery}
-                onChange={(e) => setStudentQuery(e.target.value)}
-              />
-              {studentResults.length > 0 ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.5rem' }}>
-                  {studentResults.map((student) => (
-                    <button
-                      key={student.id}
-                      type="button"
-                      className="btn btn-secondary"
-                      style={{ justifyContent: 'flex-start' }}
-                      onClick={() => {
-                        setForm({
-                          ...form,
-                          studentProfileId: student.id,
-                          requesterName:
-                            [student.firstName, student.lastName].filter(Boolean).join(' ') ||
-                            student.anonymousId,
-                          requesterEmail: student.user.email,
-                        });
-                        setStudentQuery(`${student.anonymousId} — ${student.user.email}`);
-                        setStudentResults([]);
-                      }}
-                    >
-                      {student.anonymousId} · {student.user.email}
-                    </button>
-                  ))}
+            {tab === 'case' ? (
+              <>
+                <div className="form-row">
+                  <label htmlFor="subject">Subject</label>
+                  <input
+                    id="subject"
+                    required
+                    value={form.subject}
+                    onChange={(e) => setForm({ ...form, subject: e.target.value })}
+                  />
                 </div>
-              ) : null}
-            </div>
+
+                <div className="form-row">
+                  <label htmlFor="description">Description</label>
+                  <textarea
+                    id="description"
+                    required
+                    value={form.description}
+                    onChange={(e) => setForm({ ...form, description: e.target.value })}
+                  />
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
+                  <div className="form-row">
+                    <label htmlFor="category">Category</label>
+                    <select
+                      id="category"
+                      required
+                      value={form.categoryId}
+                      onChange={(e) => setForm({ ...form, categoryId: e.target.value })}
+                    >
+                      {categories.map((category) => (
+                        <option key={category.id} value={category.id}>
+                          {category.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="form-row">
+                    <label htmlFor="priority">Priority</label>
+                    <select
+                      id="priority"
+                      value={form.priority}
+                      onChange={(e) => setForm({ ...form, priority: e.target.value })}
+                    >
+                      {Object.entries(TICKET_PRIORITY_LABELS).map(([value, label]) => (
+                        <option key={value} value={value}>
+                          {label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="form-row">
+                    <label htmlFor="channel">Channel</label>
+                    <select
+                      id="channel"
+                      value={form.channel}
+                      onChange={(e) => setForm({ ...form, channel: e.target.value })}
+                    >
+                      {Object.entries(TICKET_CHANNEL_LABELS).map(([value, label]) => (
+                        <option key={value} value={value}>
+                          {label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </>
+            ) : null}
+
+            {tab === 'requester' ? (
+              <>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
+                  <div className="form-row">
+                    <label htmlFor="requesterName">Name</label>
+                    <input
+                      id="requesterName"
+                      required
+                      value={form.requesterName}
+                      onChange={(e) => setForm({ ...form, requesterName: e.target.value })}
+                    />
+                  </div>
+                  <div className="form-row">
+                    <label htmlFor="requesterEmail">Email</label>
+                    <input
+                      id="requesterEmail"
+                      type="email"
+                      value={form.requesterEmail}
+                      onChange={(e) => setForm({ ...form, requesterEmail: e.target.value })}
+                    />
+                  </div>
+                  <div className="form-row">
+                    <label htmlFor="requesterPhone">Phone</label>
+                    <input
+                      id="requesterPhone"
+                      value={form.requesterPhone}
+                      onChange={(e) => setForm({ ...form, requesterPhone: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                <div className="form-row">
+                  <label>Linked student</label>
+                  <p style={{ margin: '0 0 0.5rem', color: 'var(--faralin-muted)', fontSize: '0.875rem' }}>
+                    {form.studentProfileId
+                      ? studentQuery || 'Student linked'
+                      : 'No student linked'}
+                  </p>
+                  <Button type="button" variant="secondary" onClick={() => setStudentModalOpen(true)}>
+                    {form.studentProfileId ? 'Change student' : 'Link student'}
+                  </Button>
+                </div>
+              </>
+            ) : null}
 
             <button type="submit" className="btn btn-primary" disabled={submitting}>
               {submitting ? 'Creating…' : 'Create ticket'}
             </button>
           </form>
         </Card>
+
+        <Modal
+          open={studentModalOpen}
+          onClose={() => setStudentModalOpen(false)}
+          title="Link student"
+        >
+          <div className="form-row">
+            <label htmlFor="studentSearch">Search by email or anonymous ID</label>
+            <input
+              id="studentSearch"
+              placeholder="Start typing…"
+              value={studentQuery}
+              onChange={(e) => setStudentQuery(e.target.value)}
+            />
+          </div>
+          {studentResults.length > 0 ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.75rem' }}>
+              {studentResults.map((student) => (
+                <button
+                  key={student.id}
+                  type="button"
+                  className="btn btn-secondary"
+                  style={{ justifyContent: 'flex-start' }}
+                  onClick={() => {
+                    setForm({
+                      ...form,
+                      studentProfileId: student.id,
+                      requesterName:
+                        [student.firstName, student.lastName].filter(Boolean).join(' ') ||
+                        student.anonymousId,
+                      requesterEmail: student.user.email,
+                    });
+                    setStudentQuery(`${student.anonymousId} — ${student.user.email}`);
+                    setStudentResults([]);
+                    setStudentModalOpen(false);
+                  }}
+                >
+                  {student.anonymousId} · {student.user.email}
+                </button>
+              ))}
+            </div>
+          ) : studentQuery.trim().length >= 2 ? (
+            <p style={{ color: 'var(--faralin-muted)', marginTop: '0.75rem' }}>No students found.</p>
+          ) : null}
+        </Modal>
       </div>
     </div>
   );

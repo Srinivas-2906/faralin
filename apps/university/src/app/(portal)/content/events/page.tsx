@@ -6,6 +6,7 @@ import {
   Button,
   Card,
   EmptyState,
+  Modal,
   PageHeader,
   ResponsiveTable,
   SkeletonTable,
@@ -32,7 +33,9 @@ export default function EventsPage() {
   const [events, setEvents] = useState<EventRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [showForm, setShowForm] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [page, setPage] = useState(1);
+  const pageSize = 15;
   const [form, setForm] = useState({
     type: 'WEBINAR',
     title: '',
@@ -74,7 +77,7 @@ export default function EventsPage() {
           isPublished: form.isPublished,
         }),
       });
-      setShowForm(false);
+      setModalOpen(false);
       setForm({
         type: 'WEBINAR',
         title: '',
@@ -125,8 +128,8 @@ export default function EventsPage() {
               <Button type="button" variant="secondary" onClick={() => load()}>
                 Refresh
               </Button>
-              <Button type="button" onClick={() => setShowForm((v) => !v)}>
-                {showForm ? 'Cancel' : 'New event'}
+              <Button type="button" onClick={() => setModalOpen(true)}>
+                New event
               </Button>
             </div>
           }
@@ -138,83 +141,92 @@ export default function EventsPage() {
           </div>
         )}
 
-        {showForm && (
-          <div className="portal-stack">
-          <Card>
-            <form className="form-stack" onSubmit={handleCreate}>
-              <div className="form-row">
-                <label htmlFor="event-type">Type</label>
-                <select
-                  id="event-type"
-                  value={form.type}
-                  onChange={(e) => setForm((f) => ({ ...f, type: e.target.value }))}
-                >
-                  {EVENT_TYPES.map((t) => (
-                    <option key={t} value={t}>
-                      {t.replace(/_/g, ' ')}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="form-row">
-                <label htmlFor="event-title">Title</label>
-                <input
-                  id="event-title"
-                  required
-                  value={form.title}
-                  onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-                />
-              </div>
-              <div className="form-row">
-                <label htmlFor="event-description">Description</label>
-                <textarea
-                  id="event-description"
-                  value={form.description}
-                  onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-                />
-              </div>
-              <div className="form-row">
-                <label htmlFor="event-starts">Starts at</label>
-                <input
-                  id="event-starts"
-                  type="datetime-local"
-                  required
-                  value={form.startsAt}
-                  onChange={(e) => setForm((f) => ({ ...f, startsAt: e.target.value }))}
-                />
-              </div>
-              <div className="form-row">
-                <label htmlFor="event-url">External URL</label>
-                <input
-                  id="event-url"
-                  type="url"
-                  value={form.externalUrl}
-                  onChange={(e) => setForm((f) => ({ ...f, externalUrl: e.target.value }))}
-                />
-              </div>
-              <div className="form-row">
-                <label htmlFor="event-capacity">Capacity</label>
-                <input
-                  id="event-capacity"
-                  type="number"
-                  min={1}
-                  value={form.capacity}
-                  onChange={(e) => setForm((f) => ({ ...f, capacity: e.target.value }))}
-                />
-              </div>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <input
-                  type="checkbox"
-                  checked={form.isPublished}
-                  onChange={(e) => setForm((f) => ({ ...f, isPublished: e.target.checked }))}
-                />
-                Publish immediately
-              </label>
-              <Button type="submit">Create event</Button>
-            </form>
-          </Card>
-          </div>
-        )}
+        <Modal
+          open={modalOpen}
+          onClose={() => setModalOpen(false)}
+          title="New event"
+          footer={
+            <>
+              <Button type="button" variant="secondary" onClick={() => setModalOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" form="create-event-form">
+                Create event
+              </Button>
+            </>
+          }
+        >
+          <form id="create-event-form" className="form-stack" onSubmit={handleCreate}>
+            <div className="form-row">
+              <label htmlFor="event-type">Type</label>
+              <select
+                id="event-type"
+                value={form.type}
+                onChange={(e) => setForm((f) => ({ ...f, type: e.target.value }))}
+              >
+                {EVENT_TYPES.map((t) => (
+                  <option key={t} value={t}>
+                    {t.replace(/_/g, ' ')}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="form-row">
+              <label htmlFor="event-title">Title</label>
+              <input
+                id="event-title"
+                required
+                value={form.title}
+                onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
+              />
+            </div>
+            <div className="form-row">
+              <label htmlFor="event-description">Description</label>
+              <textarea
+                id="event-description"
+                value={form.description}
+                onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+              />
+            </div>
+            <div className="form-row">
+              <label htmlFor="event-starts">Starts at</label>
+              <input
+                id="event-starts"
+                type="datetime-local"
+                required
+                value={form.startsAt}
+                onChange={(e) => setForm((f) => ({ ...f, startsAt: e.target.value }))}
+              />
+            </div>
+            <div className="form-row">
+              <label htmlFor="event-url">External URL</label>
+              <input
+                id="event-url"
+                type="url"
+                value={form.externalUrl}
+                onChange={(e) => setForm((f) => ({ ...f, externalUrl: e.target.value }))}
+              />
+            </div>
+            <div className="form-row">
+              <label htmlFor="event-capacity">Capacity</label>
+              <input
+                id="event-capacity"
+                type="number"
+                min={1}
+                value={form.capacity}
+                onChange={(e) => setForm((f) => ({ ...f, capacity: e.target.value }))}
+              />
+            </div>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <input
+                type="checkbox"
+                checked={form.isPublished}
+                onChange={(e) => setForm((f) => ({ ...f, isPublished: e.target.checked }))}
+              />
+              Publish immediately
+            </label>
+          </form>
+        </Modal>
 
         <Card>
           {events.length === 0 ? (
@@ -245,6 +257,11 @@ export default function EventsPage() {
               ]}
               data={events}
               getRowKey={(e) => e.id}
+              paginated
+              page={page}
+              pageSize={pageSize}
+              onPageChange={setPage}
+              maxHeight="520px"
             />
           )}
         </Card>

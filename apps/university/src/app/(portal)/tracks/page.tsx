@@ -23,6 +23,8 @@ export default function TracksPage() {
   const [tracks, setTracks] = useState<TrackRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [page, setPage] = useState(1);
+  const pageSize = 20;
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -115,6 +117,11 @@ export default function TracksPage() {
               ]}
               data={tracks}
               getRowKey={(row) => row.id}
+              paginated
+              page={page}
+              pageSize={pageSize}
+              onPageChange={setPage}
+              maxHeight="520px"
             />
           )}
         </Card>

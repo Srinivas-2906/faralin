@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
-import { Alert, Card, EmptyState, PageHeader, ResponsiveTable } from '@faralin/ui';
+import { Alert, Card, EmptyState, PageHeader, ResponsiveTable, Tabs } from '@faralin/ui';
 import { AccessDenied } from '@/components/access-denied';
 import { useStaffApi } from '@/lib/use-staff-api';
 
@@ -35,6 +35,9 @@ export function UniversitySupportChat() {
   const [message, setMessage] = useState('');
   const [sending, setSending] = useState(false);
   const [escalating, setEscalating] = useState(false);
+  const [tab, setTab] = useState('chat');
+  const [ticketPage, setTicketPage] = useState(1);
+  const ticketPageSize = 15;
   const [uniTickets, setUniTickets] = useState<
     Array<{ id: string; ticketNumber: string; subject: string; conversationPhase: string; requesterName: string }>
   >([]);
@@ -115,12 +118,24 @@ export function UniversitySupportChat() {
           </div>
         ) : null}
 
-        <div className="portal-stack">
-        {session ? (
-          <Card>
+        <Card>
+          <div className="page-toolbar">
+            <Tabs
+              ariaLabel="Support sections"
+              activeId={tab}
+              onChange={setTab}
+              tabs={[
+                { id: 'chat', label: 'Chat' },
+                { id: 'history', label: 'Ticket history', count: uniTickets.length },
+              ]}
+            />
+          </div>
+
+          {tab === 'chat' && session ? (
+            <>
             {!showLiveChat ? (
               <>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1rem' }}>
+                <div className="scroll-panel" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1rem', maxHeight: '360px' }}>
                   {session.botTurns.map((turn) => (
                     <div
                       key={turn.id}
@@ -156,27 +171,31 @@ export function UniversitySupportChat() {
             ) : (
               <SupportLiveChat streamChannelId={session.streamChannelId!} />
             )}
-          </Card>
-        ) : null}
+            </>
+          ) : null}
 
-        <Card>
-          <h2 className="section-title">University support cases</h2>
-          {uniTickets.length === 0 ? (
-            <EmptyState compact message="No support cases for your university yet." />
-          ) : (
-            <ResponsiveTable
-              columns={[
-                { key: 'num', header: 'Ticket', render: (t) => t.ticketNumber },
-                { key: 'subject', header: 'Subject', render: (t) => t.subject },
-                { key: 'requester', header: 'Requester', render: (t) => t.requesterName },
-                { key: 'phase', header: 'Phase', render: (t) => t.conversationPhase },
-              ]}
-              data={uniTickets}
-              getRowKey={(t) => t.id}
-            />
-          )}
+          {tab === 'history' ? (
+            uniTickets.length === 0 ? (
+              <EmptyState compact message="No support cases for your university yet." />
+            ) : (
+              <ResponsiveTable
+                columns={[
+                  { key: 'num', header: 'Ticket', render: (t) => t.ticketNumber },
+                  { key: 'subject', header: 'Subject', render: (t) => t.subject },
+                  { key: 'requester', header: 'Requester', render: (t) => t.requesterName },
+                  { key: 'phase', header: 'Phase', render: (t) => t.conversationPhase },
+                ]}
+                data={uniTickets}
+                getRowKey={(t) => t.id}
+                paginated
+                page={ticketPage}
+                pageSize={ticketPageSize}
+                onPageChange={setTicketPage}
+                maxHeight="480px"
+              />
+            )
+          ) : null}
         </Card>
-        </div>
 
         <p style={{ marginTop: '1rem' }}>
           <Link href="/dashboard">Back to dashboard</Link>

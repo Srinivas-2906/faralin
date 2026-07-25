@@ -21,6 +21,17 @@ interface RuleMatchContext {
   trustLevel: FaralinTrustLevel;
 }
 
+/** Prefix for section-milestone ledger rows; excluded from track-completion idempotency. */
+export const SECTION_MILESTONE_REASON_PREFIX = 'section:';
+
+export function isSectionMilestoneReason(reason: string | null | undefined): boolean {
+  return reason?.startsWith(SECTION_MILESTONE_REASON_PREFIX) ?? false;
+}
+
+export function trackCompletionReason(trackTitle: string): string {
+  return `Recognition from ${trackTitle}`;
+}
+
 @Injectable()
 export class FaralinEngineService {
   constructor(private prisma: PrismaService) {}
@@ -173,6 +184,11 @@ export class FaralinEngineService {
       });
       if (!trackConfig?.enabled) continue;
 
+      const currentBalance = await this.getUniversityBalance(
+        attempt.studentProfileId,
+        selection.universityId,
+      );
+
       await this.prisma.faralinTransaction.create({
         data: {
           studentProfileId: attempt.studentProfileId,
@@ -182,7 +198,8 @@ export class FaralinEngineService {
           status: FaralinTransactionStatus.CONDITIONAL,
           trustLevel: attempt.problemTrack.trustLevel,
           amount: rewardFaralins,
-          reason: `section:${sectionId}`,
+          balanceAfter: currentBalance + rewardFaralins,
+          reason: `${SECTION_MILESTONE_REASON_PREFIX}${sectionId}`,
         },
       });
     }
@@ -204,7 +221,10 @@ export class FaralinEngineService {
     if ((attempt.faralinsEarned ?? 0) <= 0) return;
 
     const existing = await this.prisma.faralinTransaction.count({
-      where: { problemTrackAttemptId: attemptId },
+      where: {
+        problemTrackAttemptId: attemptId,
+        NOT: { reason: { startsWith: SECTION_MILESTONE_REASON_PREFIX } },
+      },
     });
     if (existing > 0) return;
 
@@ -212,6 +232,19 @@ export class FaralinEngineService {
     if (!selections.length) return;
 
     const rubricScore = Number(attempt.rubricScore ?? 0);
+    const rubricPercent = Math.max(0, Math.min(100, rubricScore));
+
+    const priorTrackAttempts = await this.prisma.problemTrackAttempt.count({
+      where: {
+        studentProfileId: attempt.studentProfileId,
+        problemTrackId: attempt.problemTrackId,
+        completedAt: { not: null },
+        isVoided: false,
+        id: { not: attemptId },
+        status: { in: ['SCORED', 'APPROVED'] },
+      },
+    });
+    const isFirstAttempt = priorTrackAttempts === 0;
 
     for (const selection of selections) {
       const trackConfig = await this.prisma.universityProblemTrackConfig.findUnique({
@@ -230,9 +263,15 @@ export class FaralinEngineService {
         trustLevel: attempt.problemTrack.trustLevel,
       });
 
-      const amount = rule
+      const baseAmount = rule
         ? this.calculateTrackAmount(rule, attempt.faralinsEarned!, rubricScore)
         : attempt.faralinsEarned!;
+
+      const bonusAmount = this.applyBonusRules(
+        (trackConfig.bonusRules as BonusRule[] | null) ?? [],
+        { accuracyPercent: rubricPercent, isFirstAttempt },
+      );
+      const amount = baseAmount + bonusAmount;
 
       if (amount <= 0) continue;
 
@@ -251,13 +290,15 @@ export class FaralinEngineService {
           trustLevel: attempt.problemTrack.trustLevel,
           amount,
           balanceAfter: currentBalance + amount,
-          reason: `Recognition from ${attempt.problemTrack.title}`,
+          reason: trackCompletionReason(attempt.problemTrack.title),
           metadata: {
             ruleId: rule?.id,
             rubricScore,
             faralinsEarned: attempt.faralinsEarned,
             awardBand: attempt.awardBandLabel,
             trustLevel: attempt.trustLevel,
+            baseAmount,
+            bonusAmount,
           },
         },
       });
@@ -279,6 +320,96 @@ export class FaralinEngineService {
             title: 'Problem Track recognition recorded',
             body: `You earned ${amount} ${university?.shortName ?? 'university'} Faralins from "${attempt.problemTrack.title}".`,
             metadata: { universityId: selection.universityId, amount, attemptId },
+          },
+        });
+      }
+    }
+  }
+
+  /** Award journey milestone bonusFaralins when a track in an enabled journey is completed. */
+  async processJourneyMilestoneBonus(
+    studentProfileId: string,
+    trackSlug: string,
+  ): Promise<void> {
+    const selections = await this.prisma.studentUniversitySelection.findMany({
+      where: { studentProfileId },
+    });
+    if (!selections.length) return;
+
+    const universityIds = selections.map((s) => s.universityId);
+    const journeyConfigs = await this.prisma.universityProblemTrackJourneyConfig.findMany({
+      where: { universityId: { in: universityIds }, enabled: true },
+      include: { journey: true },
+    });
+
+    for (const config of journeyConfigs) {
+      const milestones = config.journey.milestones as Array<{
+        trackSlug: string;
+        sortOrder: number;
+        label: string;
+        bonusFaralins?: number;
+        badgeLabel?: string;
+      }>;
+
+      const milestone = milestones.find((m) => m.trackSlug === trackSlug);
+      if (!milestone?.bonusFaralins || milestone.bonusFaralins <= 0) continue;
+
+      const reason = `journey:${config.journeyId}:milestone:${milestone.sortOrder}`;
+      const existing = await this.prisma.faralinTransaction.count({
+        where: {
+          studentProfileId,
+          universityId: config.universityId,
+          reason,
+        },
+      });
+      if (existing > 0) continue;
+
+      const currentBalance = await this.getUniversityBalance(
+        studentProfileId,
+        config.universityId,
+      );
+
+      await this.prisma.faralinTransaction.create({
+        data: {
+          studentProfileId,
+          universityId: config.universityId,
+          type: FaralinTransactionType.BONUS,
+          status: FaralinTransactionStatus.CONDITIONAL,
+          trustLevel: FaralinTrustLevel.VERIFIED,
+          amount: milestone.bonusFaralins,
+          balanceAfter: currentBalance + milestone.bonusFaralins,
+          reason,
+          metadata: {
+            journeyId: config.journeyId,
+            journeySlug: config.journey.slug,
+            milestoneLabel: milestone.label,
+            badgeLabel: milestone.badgeLabel ?? null,
+            trackSlug,
+          },
+        },
+      });
+
+      const studentProfile = await this.prisma.studentProfile.findUnique({
+        where: { id: studentProfileId },
+        select: { userId: true },
+      });
+
+      if (studentProfile) {
+        const university = await this.prisma.university.findUnique({
+          where: { id: config.universityId },
+        });
+
+        await this.prisma.notification.create({
+          data: {
+            userId: studentProfile.userId,
+            type: NotificationType.FARALIN_EARNED,
+            title: 'Journey milestone bonus',
+            body: `You earned ${milestone.bonusFaralins} ${university?.shortName ?? 'university'} Faralins for completing "${milestone.label}".`,
+            metadata: {
+              universityId: config.universityId,
+              amount: milestone.bonusFaralins,
+              journeyId: config.journeyId,
+            },
           },
         });
       }
@@ -426,8 +557,12 @@ export class PortfolioService {
     const selections = await this.prisma.studentUniversitySelection.findMany({
       where: { studentProfileId },
       include: { university: { include: { conversionRule: true } } },
+      orderBy: { priority: 'asc' },
     });
     const universityIds = selections.map((s) => s.universityId);
+    const priorityByUniversityId = Object.fromEntries(
+      selections.map((s) => [s.universityId, s.priority]),
+    );
 
     const [transactions, monthTransactions, attempts, trackAttempts, trackArtifacts, assessmentConfigs, trackConfigs, tierConfigs] =
       await Promise.all([
@@ -538,7 +673,8 @@ export class PortfolioService {
       }
     }
 
-    const byUniversity = Array.from(byUniversityMap.values()).map((u) => {
+    const byUniversity = Array.from(byUniversityMap.values())
+      .map((u) => {
       const rule = u.conversionRule;
       const estimatedBursaryGbp = rule
         ? Math.round((u.verifiedFaralins / rule.faralinsPerGbp) * 100) / 100
@@ -571,7 +707,12 @@ export class PortfolioService {
           rule?.disclaimerText ??
           'Estimated bursary value is subject to admission, eligibility, and university terms.',
       };
-    });
+    })
+      .sort(
+        (a, b) =>
+          (priorityByUniversityId[a.universityId] ?? Number.MAX_SAFE_INTEGER) -
+          (priorityByUniversityId[b.universityId] ?? Number.MAX_SAFE_INTEGER),
+      );
 
     const totalFaralins = byUniversity.reduce((sum, u) => sum + u.totalFaralins, 0);
     const hearEligibleFaralins = byUniversity.reduce((sum, u) => sum + u.hearEligibleFaralins, 0);

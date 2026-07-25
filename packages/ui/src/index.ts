@@ -10,7 +10,9 @@ export { EmptyState } from './components/EmptyState';
 export { ImageBanner } from './components/ImageBanner';
 export { MediaCard } from './components/MediaCard';
 export { MediaImage } from './components/MediaImage';
+export { Modal } from './components/Modal';
 export { PageHeader } from './components/PageHeader';
+export { Pagination } from './components/Pagination';
 export { PartnerPennant } from './components/PartnerPennant';
 export { PromoCard } from './components/PromoCard';
 export { ProgressBar, StepIndicator } from './components/ProgressBar';
@@ -26,3 +28,5 @@ export {
 export { SplitHero } from './components/SplitHero';
 export { StatCard } from './components/StatCard';
 export { StatRow } from './components/StatRow';
+export { Tabs } from './components/Tabs';
+export type { TabItem } from './components/Tabs';

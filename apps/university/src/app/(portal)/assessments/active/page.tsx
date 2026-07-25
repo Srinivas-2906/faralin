@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useState } from 'react';
 import { Badge, Button, Card, EmptyState, PageHeader, ResponsiveTable } from '@faralin/ui';
 import { AccessDenied } from '@/components/access-denied';
 import { PortalPageSkeleton } from '@/components/portal-page-skeleton';
@@ -33,6 +34,8 @@ interface ActiveData {
 export default function ActiveAssessmentsPage() {
   const { data, loading, error, accessDenied, refresh } =
     usePortalData<ActiveData>('/universities/staff/assessments/active');
+  const [page, setPage] = useState(1);
+  const pageSize = 20;
 
   if (accessDenied) return <AccessDenied />;
   if (loading && !data) return <PortalPageSkeleton rows={4} />;
@@ -118,6 +121,11 @@ export default function ActiveAssessmentsPage() {
               ]}
               data={rows}
               getRowKey={(row) => row.id}
+              paginated
+              page={page}
+              pageSize={pageSize}
+              onPageChange={setPage}
+              maxHeight="520px"
             />
           )}
         </Card>

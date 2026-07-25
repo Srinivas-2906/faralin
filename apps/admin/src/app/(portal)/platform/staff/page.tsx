@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Alert, Card, PageHeader } from '@faralin/ui';
+import { Alert, Button, Card, Modal, PageHeader } from '@faralin/ui';
 import { AccessDenied } from '@/components/access-denied';
 import { AdminPageSkeleton } from '@/components/admin-page-skeleton';
 import { useAdminData } from '@/components/admin-provider';
@@ -12,6 +12,7 @@ export default function PlatformStaffPage() {
     Array<{ id: string; name: string }>
   >('/admin/universities');
   const { adminFetch } = useAdminApi();
+  const [modalOpen, setModalOpen] = useState(false);
   const [staffEmail, setStaffEmail] = useState('');
   const [staffUniversityId, setStaffUniversityId] = useState('');
   const [staffJobTitle, setStaffJobTitle] = useState('');
@@ -36,6 +37,7 @@ export default function PlatformStaffPage() {
       );
       setStaffEmail('');
       setStaffJobTitle('');
+      setModalOpen(false);
     } catch (err) {
       setStaffError(err instanceof Error ? err.message : 'Failed to invite staff');
     }
@@ -47,23 +49,50 @@ export default function PlatformStaffPage() {
   return (
     <div className="page-section">
       <div className="container">
-        <PageHeader title="University staff invites" description="Create pending university staff accounts" />
+        <PageHeader
+          title="University staff invites"
+          description="Create pending university staff accounts"
+          actions={
+            <Button type="button" onClick={() => setModalOpen(true)}>
+              Invite staff
+            </Button>
+          }
+        />
+
+        {staffMessage ? (
+          <div style={{ marginBottom: '1rem' }}>
+            <Alert variant="success">{staffMessage}</Alert>
+          </div>
+        ) : null}
+
         <Card>
-          <p style={{ color: 'var(--faralin-muted)', marginBottom: '1rem' }}>
+          <p style={{ color: 'var(--faralin-muted)', margin: 0 }}>
             Creates a pending staff account. Send a Clerk invite to the same email, then staff sign in at
-            the university portal.
+            the university portal. Use <strong>Invite staff</strong> to add someone new.
           </p>
+        </Card>
+
+        <Modal
+          open={modalOpen}
+          onClose={() => setModalOpen(false)}
+          title="Invite university staff"
+          footer={
+            <>
+              <Button type="button" variant="secondary" onClick={() => setModalOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" form="invite-staff-form">
+                Create staff account
+              </Button>
+            </>
+          }
+        >
           {staffError ? (
             <div style={{ marginBottom: '1rem' }}>
               <Alert variant="error">{staffError}</Alert>
             </div>
           ) : null}
-          {staffMessage ? (
-            <div style={{ marginBottom: '1rem' }}>
-              <Alert variant="success">{staffMessage}</Alert>
-            </div>
-          ) : null}
-          <form className="form-stack" style={{ maxWidth: '480px' }} onSubmit={inviteStaff}>
+          <form id="invite-staff-form" className="form-stack" onSubmit={inviteStaff}>
             <div className="form-row">
               <label htmlFor="staffEmail">Email</label>
               <input
@@ -99,11 +128,8 @@ export default function PlatformStaffPage() {
                 placeholder="Widening Participation Officer"
               />
             </div>
-            <button type="submit" className="btn btn-primary" style={{ alignSelf: 'flex-start' }}>
-              Create staff account
-            </button>
           </form>
-        </Card>
+        </Modal>
       </div>
     </div>
   );

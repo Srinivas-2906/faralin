@@ -41,6 +41,17 @@ export interface UpdateAssessmentRewardDto {
   improvementBonus?: number;
 }
 
+export interface UpdateTrackRewardDto {
+  scoreMultiplier: number;
+}
+
+export interface UpdateTrackConfigDto {
+  enabled?: boolean;
+  isCompulsory?: boolean;
+  affectsBursaryEligibility?: boolean;
+  bonusRules?: BonusRule[] | null;
+}
+
 function mapRule(rule: {
   baseAmount: number;
   scoreMultiplier: Prisma.Decimal;
@@ -374,8 +385,17 @@ export async function buildStaffTrackLibrary(prisma: PrismaService, universityId
               enabled: config.enabled,
               isCompulsory: config.isCompulsory,
               affectsBursaryEligibility: config.affectsBursaryEligibility,
+              bonusRules: (config.bonusRules as BonusRule[] | null) ?? [],
             }
-          : { enabled: false, isCompulsory: false, affectsBursaryEligibility: true },
+          : {
+              enabled: false,
+              isCompulsory: false,
+              affectsBursaryEligibility: true,
+              bonusRules: [],
+            },
+        reward: rule
+          ? { scoreMultiplier: Number(rule.scoreMultiplier) }
+          : { scoreMultiplier: 1 },
         baseReward: rule?.baseAmount ?? track.maxFaralins,
       };
     }),
@@ -386,7 +406,7 @@ export async function updateStaffTrackConfig(
   prisma: PrismaService,
   universityId: string,
   problemTrackId: string,
-  dto: { enabled?: boolean; isCompulsory?: boolean; affectsBursaryEligibility?: boolean },
+  dto: UpdateTrackConfigDto,
 ) {
   const track = await prisma.problemTrack.findUnique({ where: { id: problemTrackId } });
   if (!track) throw new NotFoundException('Problem track not found');
@@ -399,6 +419,8 @@ export async function updateStaffTrackConfig(
       enabled: dto.enabled ?? false,
       isCompulsory: dto.isCompulsory ?? false,
       affectsBursaryEligibility: dto.affectsBursaryEligibility ?? true,
+      bonusRules:
+        dto.bonusRules != null ? (dto.bonusRules as unknown as Prisma.InputJsonValue) : undefined,
     },
     update: {
       ...(dto.enabled !== undefined ? { enabled: dto.enabled } : {}),
@@ -406,6 +428,47 @@ export async function updateStaffTrackConfig(
       ...(dto.affectsBursaryEligibility !== undefined
         ? { affectsBursaryEligibility: dto.affectsBursaryEligibility }
         : {}),
+      ...(dto.bonusRules !== undefined
+        ? { bonusRules: dto.bonusRules as unknown as Prisma.InputJsonValue }
+        : {}),
+    },
+  });
+}
+
+export async function updateStaffTrackReward(
+  prisma: PrismaService,
+  universityId: string,
+  problemTrackId: string,
+  dto: UpdateTrackRewardDto,
+) {
+  const track = await prisma.problemTrack.findUnique({ where: { id: problemTrackId } });
+  if (!track) throw new NotFoundException('Problem track not found');
+
+  const existing = await prisma.faralinRule.findFirst({
+    where: {
+      universityId,
+      problemTrackId,
+      assessmentId: null,
+      subjectId: null,
+    },
+  });
+
+  if (existing) {
+    return prisma.faralinRule.update({
+      where: { id: existing.id },
+      data: {
+        scoreMultiplier: dto.scoreMultiplier,
+        isActive: true,
+      },
+    });
+  }
+
+  return prisma.faralinRule.create({
+    data: {
+      universityId,
+      problemTrackId,
+      baseAmount: track.maxFaralins,
+      scoreMultiplier: dto.scoreMultiplier,
     },
   });
 }

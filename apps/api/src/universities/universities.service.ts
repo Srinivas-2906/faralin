@@ -13,8 +13,12 @@ import {
   updateStaffAssessmentConfig,
   updateStaffAssessmentReward,
   updateStaffTrackConfig,
+  updateStaffTrackReward,
+  type BonusRule,
   type UpdateAssessmentConfigDto,
   type UpdateAssessmentRewardDto,
+  type UpdateTrackConfigDto,
+  type UpdateTrackRewardDto,
 } from './staff-assessment-config';
 import {
   buildHearExportCsv,
@@ -251,9 +255,17 @@ export class UniversitiesService {
   patchStaffTrackConfig(
     universityId: string,
     problemTrackId: string,
-    dto: { enabled?: boolean; isCompulsory?: boolean; affectsBursaryEligibility?: boolean },
+    dto: UpdateTrackConfigDto,
   ) {
     return updateStaffTrackConfig(this.prisma, universityId, problemTrackId, dto);
+  }
+
+  patchStaffTrackReward(
+    universityId: string,
+    problemTrackId: string,
+    dto: UpdateTrackRewardDto,
+  ) {
+    return updateStaffTrackReward(this.prisma, universityId, problemTrackId, dto);
   }
 
   getStaffJourneyLibrary(universityId: string) {

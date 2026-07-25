@@ -5,6 +5,7 @@ interface DashboardStatsBarProps {
   assessmentsCompleted: number;
   verifiedTotal: number;
   hearEligibleFaralins: number;
+  partnerUniversityCount: number;
 }
 
 export function DashboardStatsBar({
@@ -14,9 +15,19 @@ export function DashboardStatsBar({
   assessmentsCompleted,
   verifiedTotal,
   hearEligibleFaralins,
+  partnerUniversityCount,
 }: DashboardStatsBarProps) {
   const stats = [
-    { label: 'Total Faralins', value: totalFaralins.toLocaleString() },
+    {
+      label: 'Total Faralins',
+      value: totalFaralins.toLocaleString(),
+      hint:
+        partnerUniversityCount > 0
+          ? `Combined across ${partnerUniversityCount} partner ${
+              partnerUniversityCount === 1 ? 'university' : 'universities'
+            } — each keeps its own recognition balance.`
+          : undefined,
+    },
     {
       label: 'Est. bursary',
       value: `£${estimatedBursaryGbp.toFixed(2)}`,
@@ -38,6 +49,7 @@ export function DashboardStatsBar({
             {stat.value}
           </span>
           <span className="dashboard-stat-label">{stat.label}</span>
+          {stat.hint ? <span className="dashboard-stat-hint">{stat.hint}</span> : null}
         </div>
       ))}
     </div>

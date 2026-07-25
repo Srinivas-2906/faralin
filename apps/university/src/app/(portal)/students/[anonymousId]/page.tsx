@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { Badge, Button, Card, EmptyState, PageHeader, ResponsiveTable } from '@faralin/ui';
+import { useState } from 'react';
+import { Badge, Button, Card, EmptyState, PageHeader, ResponsiveTable, Tabs } from '@faralin/ui';
 import { AccessDenied } from '@/components/access-denied';
 import { PortalPageSkeleton } from '@/components/portal-page-skeleton';
 import { usePortalData } from '@/components/portal-provider';
@@ -85,6 +86,8 @@ export default function StudentDetailPage() {
     usePortalData<StudentDetailData>(
       `/universities/staff/students/${encodeURIComponent(anonymousId)}`,
     );
+  const [tab, setTab] = useState('summary');
+  const [assessmentPage, setAssessmentPage] = useState(1);
 
   if (accessDenied) return <AccessDenied />;
   if (loading && !data) return <PortalPageSkeleton rows={4} />;
@@ -136,7 +139,21 @@ export default function StudentDetailPage() {
           }
         />
 
-        <div className="portal-stack">
+        <Card>
+          <div className="page-toolbar">
+            <Tabs
+              ariaLabel="Student profile sections"
+              activeId={tab}
+              onChange={setTab}
+              tabs={[
+                { id: 'summary', label: 'Summary' },
+                { id: 'assessments', label: 'Assessments', count: assessmentsCompleted.length },
+                { id: 'activity', label: 'Activity', count: recentActivity.length },
+              ]}
+            />
+          </div>
+
+          {tab === 'summary' ? (
         <div className="portal-student-detail-grid">
           <Card className="portal-student-detail-summary">
             <h2 className="section-title">Summary</h2>
@@ -201,9 +218,10 @@ export default function StudentDetailPage() {
             </p>
           </Card>
         </div>
+          ) : null}
 
-        <Card>
-          <h2 className="section-title">Assessments completed</h2>
+          {tab === 'assessments' ? (
+          <>
           {assessmentsCompleted.length === 0 ? (
             <EmptyState compact message="No completed assessments yet." />
           ) : (
@@ -238,16 +256,22 @@ export default function StudentDetailPage() {
               ]}
               data={assessmentsCompleted}
               getRowKey={(row) => `${row.slug}-${row.completedAt}`}
+              paginated
+              page={assessmentPage}
+              pageSize={10}
+              onPageChange={setAssessmentPage}
+              maxHeight="480px"
             />
           )}
-        </Card>
+          </>
+          ) : null}
 
-        <Card>
-          <h2 className="section-title">Recent activity</h2>
+          {tab === 'activity' ? (
+          <>
           {recentActivity.length === 0 ? (
             <EmptyState compact message="No recent activity." />
           ) : (
-            <ul className="portal-activity-timeline">
+            <ul className="portal-activity-timeline scroll-panel" style={{ maxHeight: '480px' }}>
               {recentActivity.map((item, index) => (
                 <li key={`${item.type}-${item.occurredAt}-${index}`}>
                   <div className="portal-activity-type">{ACTIVITY_LABELS[item.type]}</div>
@@ -262,8 +286,9 @@ export default function StudentDetailPage() {
               ))}
             </ul>
           )}
+          </>
+          ) : null}
         </Card>
-        </div>
       </div>
     </div>
   );

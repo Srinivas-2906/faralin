@@ -8,7 +8,7 @@ import {
   TICKET_PRIORITY_LABELS,
   TICKET_STATUS_LABELS,
 } from '@faralin/types';
-import { Alert, Badge, Card, PageHeader } from '@faralin/ui';
+import { Alert, Badge, Card, PageHeader, Tabs } from '@faralin/ui';
 import { AccessDenied } from '@/components/access-denied';
 import { AdminPageSkeleton } from '@/components/admin-page-skeleton';
 import { useAdminContext } from '@/components/admin-provider';
@@ -76,6 +76,7 @@ export default function TicketDetailPage() {
   const [message, setMessage] = useState('');
   const [isInternal, setIsInternal] = useState(false);
   const [actionError, setActionError] = useState('');
+  const [tab, setTab] = useState('details');
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -163,147 +164,167 @@ export default function TicketDetailPage() {
           </div>
         ) : null}
 
-        <div className="layout-two-col" style={{ marginBottom: 'var(--section-gap)' }}>
-          <Card>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem' }}>
-              <Badge variant={statusBadgeVariant(ticket.status)}>
-                {ticketStatusLabel(ticket.status as never)}
-              </Badge>
-              <Badge variant={priorityBadgeVariant(ticket.priority)}>
-                {ticketPriorityLabel(ticket.priority as never)}
-              </Badge>
-              <Badge>{ticket.category.name}</Badge>
-              <Badge>{ticketChannelLabel(ticket.channel as never)}</Badge>
-            </div>
-
-            <p style={{ whiteSpace: 'pre-wrap', marginBottom: '1.5rem' }}>{ticket.description}</p>
-
-            <h3 className="section-title">Requester</h3>
-            <p>{ticket.requesterName}</p>
-            {ticket.requesterEmail ? <p>{ticket.requesterEmail}</p> : null}
-            {ticket.requesterPhone ? <p>{ticket.requesterPhone}</p> : null}
-            {ticket.studentProfile ? (
-              <p style={{ color: 'var(--faralin-muted)' }}>
-                Linked student: {ticket.studentProfile.anonymousId} ({ticket.studentProfile.user.email})
-              </p>
-            ) : null}
-
-            <h3 className="section-title" style={{ marginTop: '1.5rem' }}>
-              Assignment
-            </h3>
-            <p>{assigneeLabel(ticket.assignee)}</p>
-            <p style={{ color: isSlaOverdue(ticket.dueAt) ? '#b91c1c' : 'var(--faralin-muted)' }}>
-              Due: {formatDateTime(ticket.dueAt)}
-            </p>
-
-            <div className="admin-page-actions" style={{ marginTop: '1rem' }}>
-              {!ticket.assigneeId ? (
-                <button
-                  type="button"
-                  className="btn btn-primary"
-                  onClick={() => updateTicket({ assigneeId: context?.user.id })}
-                >
-                  Assign to me
-                </button>
-              ) : null}
-              <select
-                className="admin-status-select"
-                value={ticket.status}
-                onChange={(e) => updateTicket({ status: e.target.value })}
-              >
-                {Object.entries(TICKET_STATUS_LABELS).map(([value, label]) => (
-                  <option key={value} value={value}>
-                    {label}
-                  </option>
-                ))}
-              </select>
-              <select
-                className="admin-status-select"
-                value={ticket.priority}
-                onChange={(e) => updateTicket({ priority: e.target.value })}
-              >
-                {Object.entries(TICKET_PRIORITY_LABELS).map(([value, label]) => (
-                  <option key={value} value={value}>
-                    {label}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </Card>
-
-          <Card>
-            <h3 className="section-title">Timeline</h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              {ticket.events.map((event) => (
-                <div key={event.id} style={{ fontSize: '0.875rem' }}>
-                  <strong>{event.eventType.replaceAll('_', ' ')}</strong>
-                  <div style={{ color: 'var(--faralin-muted)' }}>
-                    {formatDateTime(event.createdAt)}
-                    {event.actor ? ` · ${event.actor.email}` : ''}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Card>
-        </div>
-
-        <Card style={{ marginBottom: 'var(--section-gap)' }}>
-          <h3 className="section-title">Conversation</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1.5rem' }}>
-            {ticket.messages.length === 0 ? (
-              <p style={{ color: 'var(--faralin-muted)' }}>No messages yet.</p>
-            ) : (
-              ticket.messages.map((entry) => (
-                <div
-                  key={entry.id}
-                  style={{
-                    padding: '0.875rem',
-                    borderRadius: '8px',
-                    background: entry.isInternal ? 'rgba(184,115,51,0.08)' : '#fff',
-                    border: '1px solid rgba(15,23,42,0.08)',
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem' }}>
-                    <strong>
-                      {entry.author.supportAgentProfile?.displayName ?? entry.author.email}
-                    </strong>
-                    <span style={{ color: 'var(--faralin-muted)', fontSize: '0.8125rem' }}>
-                      {formatDateTime(entry.createdAt)}
-                    </span>
-                  </div>
-                  {entry.isInternal ? (
-                    <Badge variant="copper" className="admin-status-active">
-                      Internal note
-                    </Badge>
-                  ) : null}
-                  <p style={{ whiteSpace: 'pre-wrap', marginTop: '0.5rem' }}>{entry.body}</p>
-                </div>
-              ))
-            )}
+        <Card>
+          <div className="page-toolbar">
+            <Tabs
+              ariaLabel="Ticket sections"
+              activeId={tab}
+              onChange={setTab}
+              tabs={[
+                { id: 'details', label: 'Details' },
+                { id: 'timeline', label: 'Timeline' },
+                { id: 'conversation', label: 'Conversation', count: ticket.messages.length },
+              ]}
+            />
           </div>
 
-          <form className="form-stack" onSubmit={submitMessage}>
-            <div className="form-row">
-              <label htmlFor="message">Add reply or note</label>
-              <textarea
-                id="message"
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                placeholder="Log what was communicated or an internal note"
-              />
+          {tab === 'details' ? (
+            <>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem' }}>
+                <Badge variant={statusBadgeVariant(ticket.status)}>
+                  {ticketStatusLabel(ticket.status as never)}
+                </Badge>
+                <Badge variant={priorityBadgeVariant(ticket.priority)}>
+                  {ticketPriorityLabel(ticket.priority as never)}
+                </Badge>
+                <Badge>{ticket.category.name}</Badge>
+                <Badge>{ticketChannelLabel(ticket.channel as never)}</Badge>
+              </div>
+
+              <p style={{ whiteSpace: 'pre-wrap', marginBottom: '1.5rem' }}>{ticket.description}</p>
+
+              <h3 className="section-title">Requester</h3>
+              <p>{ticket.requesterName}</p>
+              {ticket.requesterEmail ? <p>{ticket.requesterEmail}</p> : null}
+              {ticket.requesterPhone ? <p>{ticket.requesterPhone}</p> : null}
+              {ticket.studentProfile ? (
+                <p style={{ color: 'var(--faralin-muted)' }}>
+                  Linked student: {ticket.studentProfile.anonymousId} ({ticket.studentProfile.user.email})
+                </p>
+              ) : null}
+
+              <h3 className="section-title" style={{ marginTop: '1.5rem' }}>
+                Assignment
+              </h3>
+              <p>{assigneeLabel(ticket.assignee)}</p>
+              <p style={{ color: isSlaOverdue(ticket.dueAt) ? '#b91c1c' : 'var(--faralin-muted)' }}>
+                Due: {formatDateTime(ticket.dueAt)}
+              </p>
+
+              <div className="admin-page-actions" style={{ marginTop: '1rem' }}>
+                {!ticket.assigneeId ? (
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={() => updateTicket({ assigneeId: context?.user.id })}
+                  >
+                    Assign to me
+                  </button>
+                ) : null}
+                <select
+                  className="admin-status-select"
+                  value={ticket.status}
+                  onChange={(e) => updateTicket({ status: e.target.value })}
+                >
+                  {Object.entries(TICKET_STATUS_LABELS).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  className="admin-status-select"
+                  value={ticket.priority}
+                  onChange={(e) => updateTicket({ priority: e.target.value })}
+                >
+                  {Object.entries(TICKET_PRIORITY_LABELS).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </>
+          ) : null}
+
+          {tab === 'timeline' ? (
+            <div className="scroll-panel" style={{ maxHeight: '520px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {ticket.events.map((event) => (
+                  <div key={event.id} style={{ fontSize: '0.875rem' }}>
+                    <strong>{event.eventType.replaceAll('_', ' ')}</strong>
+                    <div style={{ color: 'var(--faralin-muted)' }}>
+                      {formatDateTime(event.createdAt)}
+                      {event.actor ? ` · ${event.actor.email}` : ''}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <input
-                type="checkbox"
-                checked={isInternal}
-                onChange={(e) => setIsInternal(e.target.checked)}
-              />
-              Internal note only
-            </label>
-            <button type="submit" className="btn btn-primary" style={{ alignSelf: 'flex-start' }}>
-              Post message
-            </button>
-          </form>
+          ) : null}
+
+          {tab === 'conversation' ? (
+            <>
+              <div
+                className="scroll-panel"
+                style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxHeight: '420px', marginBottom: '1.5rem' }}
+              >
+                {ticket.messages.length === 0 ? (
+                  <p style={{ color: 'var(--faralin-muted)' }}>No messages yet.</p>
+                ) : (
+                  ticket.messages.map((entry) => (
+                    <div
+                      key={entry.id}
+                      style={{
+                        padding: '0.875rem',
+                        borderRadius: '8px',
+                        background: entry.isInternal ? 'rgba(184,115,51,0.08)' : '#fff',
+                        border: '1px solid rgba(15,23,42,0.08)',
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem' }}>
+                        <strong>
+                          {entry.author.supportAgentProfile?.displayName ?? entry.author.email}
+                        </strong>
+                        <span style={{ color: 'var(--faralin-muted)', fontSize: '0.8125rem' }}>
+                          {formatDateTime(entry.createdAt)}
+                        </span>
+                      </div>
+                      {entry.isInternal ? (
+                        <Badge variant="copper" className="admin-status-active">
+                          Internal note
+                        </Badge>
+                      ) : null}
+                      <p style={{ whiteSpace: 'pre-wrap', marginTop: '0.5rem' }}>{entry.body}</p>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              <form className="form-stack" onSubmit={submitMessage}>
+                <div className="form-row">
+                  <label htmlFor="message">Add reply or note</label>
+                  <textarea
+                    id="message"
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    placeholder="Log what was communicated or an internal note"
+                  />
+                </div>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <input
+                    type="checkbox"
+                    checked={isInternal}
+                    onChange={(e) => setIsInternal(e.target.checked)}
+                  />
+                  Internal note only
+                </label>
+                <button type="submit" className="btn btn-primary" style={{ alignSelf: 'flex-start' }}>
+                  Post message
+                </button>
+              </form>
+            </>
+          ) : null}
         </Card>
       </div>
     </div>

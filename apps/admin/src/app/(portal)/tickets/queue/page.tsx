@@ -1,10 +1,12 @@
 'use client';
 
 import Link from 'next/link';
+import { useCallback, useEffect, useState } from 'react';
 import { Badge, Card, EmptyState, PageHeader, ResponsiveTable } from '@faralin/ui';
 import { AccessDenied } from '@/components/access-denied';
 import { AdminPageSkeleton } from '@/components/admin-page-skeleton';
-import { useAdminData } from '@/components/admin-provider';
+import { useAdminContext } from '@/components/admin-provider';
+import { useAdminApi } from '@/lib/use-admin-api';
 import {
   assigneeLabel,
   formatDateTime,
@@ -32,15 +34,42 @@ interface TicketRow {
 interface TicketListResponse {
   items: TicketRow[];
   total: number;
+  page: number;
+  totalPages: number;
 }
 
 export default function TicketQueuePage() {
-  const { data, loading, error, accessDenied } = useAdminData<TicketListResponse>(
-    '/support/tickets?mine=true',
-    30000,
-  );
+  const { accessDenied: contextDenied } = useAdminContext();
+  const { adminFetch, accessDenied } = useAdminApi();
+  const [data, setData] = useState<TicketListResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [page, setPage] = useState(1);
+  const pageSize = 25;
 
-  if (accessDenied) return <AccessDenied />;
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const params = new URLSearchParams({
+        mine: 'true',
+        page: String(page),
+        limit: String(pageSize),
+      });
+      const result = await adminFetch<TicketListResponse>(`/support/tickets?${params}`);
+      if (result) setData(result);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to load queue');
+    } finally {
+      setLoading(false);
+    }
+  }, [adminFetch, page, pageSize]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  if (contextDenied || accessDenied) return <AccessDenied />;
   if (loading && !data) return <AdminPageSkeleton rows={5} />;
 
   return (
@@ -109,6 +138,14 @@ export default function TicketQueuePage() {
               ]}
               data={data.items}
               getRowKey={(row) => row.id}
+              paginated
+              serverPaginated
+              page={data.page}
+              total={data.total}
+              totalPages={data.totalPages}
+              pageSize={pageSize}
+              onPageChange={setPage}
+              maxHeight="520px"
             />
           </Card>
         )}

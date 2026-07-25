@@ -50,6 +50,8 @@ export default function StudentsPage() {
 
   const [statusFilter, setStatusFilter] = useState('all');
   const [sort, setSort] = useState<(typeof SORT_OPTIONS)[number]['id']>('faralins-desc');
+  const [page, setPage] = useState(1);
+  const pageSize = 25;
 
   const students = useMemo(() => {
     const rows = [...(data?.students ?? [])];
@@ -114,7 +116,10 @@ export default function StudentsPage() {
               Pipeline
               <select
                 value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
+                onChange={(e) => {
+                  setStatusFilter(e.target.value);
+                  setPage(1);
+                }}
                 aria-label="Filter by pipeline status"
               >
                 <option value="all">All statuses</option>
@@ -192,6 +197,11 @@ export default function StudentsPage() {
               ]}
               data={sortedStudents}
               getRowKey={(s) => s.anonymousId}
+              paginated
+              page={page}
+              pageSize={pageSize}
+              onPageChange={setPage}
+              maxHeight="520px"
             />
           )}
         </Card>

@@ -19,6 +19,8 @@ export default function TrackJourneysPage() {
   const { staffFetch, accessDenied } = useStaffApi();
   const [journeys, setJourneys] = useState<JourneyRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const pageSize = 20;
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -89,6 +91,11 @@ export default function TrackJourneysPage() {
               ]}
               data={journeys}
               getRowKey={(row) => row.id}
+              paginated
+              page={page}
+              pageSize={pageSize}
+              onPageChange={setPage}
+              maxHeight="520px"
             />
           )}
         </Card>

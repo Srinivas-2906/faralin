@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useState } from 'react';
 import {
   Badge,
   Button,
@@ -9,6 +10,7 @@ import {
   PageHeader,
   ResponsiveTable,
   StatCard,
+  Tabs,
 } from '@faralin/ui';
 import { AccessDenied } from '@/components/access-denied';
 import { PortalPageSkeleton } from '@/components/portal-page-skeleton';
@@ -118,6 +120,8 @@ function SubjectBarChart({
 export default function DashboardPage() {
   const { data: dashboard, loading, error, accessDenied, refresh, lastUpdated } =
     usePortalData<DashboardData>('/universities/staff/dashboard', 60_000);
+  const [tab, setTab] = useState('overview');
+  const [assessmentPage, setAssessmentPage] = useState(1);
 
   if (accessDenied) return <AccessDenied />;
   if (loading && !dashboard) return <PortalPageSkeleton rows={5} />;
@@ -174,7 +178,24 @@ export default function DashboardPage() {
           }
         />
 
+        <div className="page-toolbar">
+          <Tabs
+            ariaLabel="Dashboard sections"
+            activeId={tab}
+            onChange={setTab}
+            tabs={[
+              { id: 'overview', label: 'Overview' },
+              { id: 'engagement', label: 'Engagement' },
+              { id: 'faralins', label: 'Faralins' },
+              { id: 'assessments', label: 'Assessments' },
+              { id: 'funnel', label: 'Funnel' },
+            ]}
+          />
+        </div>
+
         <div className="portal-stack">
+        {tab === 'engagement' ? (
+          <>
         <h2 className="section-title portal-section-heading">Student engagement</h2>
         <div className="stat-grid portal-stat-grid portal-engagement-grid">
           <StatCard label="Registered followers" value={engagement.totalRegistered.toLocaleString()} />
@@ -193,7 +214,11 @@ export default function DashboardPage() {
           Active = completed assessment, Faralin earn, problem track, or event registration this
           period.
         </p>
+          </>
+        ) : null}
 
+        {tab === 'faralins' ? (
+          <>
         <h2 className="section-title portal-section-heading">Faralin distribution</h2>
         <div className="stat-grid portal-stat-grid portal-faralin-grid">
           <StatCard
@@ -224,7 +249,11 @@ export default function DashboardPage() {
           awards. Student Faralin totals may include practice recognition not counted toward
           liability.
         </p>
+          </>
+        ) : null}
 
+        {tab === 'overview' ? (
+          <>
         <div className="stat-grid portal-stat-grid">
           <StatCard
             label="Students following"
@@ -236,6 +265,53 @@ export default function DashboardPage() {
           <StatCard label="Upcoming events" value={contentEngagement.events} />
         </div>
 
+        <div className="layout-two-col">
+          <Card>
+            <h2 className="section-title">Subject interests</h2>
+            {subjectInterests.length === 0 ? (
+              <EmptyState compact message="No data yet." />
+            ) : (
+              <SubjectBarChart items={subjectInterests} />
+            )}
+          </Card>
+
+          <Card>
+            <h2 className="section-title">Top performers (anonymous)</h2>
+            {topPerformers.length === 0 ? (
+              <EmptyState compact message="No students yet." />
+            ) : (
+              <ResponsiveTable<{
+                anonymousId: string;
+                totalFaralins: number;
+                performanceBand: string;
+              }>
+                columns={[
+                  { key: 'id', header: 'Anonymous ID', render: (s) => (
+                    <Link href={`/students/${s.anonymousId}`} className="portal-student-link">
+                      {s.anonymousId}
+                    </Link>
+                  ) },
+                  {
+                    key: 'faralins',
+                    header: 'Faralins',
+                    render: (s) => s.totalFaralins.toLocaleString(),
+                  },
+                  {
+                    key: 'band',
+                    header: 'Band',
+                    render: (s) => <Badge>{s.performanceBand}</Badge>,
+                  },
+                ]}
+                data={topPerformers}
+                getRowKey={(s) => s.anonymousId}
+              />
+            )}
+          </Card>
+        </div>
+          </>
+        ) : null}
+
+        {tab === 'assessments' ? (
         <Card className="portal-assessment-card">
           <h2 className="section-title">Assessment breakdown</h2>
           <div className="portal-assessment-summary">
@@ -299,10 +375,17 @@ export default function DashboardPage() {
               ]}
               data={assessmentBreakdown}
               getRowKey={(row) => row.slug}
+              paginated
+              page={assessmentPage}
+              pageSize={10}
+              onPageChange={setAssessmentPage}
+              maxHeight="480px"
             />
           )}
         </Card>
+        ) : null}
 
+        {tab === 'funnel' ? (
         <Card>
           <h2 className="section-title">Conversion funnel</h2>
           <div className="portal-funnel-horizontal">
@@ -326,50 +409,7 @@ export default function DashboardPage() {
             })}
           </div>
         </Card>
-
-        <div className="layout-two-col">
-          <Card>
-            <h2 className="section-title">Subject interests</h2>
-            {subjectInterests.length === 0 ? (
-              <EmptyState compact message="No data yet." />
-            ) : (
-              <SubjectBarChart items={subjectInterests} />
-            )}
-          </Card>
-
-          <Card>
-            <h2 className="section-title">Top performers (anonymous)</h2>
-            {topPerformers.length === 0 ? (
-              <EmptyState compact message="No students yet." />
-            ) : (
-              <ResponsiveTable<{
-                anonymousId: string;
-                totalFaralins: number;
-                performanceBand: string;
-              }>
-                columns={[
-                  { key: 'id', header: 'Anonymous ID', render: (s) => (
-                    <Link href={`/students/${s.anonymousId}`} className="portal-student-link">
-                      {s.anonymousId}
-                    </Link>
-                  ) },
-                  {
-                    key: 'faralins',
-                    header: 'Faralins',
-                    render: (s) => s.totalFaralins.toLocaleString(),
-                  },
-                  {
-                    key: 'band',
-                    header: 'Band',
-                    render: (s) => <Badge>{s.performanceBand}</Badge>,
-                  },
-                ]}
-                data={topPerformers}
-                getRowKey={(s) => s.anonymousId}
-              />
-            )}
-          </Card>
-        </div>
+        ) : null}
         </div>
       </div>
     </div>

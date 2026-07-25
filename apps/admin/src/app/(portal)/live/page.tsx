@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Badge, Card, EmptyState, PageHeader, ResponsiveTable } from '@faralin/ui';
 import { SUPPORT_REQUESTER_TYPE_LABELS } from '@faralin/types';
 import { AccessDenied } from '@/components/access-denied';
@@ -28,6 +28,13 @@ export default function LiveInboxPage() {
   const [tickets, setTickets] = useState<LiveTicket[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [page, setPage] = useState(1);
+  const pageSize = 20;
+
+  const pagedTickets = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return tickets.slice(start, start + pageSize);
+  }, [page, pageSize, tickets]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -102,8 +109,14 @@ export default function LiveInboxPage() {
                     t.assignee?.supportAgentProfile?.displayName ?? t.assignee?.email ?? 'Unassigned',
                 },
               ]}
-              data={tickets}
+              data={pagedTickets}
               getRowKey={(t) => t.id}
+              paginated
+              page={page}
+              pageSize={pageSize}
+              total={tickets.length}
+              onPageChange={setPage}
+              maxHeight="520px"
             />
           </Card>
         )}

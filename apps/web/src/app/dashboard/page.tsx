@@ -78,12 +78,10 @@ export default async function DashboardPage() {
 
   const portfolioArtifacts: PortfolioArtifactSummary[] = dashboard?.portfolioArtifacts ?? [];
 
-  const previewUniversities = dashboard
-    ? dashboard.portfolio.byUniversity.slice(0, 2)
-    : [];
+  const partnerUniversities = dashboard?.portfolio.byUniversity ?? [];
 
   const previewArticles = dashboard ? dashboard.articles.slice(0, 2) : [];
-  const totalUniversities = dashboard?.portfolio.byUniversity.length ?? 0;
+  const totalUniversities = partnerUniversities.length;
   const totalArticles = dashboard?.articles.length ?? 0;
   const displayName = getUserDisplayName(clerkUser, dashboard?.profile);
 
@@ -103,6 +101,7 @@ export default async function DashboardPage() {
               assessmentsCompleted={dashboard.portfolio.assessmentsCompleted}
               verifiedTotal={verifiedTotal}
               hearEligibleFaralins={dashboard.portfolio.hearEligibleFaralins ?? 0}
+              partnerUniversityCount={totalUniversities}
             />
           ) : null}
         </div>
@@ -120,18 +119,16 @@ export default async function DashboardPage() {
               <Card className="dashboard-bento-panel">
                 <header className="dashboard-section-head">
                   <h2 className="dashboard-section-title">Partners you chose</h2>
-                  {totalUniversities > 2 && (
-                    <Link href="/universities" className="dashboard-section-link">
-                      View all →
-                    </Link>
-                  )}
+                  <Link href="/universities" className="dashboard-section-link">
+                    Browse partners →
+                  </Link>
                 </header>
                 <div className="dashboard-bento-body">
-                  {dashboard.portfolio.byUniversity.length === 0 ? (
+                  {partnerUniversities.length === 0 ? (
                     <EmptyState compact message="Choose partner universities during onboarding to see them here." />
                   ) : (
                     <div className="dashboard-bento-list">
-                      {previewUniversities.map(
+                      {partnerUniversities.map(
                         (u: {
                           universitySlug: string;
                           universityName: string;

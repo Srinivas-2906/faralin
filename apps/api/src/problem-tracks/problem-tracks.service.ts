@@ -529,6 +529,13 @@ export class ProblemTracksService {
       await this.faralinEngine.processTrackAttemptCompletion(attemptId);
     }
 
+    if (status === ProblemTrackAttemptStatus.SCORED) {
+      await this.faralinEngine.processJourneyMilestoneBonus(
+        studentProfileId,
+        attempt.problemTrack.slug,
+      );
+    }
+
     return {
       ...result,
       score: scoreResult,
@@ -594,6 +601,19 @@ export class ProblemTracksService {
 
     if (decision === 'approve' && (attempt.faralinsEarned ?? 0) > 0) {
       await this.faralinEngine.processTrackAttemptCompletion(attemptId);
+    }
+
+    if (decision === 'approve') {
+      const fullAttempt = await this.prisma.problemTrackAttempt.findUnique({
+        where: { id: attemptId },
+        include: { problemTrack: { select: { slug: true } } },
+      });
+      if (fullAttempt) {
+        await this.faralinEngine.processJourneyMilestoneBonus(
+          fullAttempt.studentProfileId,
+          fullAttempt.problemTrack.slug,
+        );
+      }
     }
 
     return updated;

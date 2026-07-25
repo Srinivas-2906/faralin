@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Badge, Button, Card, EmptyState, PageHeader, ResponsiveTable } from '@faralin/ui';
+import { Badge, Button, Card, EmptyState, PageHeader, ResponsiveTable, Tabs } from '@faralin/ui';
 import { AccessDenied } from '@/components/access-denied';
 import { PortalPageSkeleton } from '@/components/portal-page-skeleton';
 import { useStaffApi } from '@/lib/use-staff-api';
@@ -36,6 +36,8 @@ export default function AssessmentLibraryPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [activeCategory, setActiveCategory] = useState('all');
+  const [page, setPage] = useState(1);
+  const pageSize = 20;
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -87,21 +89,18 @@ export default function AssessmentLibraryPage() {
 
         <Card>
           <div className="portal-card-toolbar">
-            <label className="portal-filter">
-              Category
-              <select
-                value={activeCategory}
-                onChange={(e) => setActiveCategory(e.target.value)}
-                aria-label="Filter by category"
-              >
-                <option value="all">All categories</option>
-                {categories.map((cat) => (
-                  <option key={cat.category} value={cat.category}>
-                    {cat.label}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <Tabs
+              ariaLabel="Assessment categories"
+              activeId={activeCategory}
+              onChange={(id) => {
+                setActiveCategory(id);
+                setPage(1);
+              }}
+              tabs={[
+                { id: 'all', label: 'All categories' },
+                ...categories.map((cat) => ({ id: cat.category, label: cat.label })),
+              ]}
+            />
           </div>
 
           {error ? (
@@ -159,6 +158,11 @@ export default function AssessmentLibraryPage() {
               ]}
               data={filtered}
               getRowKey={(row) => row.id}
+              paginated
+              page={page}
+              pageSize={pageSize}
+              onPageChange={setPage}
+              maxHeight="520px"
             />
           )}
         </Card>

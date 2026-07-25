@@ -1009,6 +1009,225 @@ td {
   }
 }
 
+.table-scroll-panel {
+  overflow-y: auto;
+}
+
+.table-sticky-head thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--faralin-ivory, #faf8f5);
+}
+
+/* ── Tabs ── */
+
+.ui-tabs {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 0.375rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.ui-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.ui-tab {
+  flex-shrink: 0;
+  border: 1px solid var(--faralin-border, rgba(15, 23, 42, 0.12));
+  background: var(--faralin-surface, #fff);
+  color: var(--faralin-text, #0f172a);
+  border-radius: 999px;
+  padding: 0.375rem 0.875rem;
+  font: inherit;
+  font-size: var(--text-sm, 0.875rem);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.ui-tab-active {
+  background: rgba(184, 115, 51, 0.15);
+  border-color: var(--faralin-copper, #b87333);
+  color: var(--faralin-copper, #b87333);
+}
+
+.ui-tab-count {
+  font-size: 0.75rem;
+  font-weight: 600;
+  opacity: 0.85;
+}
+
+/* ── Pagination ── */
+
+.ui-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--faralin-border, rgba(15, 23, 42, 0.08));
+}
+
+.ui-pagination-summary {
+  font-size: var(--text-sm, 0.875rem);
+  color: var(--faralin-muted, #64748b);
+}
+
+.ui-pagination-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.ui-pagination-btn {
+  min-width: 2rem;
+  padding: 0.35rem 0.625rem;
+  border: 1px solid var(--faralin-border, rgba(15, 23, 42, 0.12));
+  border-radius: 4px;
+  background: var(--faralin-surface, #fff);
+  color: var(--faralin-text, #0f172a);
+  font: inherit;
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
+.ui-pagination-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.ui-pagination-btn-active {
+  background: rgba(184, 115, 51, 0.15);
+  border-color: var(--faralin-copper, #b87333);
+  color: var(--faralin-copper, #b87333);
+}
+
+.ui-pagination-ellipsis {
+  padding: 0 0.25rem;
+  color: var(--faralin-muted, #64748b);
+}
+
+.ui-pagination-compact .ui-pagination-controls {
+  margin-left: auto;
+}
+
+.ui-pagination-current {
+  font-size: 0.8125rem;
+  padding: 0 0.5rem;
+  color: var(--faralin-muted, #64748b);
+}
+
+/* ── Modal ── */
+
+.ui-modal {
+  border: none;
+  padding: 0;
+  max-width: min(96vw, 560px);
+  width: 100%;
+  background: transparent;
+}
+
+.ui-modal::backdrop {
+  background: rgba(15, 23, 42, 0.45);
+}
+
+.ui-modal-sm {
+  max-width: min(96vw, 420px);
+}
+
+.ui-modal-lg {
+  max-width: min(96vw, 720px);
+}
+
+.ui-modal-panel {
+  background: var(--faralin-surface, #fff);
+  border-radius: 8px;
+  border: 1px solid var(--faralin-border, rgba(15, 23, 42, 0.08));
+  box-shadow: 0 16px 48px rgba(15, 23, 42, 0.18);
+  overflow: hidden;
+}
+
+.ui-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--faralin-border, rgba(15, 23, 42, 0.08));
+}
+
+.ui-modal-title {
+  margin: 0;
+  font-size: 1.0625rem;
+  font-weight: 600;
+}
+
+.ui-modal-close {
+  border: none;
+  background: transparent;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--faralin-muted, #64748b);
+  padding: 0.25rem;
+}
+
+.ui-modal-body {
+  padding: 1.25rem;
+  max-height: min(70vh, 520px);
+  overflow-y: auto;
+}
+
+.ui-modal-footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding: 0.875rem 1.25rem;
+  border-top: 1px solid var(--faralin-border, rgba(15, 23, 42, 0.08));
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .ui-modal[open] .ui-modal-panel {
+    animation: ui-modal-in 0.18s ease-out;
+  }
+}
+
+@keyframes ui-modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── Page toolbar ── */
+
+.page-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.scroll-panel {
+  overflow-y: auto;
+}
+
+
 /* ── Assessment layout ── */
 
 .assessment-active {
@@ -3512,6 +3731,15 @@ a.nav-sign-in {
   line-height: 1.35;
   color: rgba(0, 33, 71, 0.55);
   overflow-wrap: break-word;
+}
+
+.dashboard-page .dashboard-stat-hint {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.65rem;
+  line-height: 1.35;
+  color: rgba(0, 33, 71, 0.45);
+  max-width: 12rem;
 }
 
 @media (max-width: 1023px) {

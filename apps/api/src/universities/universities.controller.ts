@@ -6,6 +6,7 @@ import { AuthUser } from '../auth/clerk-auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { SupportBotService } from '../support/support-bot.service';
 import { UniversitiesService } from './universities.service';
+import type { BonusRule } from './staff-assessment-config';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Controller('universities')
@@ -105,10 +106,26 @@ export class UniversitiesController {
     @CurrentUser() user: AuthUser,
     @Param('trackId') trackId: string,
     @Body()
-    body: { enabled?: boolean; isCompulsory?: boolean; affectsBursaryEligibility?: boolean },
+    body: {
+      enabled?: boolean;
+      isCompulsory?: boolean;
+      affectsBursaryEligibility?: boolean;
+      bonusRules?: BonusRule[] | null;
+    },
   ) {
     this.universities.requireUniversityAccess(user.universityId, user.universityId!);
     return this.universities.patchStaffTrackConfig(user.universityId!, trackId, body);
+  }
+
+  @Patch('staff/tracks/:trackId/reward')
+  @Roles(UserRole.UNIVERSITY_STAFF)
+  patchStaffTrackReward(
+    @CurrentUser() user: AuthUser,
+    @Param('trackId') trackId: string,
+    @Body() body: { scoreMultiplier: number },
+  ) {
+    this.universities.requireUniversityAccess(user.universityId, user.universityId!);
+    return this.universities.patchStaffTrackReward(user.universityId!, trackId, body);
   }
 
   @Get('staff/journeys/library')

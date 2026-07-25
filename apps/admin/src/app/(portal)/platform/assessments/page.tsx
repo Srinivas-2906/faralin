@@ -1,9 +1,12 @@
 'use client';
 
+import { useState } from 'react';
 import { Card, EmptyState, PageHeader, ResponsiveTable } from '@faralin/ui';
 import { AccessDenied } from '@/components/access-denied';
 import { AdminPageSkeleton } from '@/components/admin-page-skeleton';
 import { useAdminData } from '@/components/admin-provider';
+
+const PAGE_SIZE = 20;
 
 export default function PlatformAssessmentsPage() {
   const { data, loading, error, accessDenied } = useAdminData<
@@ -15,6 +18,7 @@ export default function PlatformAssessmentsPage() {
       _count: { questions: number; attempts: number };
     }>
   >('/admin/assessments');
+  const [page, setPage] = useState(1);
 
   if (accessDenied) return <AccessDenied />;
   if (loading && !data) return <AdminPageSkeleton rows={6} />;
@@ -38,6 +42,11 @@ export default function PlatformAssessmentsPage() {
               ]}
               data={data}
               getRowKey={(a) => a.id}
+              paginated
+              page={page}
+              pageSize={PAGE_SIZE}
+              onPageChange={setPage}
+              maxHeight="520px"
             />
           )}
         </Card>

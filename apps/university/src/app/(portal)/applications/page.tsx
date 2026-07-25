@@ -10,6 +10,7 @@ import {
   PageHeader,
   ResponsiveTable,
   SkeletonTable,
+  Tabs,
 } from '@faralin/ui';
 import { AccessDenied } from '@/components/access-denied';
 import { useStaffApi } from '@/lib/use-staff-api';
@@ -55,6 +56,8 @@ export default function ApplicationsPage() {
   const [savingId, setSavingId] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const [tab, setTab] = useState<(typeof PIPELINE_TABS)[number]['id']>('all');
+  const [page, setPage] = useState(1);
+  const pageSize = 20;
 
   const load = useCallback(async () => {
     try {
@@ -88,14 +91,49 @@ export default function ApplicationsPage() {
     });
   }, [applications, query, tab]);
 
-  const grouped = useMemo(() => {
-    const groups: Record<string, ApplicationRow[]> = {};
-    for (const application of filtered) {
-      if (!groups[application.status]) groups[application.status] = [];
-      groups[application.status].push(application);
-    }
-    return groups;
-  }, [filtered]);
+  const applicationColumns = [
+    { key: 'id', header: 'Anonymous ID', render: (a: ApplicationRow) => a.anonymousId },
+    {
+      key: 'subjects',
+      header: 'Subjects',
+      render: (a: ApplicationRow) =>
+        a.subjectNames.length > 0 ? a.subjectNames.join(', ') : '—',
+    },
+    {
+      key: 'faralins',
+      header: 'Faralins',
+      render: (a: ApplicationRow) => a.totalFaralins.toLocaleString(),
+    },
+    {
+      key: 'band',
+      header: 'Band',
+      render: (a: ApplicationRow) => <Badge>{a.performanceBand}</Badge>,
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      render: (a: ApplicationRow) => (
+        <select
+          className="portal-status-select"
+          value={a.status}
+          disabled={savingId === a.studentProfileId}
+          onChange={(e) => updateStatus(a.studentProfileId, e.target.value)}
+          aria-label={`Status for ${a.anonymousId}`}
+        >
+          {STATUS_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      ),
+    },
+    {
+      key: 'updated',
+      header: 'Updated',
+      render: (a: ApplicationRow) => new Date(a.updatedAt).toLocaleDateString(),
+    },
+  ] as const;
 
   async function updateStatus(studentProfileId: string, status: string) {
     setSavingId(studentProfileId);
@@ -169,7 +207,6 @@ export default function ApplicationsPage() {
           </div>
         )}
 
-        <div className="portal-stack">
         <Card>
           <div className="portal-card-toolbar">
             <input
@@ -177,138 +214,38 @@ export default function ApplicationsPage() {
               className="portal-search"
               placeholder="Search anonymous ID…"
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(e) => {
+                setQuery(e.target.value);
+                setPage(1);
+              }}
               aria-label="Search applications"
             />
-            <div className="portal-tabs" role="tablist" aria-label="Pipeline filters">
-              {PIPELINE_TABS.map((item) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  role="tab"
-                  aria-selected={tab === item.id}
-                  className={`portal-tab${tab === item.id ? ' portal-tab-active' : ''}`}
-                  onClick={() => setTab(item.id)}
-                >
-                  {item.label}
-                </button>
-              ))}
-            </div>
+            <Tabs
+              ariaLabel="Pipeline filters"
+              activeId={tab}
+              onChange={(id) => {
+                setTab(id as typeof tab);
+                setPage(1);
+              }}
+              tabs={PIPELINE_TABS.map((item) => ({ id: item.id, label: item.label }))}
+            />
           </div>
-        </Card>
 
-        {filtered.length === 0 ? (
-          <Card>
+          {filtered.length === 0 ? (
             <EmptyState compact message="No applications match this filter." />
-          </Card>
-        ) : tab === 'all' ? (
-          Object.entries(grouped).map(([status, rows]) => (
-            <Card key={status}>
-              <h2 className="section-title">
-                {STATUS_OPTIONS.find((option) => option.value === status)?.label ??
-                  status.replace(/_/g, ' ')}{' '}
-                <Badge>{rows.length}</Badge>
-              </h2>
-              <ResponsiveTable<ApplicationRow>
-                columns={[
-                  { key: 'id', header: 'Anonymous ID', render: (a) => a.anonymousId },
-                  {
-                    key: 'subjects',
-                    header: 'Subjects',
-                    render: (a) =>
-                      a.subjectNames.length > 0 ? a.subjectNames.join(', ') : '—',
-                  },
-                  {
-                    key: 'faralins',
-                    header: 'Faralins',
-                    render: (a) => a.totalFaralins.toLocaleString(),
-                  },
-                  {
-                    key: 'band',
-                    header: 'Band',
-                    render: (a) => <Badge>{a.performanceBand}</Badge>,
-                  },
-                  {
-                    key: 'status',
-                    header: 'Status',
-                    render: (a) => (
-                      <select
-                        className="portal-status-select"
-                        value={a.status}
-                        disabled={savingId === a.studentProfileId}
-                        onChange={(e) => updateStatus(a.studentProfileId, e.target.value)}
-                        aria-label={`Status for ${a.anonymousId}`}
-                      >
-                        {STATUS_OPTIONS.map((option) => (
-                          <option key={option.value} value={option.value}>
-                            {option.label}
-                          </option>
-                        ))}
-                      </select>
-                    ),
-                  },
-                  {
-                    key: 'updated',
-                    header: 'Updated',
-                    render: (a) => new Date(a.updatedAt).toLocaleDateString(),
-                  },
-                ]}
-                data={rows}
-                getRowKey={(a) => a.id}
-              />
-            </Card>
-          ))
-        ) : (
-          <Card>
+          ) : (
             <ResponsiveTable<ApplicationRow>
-              columns={[
-                { key: 'id', header: 'Anonymous ID', render: (a) => a.anonymousId },
-                {
-                  key: 'subjects',
-                  header: 'Subjects',
-                  render: (a) => (a.subjectNames.length > 0 ? a.subjectNames.join(', ') : '—'),
-                },
-                {
-                  key: 'faralins',
-                  header: 'Faralins',
-                  render: (a) => a.totalFaralins.toLocaleString(),
-                },
-                {
-                  key: 'band',
-                  header: 'Band',
-                  render: (a) => <Badge>{a.performanceBand}</Badge>,
-                },
-                {
-                  key: 'status',
-                  header: 'Status',
-                  render: (a) => (
-                    <select
-                      className="portal-status-select"
-                      value={a.status}
-                      disabled={savingId === a.studentProfileId}
-                      onChange={(e) => updateStatus(a.studentProfileId, e.target.value)}
-                      aria-label={`Status for ${a.anonymousId}`}
-                    >
-                      {STATUS_OPTIONS.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-                  ),
-                },
-                {
-                  key: 'updated',
-                  header: 'Updated',
-                  render: (a) => new Date(a.updatedAt).toLocaleDateString(),
-                },
-              ]}
+              columns={[...applicationColumns]}
               data={filtered}
               getRowKey={(a) => a.id}
+              paginated
+              page={page}
+              pageSize={pageSize}
+              onPageChange={setPage}
+              maxHeight="520px"
             />
-          </Card>
-        )}
-        </div>
+          )}
+        </Card>
       </div>
     </div>
   );

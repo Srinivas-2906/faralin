@@ -9,20 +9,60 @@ import { usePortalContext } from '@/components/portal-provider';
 import { getUniversityLogoUrl } from '@/lib/media';
 import { useStaffApi } from '@/lib/use-staff-api';
 
-const navLinks = [
-  { href: '/dashboard', label: 'Dashboard', icon: '◉' },
-  { href: '/students', label: 'Students', icon: '◎' },
-  { href: '/assessments/library', label: 'Assessment Library', icon: '▦' },
-  { href: '/assessments/active', label: 'Active Assessments', icon: '▣' },
-  { href: '/tracks', label: 'Problem Trackers', icon: '↝' },
-  { href: '/tracks/journeys', label: 'Track Journeys', icon: '↬' },
-  { href: '/rewards', label: 'Rewards', icon: '◆' },
-  { href: '/recognition', label: 'Recognition Tiers', icon: '★' },
-  { href: '/applications', label: 'Applications', icon: '◈', countKey: 'applications' as const },
-  { href: '/content/articles', label: 'Articles', icon: '▤' },
-  { href: '/content/events', label: 'Events', icon: '◷' },
-  { href: '/support/chat', label: 'Support', icon: '?' },
+const navSections = [
+  {
+    title: 'Overview',
+    links: [
+      { href: '/dashboard', label: 'Dashboard', icon: '◉' },
+      { href: '/students', label: 'Students', icon: '◎' },
+      { href: '/applications', label: 'Applications', icon: '◈', countKey: 'applications' as const },
+    ],
+  },
+  {
+    title: 'Assessments',
+    links: [
+      { href: '/assessments/library', label: 'Library', icon: '▦' },
+      { href: '/assessments/active', label: 'Active', icon: '▣' },
+    ],
+  },
+  {
+    title: 'Tracks',
+    links: [
+      { href: '/tracks', label: 'Problem Trackers', icon: '↝' },
+      { href: '/tracks/journeys', label: 'Journeys', icon: '↬' },
+    ],
+  },
+  {
+    title: 'Rewards',
+    links: [
+      { href: '/rewards', label: 'Rewards', icon: '◆' },
+      { href: '/recognition', label: 'Recognition Tiers', icon: '★' },
+      { href: '/leaderboard', label: 'Leaderboard', icon: '▲' },
+    ],
+  },
+  {
+    title: 'Content',
+    links: [
+      { href: '/content/articles', label: 'Articles', icon: '▤' },
+      { href: '/content/events', label: 'Events', icon: '◷' },
+    ],
+  },
+  {
+    title: 'Support',
+    links: [{ href: '/support/chat', label: 'Support chat', icon: '?' }],
+  },
 ];
+
+type NavLink = (typeof navSections)[number]['links'][number];
+
+function readCollapsedSections(storageKey: string) {
+  if (typeof window === 'undefined') return {} as Record<string, boolean>;
+  try {
+    return JSON.parse(window.localStorage.getItem(storageKey) ?? '{}') as Record<string, boolean>;
+  } catch {
+    return {};
+  }
+}
 
 function isActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
@@ -34,6 +74,40 @@ export function PortalShell({ children }: { children: React.ReactNode }) {
   const { staffFetch: fetchCounts } = useStaffApi();
   const [navOpen, setNavOpen] = useState(false);
   const [applicationCount, setApplicationCount] = useState<number | null>(null);
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    setCollapsed(readCollapsedSections('portal-nav-collapsed'));
+  }, []);
+
+  function toggleSection(title: string) {
+    setCollapsed((prev) => {
+      const next = { ...prev, [title]: !prev[title] };
+      window.localStorage.setItem('portal-nav-collapsed', JSON.stringify(next));
+      return next;
+    });
+  }
+
+  function renderLink(link: NavLink) {
+    const count =
+      link.countKey === 'applications' && applicationCount !== null ? applicationCount : null;
+    return (
+      <Link
+        key={link.href}
+        href={link.href}
+        className={isActive(pathname, link.href) ? 'portal-nav-active' : undefined}
+        onClick={() => setNavOpen(false)}
+      >
+        <span className="portal-nav-icon" aria-hidden="true">
+          {link.icon}
+        </span>
+        <span className="portal-nav-label">{link.label}</span>
+        {count !== null && count > 0 ? (
+          <span className="portal-nav-badge">{count}</span>
+        ) : null}
+      </Link>
+    );
+  }
 
   const universityName = context?.university.name ?? 'University portal';
   const logoUrl = context
@@ -89,34 +163,31 @@ export function PortalShell({ children }: { children: React.ReactNode }) {
             </>
           )}
         </div>
-        <nav
-          id="portal-sidebar-nav"
-          className="portal-sidebar-nav"
-          aria-label="Portal navigation"
-        >
-          {navLinks.map((link) => {
-            const count =
-              link.countKey === 'applications' && applicationCount !== null
-                ? applicationCount
-                : null;
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={isActive(pathname, link.href) ? 'portal-nav-active' : undefined}
-                onClick={() => setNavOpen(false)}
+        {navSections.map((section, index) => {
+          const isCollapsed = collapsed[section.title] ?? false;
+          return (
+            <div key={section.title} className="portal-nav-section">
+              <button
+                type="button"
+                className="portal-nav-section-toggle"
+                aria-expanded={!isCollapsed}
+                onClick={() => toggleSection(section.title)}
               >
-                <span className="portal-nav-icon" aria-hidden="true">
-                  {link.icon}
-                </span>
-                <span className="portal-nav-label">{link.label}</span>
-                {count !== null && count > 0 ? (
-                  <span className="portal-nav-badge">{count}</span>
-                ) : null}
-              </Link>
-            );
-          })}
-        </nav>
+                <span>{section.title}</span>
+                <span aria-hidden="true">{isCollapsed ? '▸' : '▾'}</span>
+              </button>
+              {!isCollapsed ? (
+                <nav
+                  id={index === 0 ? 'portal-sidebar-nav' : undefined}
+                  className="portal-sidebar-nav"
+                  aria-label={`${section.title} navigation`}
+                >
+                  {section.links.map(renderLink)}
+                </nav>
+              ) : null}
+            </div>
+          );
+        })}
         <div className="portal-sidebar-footer">
           {context?.staff.email ? (
             <p className="portal-sidebar-email">{context.staff.email}</p>

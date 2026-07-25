@@ -53,12 +53,16 @@ export default function TicketsPage() {
   const [priority, setPriority] = useState('');
   const [search, setSearch] = useState('');
   const [assigneeId, setAssigneeId] = useState('');
+  const [page, setPage] = useState(1);
+  const pageSize = 25;
 
   const load = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
       const params = new URLSearchParams();
+      params.set('page', String(page));
+      params.set('limit', String(pageSize));
       if (status) params.set('status', status);
       if (priority) params.set('priority', priority);
       if (search.trim()) params.set('search', search.trim());
@@ -73,7 +77,7 @@ export default function TicketsPage() {
     } finally {
       setLoading(false);
     }
-  }, [adminFetch, assigneeId, priority, search, status]);
+  }, [adminFetch, assigneeId, page, pageSize, priority, search, status]);
 
   useEffect(() => {
     load();
@@ -139,7 +143,14 @@ export default function TicketsPage() {
                 <option value="">All assignees</option>
                 <option value="unassigned">Unassigned</option>
               </select>
-              <button type="button" className="btn btn-secondary" onClick={load}>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => {
+                  setPage(1);
+                  load();
+                }}
+              >
                 Apply filters
               </button>
             </div>
@@ -204,6 +215,14 @@ export default function TicketsPage() {
               ]}
               data={data.items}
               getRowKey={(row) => row.id}
+              paginated
+              serverPaginated
+              page={data.page}
+              total={data.total}
+              totalPages={data.totalPages}
+              pageSize={pageSize}
+              onPageChange={setPage}
+              maxHeight="520px"
             />
           </Card>
         )}

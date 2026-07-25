@@ -26,6 +26,7 @@
     "backfill:institutional-engagement-phase2:ci": "tsx prisma/backfill-institutional-engagement-phase2.ts",
     "backfill:support-categories": "dotenv -e ../../.env -- tsx prisma/backfill-support-categories.ts",
     "backfill:support-categories:ci": "tsx prisma/backfill-support-categories.ts",
+    "inspect:faralin-breakdown": "dotenv -e ../../.env -- tsx prisma/inspect-faralin-breakdown.ts",
     "seed:ci": "tsx prisma/seed.ts",
     "studio": "dotenv -e ../../.env -- prisma studio"
   },
