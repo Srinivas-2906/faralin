@@ -115,13 +115,19 @@ export default async function DashboardPage() {
 
             <DashboardCompletedTracks artifacts={portfolioArtifacts} />
 
-            <div className="dashboard-bento">
+            <div className="dashboard-bento" id="partners">
               <Card className="dashboard-bento-panel">
                 <header className="dashboard-section-head">
                   <h2 className="dashboard-section-title">Partners you chose</h2>
-                  <Link href="/universities" className="dashboard-section-link">
-                    Browse partners →
-                  </Link>
+                  {partnerUniversities.length > 0 ? (
+                    <Link href="/partners" className="dashboard-section-link">
+                      View all →
+                    </Link>
+                  ) : (
+                    <Link href="/universities" className="dashboard-section-link">
+                      Browse partners →
+                    </Link>
+                  )}
                 </header>
                 <div className="dashboard-bento-body">
                   {partnerUniversities.length === 0 ? (

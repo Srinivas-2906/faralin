@@ -4151,6 +4151,29 @@ button.dashboard-section-link {
   color: rgba(92, 107, 122, 0.65);
 }
 
+/* ── Partners page ── */
+
+.partners-page-summary {
+  margin: 0 0 1rem;
+  font-size: var(--text-sm);
+  color: var(--faralin-muted-on-dark);
+}
+
+.partners-page-card {
+  padding: 1rem 1.25rem;
+}
+
+.partners-page-list {
+  max-width: 42rem;
+}
+
+.partners-page-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1.25rem;
+}
+
 /* ── Focus visible ── */
 
 :focus-visible {
