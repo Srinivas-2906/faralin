@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { auth, currentUser } from '@clerk/nextjs/server';
 import { Card, EmptyState } from '@faralin/ui';
+import { MIN_DISPLAY_AWARD_GBP, UNIVERSITY_VALUE_EXPLAINER } from '@faralin/types';
 import type { PortfolioArtifactSummary } from '@faralin/types';
 import type { AssessmentListItem } from '@/components/assessment-card';
 import { DashboardPartnerCard } from '@/components/dashboard-partner-card';
@@ -10,7 +11,6 @@ import { DashboardCombinedRecommended } from '@/components/dashboard-problem-tra
 import type { ProblemTrackListItem } from '@/components/problem-tracks/track-card';
 import { DashboardUpdateItem } from '@/components/dashboard-update-item';
 import { DashboardStatsBar } from '@/components/dashboard-stats-bar';
-import { ConditionalAwardDisclaimer } from '@/components/conditional-award-disclaimer';
 import { getUserDisplayName } from '@/lib/user-display-name';
 
 function toAssessmentListItem(a: {
@@ -60,13 +60,6 @@ export default async function DashboardPage() {
     redirect('/onboarding');
   }
 
-  const verifiedTotal = dashboard
-    ? dashboard.portfolio.byUniversity.reduce(
-        (sum: number, u: { verifiedFaralins: number }) => sum + u.verifiedFaralins,
-        0,
-      )
-    : 0;
-
   const allRecommendedAssessments: AssessmentListItem[] = dashboard
     ? dashboard.recommendedAssessments.map(toAssessmentListItem)
     : [];
@@ -79,10 +72,12 @@ export default async function DashboardPage() {
 
   const portfolioArtifacts: PortfolioArtifactSummary[] = dashboard?.portfolioArtifacts ?? [];
 
-  const partnerUniversities = dashboard?.portfolio.byUniversity ?? [];
+  const legacyPartners = dashboard?.portfolio.byUniversity ?? [];
   const projections = dashboard?.portfolio.projections ?? [];
   const awardAccounts = dashboard?.portfolio.awardAccounts ?? [];
-  const coreFaralins = dashboard?.portfolio.coreFaralins ?? dashboard?.portfolio.totalFaralins ?? 0;
+  const faralinsEarned =
+    dashboard?.portfolio.coreFaralins ?? dashboard?.portfolio.totalFaralins ?? 0;
+  const recognition = dashboard?.portfolio.recognition;
 
   const partnerCards = projections.length
     ? projections.map(
@@ -92,16 +87,13 @@ export default async function DashboardPage() {
           eligibleCoreFaralins: number;
           estimatedAwardGbp: number;
         }) => {
-          const legacy = partnerUniversities.find(
-            (u: { universitySlug: string }) => u.universitySlug === p.universitySlug,
-          );
           const award = awardAccounts.find(
             (a: { universitySlug: string; status: string }) =>
               a.universitySlug === p.universitySlug,
           );
           const awardStatusLabel = award
             ? award.status === 'CONVERTED'
-              ? 'Converted award'
+              ? 'Confirmed award'
               : award.status === 'FORFEITED'
                 ? 'Forfeited'
                 : award.status === 'RESERVED'
@@ -109,49 +101,41 @@ export default async function DashboardPage() {
                   : award.status === 'ELIGIBLE'
                     ? 'Eligible'
                     : award.status === 'CONFIRMED'
-                      ? 'Confirmed'
-                      : 'Projected estimate'
-            : undefined;
+                      ? 'Confirmed award'
+                      : 'Estimate only'
+            : 'Estimate only';
           return {
             universitySlug: p.universitySlug,
             universityName: p.universityName,
-            eligibleCoreFaralins: p.eligibleCoreFaralins,
+            countedFaralins: p.eligibleCoreFaralins,
             estimatedAwardGbp: p.estimatedAwardGbp,
-            hearEligibleFaralins: legacy?.hearEligibleFaralins,
-            recognitionTierLabel: legacy?.recognitionTierLabel,
-            recognitionProgressPercent: legacy?.recognitionProgressPercent,
             awardStatus: award?.status,
             awardStatusLabel,
           };
         },
       )
-    : partnerUniversities.map(
+    : legacyPartners.map(
         (u: {
           universitySlug: string;
           universityName: string;
           totalFaralins: number;
-          verifiedFaralins: number;
-          hearEligibleFaralins: number;
-          recognitionTierLabel: string;
-          recognitionProgressPercent: number;
           estimatedBursaryGbp: number;
         }) => ({
           universitySlug: u.universitySlug,
           universityName: u.universityName,
-          totalFaralins: u.totalFaralins,
+          countedFaralins: u.totalFaralins,
           estimatedAwardGbp: u.estimatedBursaryGbp,
-          hearEligibleFaralins: u.hearEligibleFaralins,
-          recognitionTierLabel: u.recognitionTierLabel,
-          recognitionProgressPercent: u.recognitionProgressPercent,
+          awardStatusLabel: 'Estimate only',
         }),
       );
 
-  const maxProjectionGbp = projections.length
-    ? Math.max(...projections.map((p: { estimatedAwardGbp: number }) => p.estimatedAwardGbp))
-    : dashboard?.portfolio.estimatedBursaryGbp ?? 0;
+  const displayableEstimates = partnerCards
+    .map((p: { estimatedAwardGbp: number }) => p.estimatedAwardGbp)
+    .filter((gbp: number) => gbp >= MIN_DISPLAY_AWARD_GBP);
+  const highestEstimatedAwardGbp =
+    displayableEstimates.length > 0 ? Math.max(...displayableEstimates) : null;
 
   const previewArticles = dashboard ? dashboard.articles.slice(0, 2) : [];
-  const totalUniversities = partnerCards.length;
   const totalArticles = dashboard?.articles.length ?? 0;
   const displayName = getUserDisplayName(clerkUser, dashboard?.profile);
 
@@ -165,21 +149,19 @@ export default async function DashboardPage() {
           </h1>
           {dashboard ? (
             <DashboardStatsBar
-              coreFaralins={coreFaralins}
-              estimatedBursaryGbp={maxProjectionGbp}
+              faralinsEarned={faralinsEarned}
               tracksCompleted={dashboard.portfolio.tracksCompleted ?? 0}
               assessmentsCompleted={dashboard.portfolio.assessmentsCompleted}
-              verifiedTotal={verifiedTotal}
-              hearEligibleFaralins={dashboard.portfolio.hearEligibleFaralins ?? 0}
-              partnerUniversityCount={totalUniversities}
-              projectionCount={projections.length}
+              recognitionLabel={recognition?.currentLabel}
+              recognitionNextTier={recognition?.nextTier}
+              recognitionProgressPercent={recognition?.progressPercent}
+              highestEstimatedAwardGbp={highestEstimatedAwardGbp}
             />
           ) : null}
         </div>
 
         {dashboard ? (
           <>
-            <ConditionalAwardDisclaimer compact className="dashboard-disclaimer" />
             <DashboardCombinedRecommended
               assessments={allRecommendedAssessments}
               tracks={allRecommendedProblemTracks}
@@ -190,39 +172,36 @@ export default async function DashboardPage() {
             <div className="dashboard-bento" id="partners">
               <Card className="dashboard-bento-panel">
                 <header className="dashboard-section-head">
-                  <h2 className="dashboard-section-title">Partners you chose</h2>
+                  <h2 className="dashboard-section-title">Your universities</h2>
                   {partnerCards.length > 0 ? (
                     <Link href="/partners" className="dashboard-section-link">
                       View all →
                     </Link>
                   ) : (
                     <Link href="/universities" className="dashboard-section-link">
-                      Browse partners →
+                      Browse universities →
                     </Link>
                   )}
                 </header>
+                <p className="dashboard-universities-explainer">{UNIVERSITY_VALUE_EXPLAINER}</p>
                 <div className="dashboard-bento-body">
                   {partnerCards.length === 0 ? (
-                    <EmptyState compact message="Choose partner universities during onboarding to see them here." />
+                    <EmptyState
+                      compact
+                      message="Choose universities during onboarding to see estimated values here."
+                    />
                   ) : (
                     <div className="dashboard-bento-list">
                       {partnerCards.map(
                         (u: {
                           universitySlug: string;
                           universityName: string;
-                          eligibleCoreFaralins?: number;
-                          totalFaralins?: number;
-                          hearEligibleFaralins?: number;
-                          recognitionTierLabel?: string;
-                          recognitionProgressPercent?: number;
+                          countedFaralins?: number;
                           estimatedAwardGbp: number;
                           awardStatus?: string;
                           awardStatusLabel?: string;
                         }) => (
-                          <DashboardPartnerCard
-                            key={u.universitySlug}
-                            university={u}
-                          />
+                          <DashboardPartnerCard key={u.universitySlug} university={u} />
                         ),
                       )}
                     </div>

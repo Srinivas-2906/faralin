@@ -2,11 +2,11 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { auth } from '@clerk/nextjs/server';
 import { Card, EmptyState, PageHeader } from '@faralin/ui';
+import { UNIVERSITY_VALUE_EXPLAINER } from '@faralin/types';
 import {
   DashboardPartnerCard,
   type DashboardPartnerUniversity,
 } from '@/components/dashboard-partner-card';
-import { ConditionalAwardDisclaimer } from '@/components/conditional-award-disclaimer';
 
 export default async function PartnersPage() {
   const { userId, getToken } = await auth();
@@ -32,7 +32,9 @@ export default async function PartnersPage() {
 
   const legacyPartners = dashboard?.portfolio.byUniversity ?? [];
   const projections = dashboard?.portfolio.projections ?? [];
-  const coreFaralins = dashboard?.portfolio.coreFaralins ?? dashboard?.portfolio.totalFaralins ?? 0;
+  const awardAccounts = dashboard?.portfolio.awardAccounts ?? [];
+  const faralinsEarned =
+    dashboard?.portfolio.coreFaralins ?? dashboard?.portfolio.totalFaralins ?? 0;
 
   const partnerCards: DashboardPartnerUniversity[] = projections.length
     ? projections.map(
@@ -42,17 +44,23 @@ export default async function PartnersPage() {
           eligibleCoreFaralins: number;
           estimatedAwardGbp: number;
         }) => {
-          const legacy = legacyPartners.find(
-            (u: { universitySlug: string }) => u.universitySlug === p.universitySlug,
+          const award = awardAccounts.find(
+            (a: { universitySlug: string; status: string }) =>
+              a.universitySlug === p.universitySlug,
           );
           return {
             universitySlug: p.universitySlug,
             universityName: p.universityName,
-            eligibleCoreFaralins: p.eligibleCoreFaralins,
+            countedFaralins: p.eligibleCoreFaralins,
             estimatedAwardGbp: p.estimatedAwardGbp,
-            hearEligibleFaralins: legacy?.hearEligibleFaralins,
-            recognitionTierLabel: legacy?.recognitionTierLabel,
-            recognitionProgressPercent: legacy?.recognitionProgressPercent,
+            awardStatus: award?.status,
+            awardStatusLabel: award
+              ? award.status === 'CONVERTED' || award.status === 'CONFIRMED'
+                ? 'Confirmed award'
+                : award.status === 'FORFEITED'
+                  ? 'Forfeited'
+                  : 'Estimate only'
+              : 'Estimate only',
           };
         },
       )
@@ -61,18 +69,13 @@ export default async function PartnersPage() {
           universitySlug: string;
           universityName: string;
           totalFaralins: number;
-          hearEligibleFaralins: number;
-          recognitionTierLabel: string;
-          recognitionProgressPercent: number;
           estimatedBursaryGbp: number;
         }) => ({
           universitySlug: u.universitySlug,
           universityName: u.universityName,
-          totalFaralins: u.totalFaralins,
+          countedFaralins: u.totalFaralins,
           estimatedAwardGbp: u.estimatedBursaryGbp,
-          hearEligibleFaralins: u.hearEligibleFaralins,
-          recognitionTierLabel: u.recognitionTierLabel,
-          recognitionProgressPercent: u.recognitionProgressPercent,
+          awardStatusLabel: 'Estimate only',
         }),
       );
 
@@ -80,30 +83,28 @@ export default async function PartnersPage() {
     <div className="page-section partners-page">
       <div className="container-wide">
         <PageHeader
-          title="Partners you follow"
-          description="Each university shows a conditional award estimate based on your Core Faralins and its current rules. These are projections, not separate balances or guaranteed scholarships."
+          title="Your universities"
+          description={UNIVERSITY_VALUE_EXPLAINER}
           actions={
             <div className="partners-page-actions">
               <Link href="/dashboard" className="dashboard-section-link">
                 ← Dashboard
               </Link>
               <Link href="/universities" className="dashboard-section-link">
-                Browse more partners →
+                Browse more →
               </Link>
             </div>
           }
         />
 
-        <ConditionalAwardDisclaimer compact className="partners-page-disclaimer" />
-
         {!dashboard ? (
           <Card>
-            <EmptyState message="Connect to the API to load your partners." />
+            <EmptyState message="Connect to the API to load your universities." />
           </Card>
         ) : partnerCards.length === 0 ? (
           <Card>
             <EmptyState
-              message="You have not chosen any partner universities yet."
+              message="You have not chosen any universities yet."
               action={
                 <Link href="/onboarding" className="dashboard-section-link">
                   Complete onboarding →
@@ -115,8 +116,8 @@ export default async function PartnersPage() {
           <>
             <p className="partners-page-summary">
               {partnerCards.length}{' '}
-              {partnerCards.length === 1 ? 'partner' : 'partners'} ·{' '}
-              {coreFaralins.toLocaleString()} Core Faralins earned
+              {partnerCards.length === 1 ? 'university' : 'universities'} ·{' '}
+              {faralinsEarned.toLocaleString()} Faralins earned
             </p>
             <Card className="partners-page-card">
               <div className="dashboard-bento-list partners-page-list">

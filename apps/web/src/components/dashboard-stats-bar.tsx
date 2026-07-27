@@ -1,77 +1,68 @@
+import { RECOGNITION_TIER_LABELS, type StudentRecognitionTier } from '@faralin/types';
+
 interface DashboardStatsBarProps {
-  coreFaralins: number;
-  estimatedBursaryGbp: number;
+  faralinsEarned: number;
   tracksCompleted: number;
   assessmentsCompleted: number;
-  verifiedTotal: number;
-  hearEligibleFaralins: number;
-  partnerUniversityCount: number;
-  projectionCount?: number;
+  recognitionLabel?: string;
+  recognitionNextTier?: StudentRecognitionTier | string | null;
+  recognitionProgressPercent?: number;
+  highestEstimatedAwardGbp?: number | null;
 }
 
 export function DashboardStatsBar({
-  coreFaralins,
-  estimatedBursaryGbp,
+  faralinsEarned,
   tracksCompleted,
   assessmentsCompleted,
-  verifiedTotal,
-  hearEligibleFaralins,
-  partnerUniversityCount,
-  projectionCount = 0,
+  recognitionLabel = 'Explorer',
+  recognitionNextTier = null,
+  recognitionProgressPercent,
+  highestEstimatedAwardGbp = null,
 }: DashboardStatsBarProps) {
-  const showLegacyVerified = coreFaralins <= 0 && verifiedTotal > 0;
-
-  const stats = [
-    {
-      label: 'Core Faralins',
-      value: coreFaralins.toLocaleString(),
-      hint:
-        'Your portable achievement record — independent of which universities you follow.',
-    },
-    {
-      label: 'Est. conditional award',
-      value:
-        projectionCount > 1
-          ? `Up to £${estimatedBursaryGbp.toFixed(2)}`
-          : `£${estimatedBursaryGbp.toFixed(2)}`,
-      accent: true,
-      hint:
-        partnerUniversityCount > 0
-          ? `Based on current rules at ${partnerUniversityCount} followed ${
-              partnerUniversityCount === 1 ? 'university' : 'universities'
-            }. Only your enrolled university can confirm an award.`
-          : undefined,
-    },
-    { label: 'Problem tracks', value: tracksCompleted.toLocaleString() },
-    { label: 'Assessments', value: assessmentsCompleted.toLocaleString() },
-    ...(showLegacyVerified
-      ? [
-          {
-            label: 'Verified (migrating)',
-            value: verifiedTotal.toLocaleString(),
-            hint: 'Previous per-university totals while Core Faralins are being migrated.',
-          },
-        ]
-      : []),
-    {
-      label: 'HEAR eligible',
-      value: hearEligibleFaralins.toLocaleString(),
-    },
-  ];
+  const nextLabel =
+    recognitionNextTier && recognitionNextTier in RECOGNITION_TIER_LABELS
+      ? RECOGNITION_TIER_LABELS[recognitionNextTier as StudentRecognitionTier]
+      : recognitionNextTier
+        ? String(recognitionNextTier).charAt(0) +
+          String(recognitionNextTier).slice(1).toLowerCase()
+        : null;
 
   return (
-    <div className="dashboard-stats" aria-label="Dashboard statistics">
-      {stats.map((stat) => (
-        <div key={stat.label} className="dashboard-stat">
-          <span
-            className={`dashboard-stat-value${stat.accent ? ' dashboard-stat-value--accent' : ''}`}
-          >
-            {stat.value}
-          </span>
-          <span className="dashboard-stat-label">{stat.label}</span>
-          {stat.hint ? <span className="dashboard-stat-hint">{stat.hint}</span> : null}
-        </div>
-      ))}
+    <div className="dashboard-progress" aria-label="Your Faralin progress">
+      <p className="dashboard-progress-eyebrow">Your Faralin progress</p>
+      <p className="dashboard-progress-primary">
+        <span className="dashboard-progress-primary-value">
+          {faralinsEarned.toLocaleString()}
+        </span>{' '}
+        Faralins earned
+      </p>
+      <p className="dashboard-progress-explainer">
+        Your portable achievement balance. You earn Faralins once, regardless of how many
+        universities you follow.
+      </p>
+      <ul className="dashboard-progress-meta">
+        <li>
+          {assessmentsCompleted.toLocaleString()} assessment
+          {assessmentsCompleted === 1 ? '' : 's'} completed
+        </li>
+        <li>
+          {tracksCompleted.toLocaleString()} problem track
+          {tracksCompleted === 1 ? '' : 's'} completed
+        </li>
+        <li>
+          Current level: {recognitionLabel}
+          {nextLabel &&
+          recognitionProgressPercent != null &&
+          recognitionProgressPercent < 100
+            ? ` · ${recognitionProgressPercent}% towards ${nextLabel}`
+            : null}
+        </li>
+      </ul>
+      {highestEstimatedAwardGbp != null && highestEstimatedAwardGbp >= 1 ? (
+        <p className="dashboard-progress-estimate">
+          Highest estimated value: £{highestEstimatedAwardGbp.toFixed(2)}
+        </p>
+      ) : null}
     </div>
   );
 }

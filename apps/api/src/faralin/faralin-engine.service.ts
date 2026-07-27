@@ -11,6 +11,7 @@ import {
 } from '@faralin/db';
 import { PrismaService } from '../prisma/prisma.service';
 import type { BonusRule } from '../universities/staff-assessment-config';
+import { DEFAULT_RECOGNITION_TIER_THRESHOLDS } from '@faralin/types';
 import { computeRecognitionTier } from '../universities/recognition-tiers';
 import { ProjectionService } from './projection.service';
 import { AwardAccountService } from './award-account.service';
@@ -754,11 +755,23 @@ export class PortfolioService {
       0,
     );
 
+    const recognition = computeRecognitionTier(
+      coreTotals.coreFaralins,
+      DEFAULT_RECOGNITION_TIER_THRESHOLDS,
+    );
+
     return {
       coreFaralins: coreTotals.coreFaralins,
       coreFaralinsThisMonth: coreTotals.coreFaralinsThisMonth,
       projections,
       awardAccounts,
+      recognition: {
+        currentTier: recognition.currentTier,
+        currentLabel: recognition.currentLabel,
+        nextTier: recognition.nextTier,
+        nextThreshold: recognition.nextThreshold,
+        progressPercent: recognition.progressPercent,
+      },
       totalFaralins,
       hearEligibleFaralins,
       faralinsThisMonth: monthTransactions._sum.amount ?? 0,

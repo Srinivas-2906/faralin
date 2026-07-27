@@ -1,16 +1,12 @@
 import Link from 'next/link';
+import { MIN_DISPLAY_AWARD_GBP } from '@faralin/types';
 import { MediaImage } from '@faralin/ui';
 import { getUniversityImage } from '@/lib/media';
 
 export interface DashboardPartnerUniversity {
   universitySlug: string;
   universityName: string;
-  eligibleCoreFaralins?: number;
-  totalFaralins?: number;
-  verifiedFaralins?: number;
-  hearEligibleFaralins?: number;
-  recognitionTierLabel?: string;
-  recognitionProgressPercent?: number;
+  countedFaralins?: number;
   estimatedAwardGbp: number;
   awardStatus?: string;
   awardStatusLabel?: string;
@@ -20,25 +16,27 @@ type DashboardPartnerCardProps = {
   university: DashboardPartnerUniversity;
 };
 
+function shortUniversityName(name: string): string {
+  return name.replace(/^University of /i, '').replace(/ University$/i, '');
+}
+
 export function DashboardPartnerCard({ university }: DashboardPartnerCardProps) {
   const {
     universitySlug,
     universityName,
-    eligibleCoreFaralins,
-    totalFaralins,
-    hearEligibleFaralins,
-    recognitionTierLabel,
-    recognitionProgressPercent,
+    countedFaralins,
     estimatedAwardGbp,
+    awardStatus,
     awardStatusLabel,
   } = university;
 
-  const coreDisplay =
-    eligibleCoreFaralins != null
-      ? `${eligibleCoreFaralins.toLocaleString()} Core Faralins eligible`
-      : totalFaralins != null
-        ? `${totalFaralins.toLocaleString()} Faralins at this university`
-        : null;
+  const shortName = shortUniversityName(universityName);
+  const showCashEstimate = estimatedAwardGbp >= MIN_DISPLAY_AWARD_GBP;
+  const isConfirmed =
+    awardStatus === 'CONVERTED' || awardStatus === 'CONFIRMED';
+  const statusLabel =
+    awardStatusLabel ??
+    (isConfirmed ? 'Confirmed award' : awardStatus === 'FORFEITED' ? 'Forfeited' : 'Estimate only');
 
   return (
     <article className="dashboard-bento-item">
@@ -53,39 +51,41 @@ export function DashboardPartnerCard({ university }: DashboardPartnerCardProps) 
         <div className="dashboard-bento-item-top">
           <p className="dashboard-bento-item-title">{universityName}</p>
           <Link href={`/universities/${universitySlug}`} className="dashboard-bento-item-link">
-            View →
+            View details →
           </Link>
         </div>
-        {awardStatusLabel ? (
-          <p className="dashboard-bento-item-meta">
-            <span className="dashboard-bento-item-meta-primary">{awardStatusLabel}</span>
+
+        {showCashEstimate ? (
+          <p className="dashboard-bento-item-award">
+            Estimated value: £{estimatedAwardGbp.toFixed(2)}
           </p>
-        ) : null}
-        <p className="dashboard-bento-item-meta">
-          {coreDisplay ? (
-            <span className="dashboard-bento-item-meta-primary">{coreDisplay}</span>
-          ) : null}
-          <span className="dashboard-bento-item-meta-secondary">
-            Est. conditional award £{estimatedAwardGbp.toFixed(2)}
-          </span>
-        </p>
-        {recognitionTierLabel ? (
+        ) : (
+          <p className="dashboard-bento-item-award">Your award is building</p>
+        )}
+
+        {countedFaralins != null ? (
           <p className="dashboard-bento-item-meta">
-            <span className="dashboard-bento-item-meta-primary">
-              {recognitionTierLabel} recognition
+            <span className="dashboard-bento-item-meta-secondary dashboard-bento-item-meta-secondary--solo">
+              Based on {countedFaralins.toLocaleString()} of your Faralins
             </span>
-            {recognitionProgressPercent != null && recognitionProgressPercent < 100 ? (
-              <span className="dashboard-bento-item-meta-secondary">
-                {recognitionProgressPercent}% to next level
-              </span>
-            ) : null}
           </p>
         ) : null}
-        {hearEligibleFaralins != null ? (
-          <p className="dashboard-bento-item-conversion">
-            {hearEligibleFaralins.toLocaleString()} HEAR-eligible verified Faralins
+
+        {!showCashEstimate ? (
+          <p className="dashboard-bento-item-meta">
+            <span className="dashboard-bento-item-meta-secondary dashboard-bento-item-meta-secondary--solo">
+              Complete more verified activities to unlock a university value estimate.
+            </span>
           </p>
         ) : null}
+
+        <p className="dashboard-bento-item-meta">
+          <span className="dashboard-bento-item-meta-primary">{statusLabel}</span>
+        </p>
+
+        <p className="dashboard-bento-item-conversion">
+          Confirmed only if you enrol at {shortName} and meet its award requirements.
+        </p>
       </div>
     </article>
   );
