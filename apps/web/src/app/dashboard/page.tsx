@@ -2,10 +2,10 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { auth, currentUser } from '@clerk/nextjs/server';
 import { Card, EmptyState } from '@faralin/ui';
-import { MIN_DISPLAY_AWARD_GBP, UNIVERSITY_VALUE_EXPLAINER } from '@faralin/types';
+import { MIN_DISPLAY_AWARD_GBP } from '@faralin/types';
 import type { PortfolioArtifactSummary } from '@faralin/types';
 import type { AssessmentListItem } from '@/components/assessment-card';
-import { DashboardPartnerCard } from '@/components/dashboard-partner-card';
+import { DashboardUniversitiesSection } from '@/components/dashboard-universities-section';
 import { DashboardCompletedTracks } from '@/components/dashboard-completed-tracks';
 import { DashboardCombinedRecommended } from '@/components/dashboard-problem-tracks';
 import type { ProblemTrackListItem } from '@/components/problem-tracks/track-card';
@@ -135,6 +135,26 @@ export default async function DashboardPage() {
   const highestEstimatedAwardGbp =
     displayableEstimates.length > 0 ? Math.max(...displayableEstimates) : null;
 
+  const previewUniversities = [...partnerCards]
+    .sort(
+      (
+        a: { estimatedAwardGbp: number },
+        b: { estimatedAwardGbp: number },
+      ) => b.estimatedAwardGbp - a.estimatedAwardGbp,
+    )
+    .slice(0, 2)
+    .map(
+      (u: {
+        universitySlug: string;
+        universityName: string;
+        estimatedAwardGbp: number;
+      }) => ({
+        universitySlug: u.universitySlug,
+        universityName: u.universityName,
+        estimatedAwardGbp: u.estimatedAwardGbp,
+      }),
+    );
+
   const previewArticles = dashboard ? dashboard.articles.slice(0, 2) : [];
   const totalArticles = dashboard?.articles.length ?? 0;
   const displayName = getUserDisplayName(clerkUser, dashboard?.profile);
@@ -171,42 +191,27 @@ export default async function DashboardPage() {
 
             <div className="dashboard-bento" id="partners">
               <Card className="dashboard-bento-panel">
-                <header className="dashboard-section-head">
-                  <h2 className="dashboard-section-title">Your universities</h2>
-                  {partnerCards.length > 0 ? (
-                    <Link href="/partners" className="dashboard-section-link">
-                      View all →
-                    </Link>
-                  ) : (
-                    <Link href="/universities" className="dashboard-section-link">
-                      Browse universities →
-                    </Link>
-                  )}
-                </header>
-                <p className="dashboard-universities-explainer">{UNIVERSITY_VALUE_EXPLAINER}</p>
-                <div className="dashboard-bento-body">
-                  {partnerCards.length === 0 ? (
-                    <EmptyState
-                      compact
-                      message="Choose universities during onboarding to see estimated values here."
+                {partnerCards.length === 0 ? (
+                  <>
+                    <DashboardUniversitiesSection
+                      previewUniversities={[]}
+                      totalCount={0}
                     />
-                  ) : (
-                    <div className="dashboard-bento-list">
-                      {partnerCards.map(
-                        (u: {
-                          universitySlug: string;
-                          universityName: string;
-                          countedFaralins?: number;
-                          estimatedAwardGbp: number;
-                          awardStatus?: string;
-                          awardStatusLabel?: string;
-                        }) => (
-                          <DashboardPartnerCard key={u.universitySlug} university={u} />
-                        ),
-                      )}
+                    <div className="dashboard-bento-body">
+                      <EmptyState
+                        compact
+                        message="Choose universities during onboarding to see estimated values here."
+                      />
                     </div>
-                  )}
-                </div>
+                  </>
+                ) : (
+                  <div className="dashboard-bento-body">
+                    <DashboardUniversitiesSection
+                      previewUniversities={previewUniversities}
+                      totalCount={partnerCards.length}
+                    />
+                  </div>
+                )}
               </Card>
 
               <Card className="dashboard-bento-panel">

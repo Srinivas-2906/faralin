@@ -8,6 +8,7 @@ export { Chip } from './components/Chip';
 export { ContentRail, ContentRailItem } from './components/ContentRail';
 export { EmptyState } from './components/EmptyState';
 export { ImageBanner } from './components/ImageBanner';
+export { InfoTooltip } from './components/InfoTooltip';
 export { MediaCard } from './components/MediaCard';
 export { MediaImage } from './components/MediaImage';
 export { Modal } from './components/Modal';

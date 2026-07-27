@@ -1,4 +1,8 @@
+'use client';
+
+import { InfoTooltip } from '@faralin/ui';
 import { RECOGNITION_TIER_LABELS, type StudentRecognitionTier } from '@faralin/types';
+import { STUDENT_HELP_COPY } from '@/lib/student-help-copy';
 
 interface DashboardStatsBarProps {
   faralinsEarned: number;
@@ -27,41 +31,56 @@ export function DashboardStatsBar({
           String(recognitionNextTier).slice(1).toLowerCase()
         : null;
 
+  const levelText =
+    nextLabel &&
+    recognitionProgressPercent != null &&
+    recognitionProgressPercent < 100
+      ? `${recognitionLabel} · ${recognitionProgressPercent}% to ${nextLabel}`
+      : recognitionLabel;
+
   return (
-    <div className="dashboard-progress" aria-label="Your Faralin progress">
-      <p className="dashboard-progress-eyebrow">Your Faralin progress</p>
-      <p className="dashboard-progress-primary">
-        <span className="dashboard-progress-primary-value">
+    <div className="dashboard-progress-row" aria-label="Your Faralin progress">
+      <div className="dashboard-progress-chip dashboard-progress-chip--primary">
+        <span className="dashboard-progress-chip-value">
           {faralinsEarned.toLocaleString()}
-        </span>{' '}
-        Faralins earned
-      </p>
-      <p className="dashboard-progress-explainer">
-        Your portable achievement balance. You earn Faralins once, regardless of how many
-        universities you follow.
-      </p>
-      <ul className="dashboard-progress-meta">
-        <li>
-          {assessmentsCompleted.toLocaleString()} assessment
-          {assessmentsCompleted === 1 ? '' : 's'} completed
-        </li>
-        <li>
-          {tracksCompleted.toLocaleString()} problem track
-          {tracksCompleted === 1 ? '' : 's'} completed
-        </li>
-        <li>
-          Current level: {recognitionLabel}
-          {nextLabel &&
-          recognitionProgressPercent != null &&
-          recognitionProgressPercent < 100
-            ? ` · ${recognitionProgressPercent}% towards ${nextLabel}`
-            : null}
-        </li>
-      </ul>
+        </span>
+        <span className="dashboard-progress-chip-label">Faralins earned</span>
+        <InfoTooltip label="About Faralins earned">{STUDENT_HELP_COPY.faralinsEarned}</InfoTooltip>
+      </div>
+
+      <div className="dashboard-progress-chip">
+        <span className="dashboard-progress-chip-value">
+          {assessmentsCompleted.toLocaleString()}
+        </span>
+        <span className="dashboard-progress-chip-label">
+          assessment{assessmentsCompleted === 1 ? '' : 's'}
+        </span>
+      </div>
+
+      <div className="dashboard-progress-chip">
+        <span className="dashboard-progress-chip-value">
+          {tracksCompleted.toLocaleString()}
+        </span>
+        <span className="dashboard-progress-chip-label">
+          track{tracksCompleted === 1 ? '' : 's'}
+        </span>
+      </div>
+
+      <div className="dashboard-progress-chip">
+        <span className="dashboard-progress-chip-label">{levelText}</span>
+        <InfoTooltip label="About your current level">{STUDENT_HELP_COPY.currentLevel}</InfoTooltip>
+      </div>
+
       {highestEstimatedAwardGbp != null && highestEstimatedAwardGbp >= 1 ? (
-        <p className="dashboard-progress-estimate">
-          Highest estimated value: £{highestEstimatedAwardGbp.toFixed(2)}
-        </p>
+        <div className="dashboard-progress-chip">
+          <span className="dashboard-progress-chip-label">Up to</span>
+          <span className="dashboard-progress-chip-value">
+            £{highestEstimatedAwardGbp.toFixed(2)}
+          </span>
+          <InfoTooltip label="About highest estimated value">
+            {STUDENT_HELP_COPY.highestEstimate}
+          </InfoTooltip>
+        </div>
       ) : null}
     </div>
   );
