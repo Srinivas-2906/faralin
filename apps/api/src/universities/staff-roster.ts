@@ -106,10 +106,13 @@ export function buildSubjectInterests(roster: StaffStudentRow[]) {
 
 export const APPLICATION_STATUS_LABELS: Record<string, string> = {
   FOLLOWER: 'Following',
+  FARALIN_ACTIVE: 'Faralin active',
   REFERRAL_CLICKED: 'Referral clicked',
   APPLIED: 'Applied',
   OFFER_RECEIVED: 'Offer received',
   OFFER_ACCEPTED: 'Offer accepted',
+  FIRM: 'Firm choice',
+  INSURANCE: 'Insurance choice',
   ENROLLED: 'Enrolled',
   WITHDRAWN: 'Withdrawn',
   REJECTED: 'Rejected',

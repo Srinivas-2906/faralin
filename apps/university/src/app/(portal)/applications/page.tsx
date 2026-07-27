@@ -17,10 +17,13 @@ import { useStaffApi } from '@/lib/use-staff-api';
 
 const STATUS_OPTIONS = [
   { value: 'FOLLOWER', label: 'Following' },
+  { value: 'FARALIN_ACTIVE', label: 'Faralin active' },
   { value: 'REFERRAL_CLICKED', label: 'Referral clicked' },
   { value: 'APPLIED', label: 'Applied' },
   { value: 'OFFER_RECEIVED', label: 'Offer received' },
   { value: 'OFFER_ACCEPTED', label: 'Offer accepted' },
+  { value: 'FIRM', label: 'Firm choice' },
+  { value: 'INSURANCE', label: 'Insurance choice' },
   { value: 'ENROLLED', label: 'Enrolled' },
   { value: 'WITHDRAWN', label: 'Withdrawn' },
   { value: 'REJECTED', label: 'Rejected' },
@@ -30,6 +33,9 @@ const PIPELINE_TABS = [
   { id: 'all', label: 'All' },
   { id: 'active', label: 'Active pipeline' },
   { id: 'FOLLOWER', label: 'Following' },
+  { id: 'FARALIN_ACTIVE', label: 'Faralin active' },
+  { id: 'FIRM', label: 'Firm' },
+  { id: 'INSURANCE', label: 'Insurance' },
   { id: 'APPLIED', label: 'Applied' },
   { id: 'ENROLLED', label: 'Enrolled' },
 ] as const;

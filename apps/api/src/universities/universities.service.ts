@@ -135,15 +135,20 @@ export class UniversitiesService {
       followers: followerCount,
       referralClicked: applications.filter((a) => a.status !== 'FOLLOWER').length,
       applied: applications.filter((a) =>
-        ['APPLIED', 'OFFER_RECEIVED', 'OFFER_ACCEPTED', 'ENROLLED'].includes(a.status),
+        ['APPLIED', 'OFFER_RECEIVED', 'OFFER_ACCEPTED', 'FIRM', 'INSURANCE', 'ENROLLED'].includes(
+          a.status,
+        ),
       ).length,
       offerReceived: applications.filter((a) =>
-        ['OFFER_RECEIVED', 'OFFER_ACCEPTED', 'ENROLLED'].includes(a.status),
+        ['OFFER_RECEIVED', 'OFFER_ACCEPTED', 'FIRM', 'INSURANCE', 'ENROLLED'].includes(a.status),
       ).length,
       offerAccepted: applications.filter((a) =>
-        ['OFFER_ACCEPTED', 'ENROLLED'].includes(a.status),
+        ['OFFER_ACCEPTED', 'FIRM', 'INSURANCE', 'ENROLLED'].includes(a.status),
       ).length,
       enrolled: applications.filter((a) => a.status === 'ENROLLED').length,
+      faralinActive: applications.filter((a) => a.status === 'FARALIN_ACTIVE').length,
+      firm: applications.filter((a) => a.status === 'FIRM').length,
+      insurance: applications.filter((a) => a.status === 'INSURANCE').length,
     };
 
     const subjectInterests = buildSubjectInterests(students);
