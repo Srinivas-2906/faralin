@@ -7,6 +7,7 @@ export interface UniversityCardData {
   name: string;
   shortName?: string | null;
   logoUrl?: string | null;
+  description?: string | null;
   conversionRule?: { faralinsPerGbp: number } | null;
   prestigeTier?: UniversityPrestigeTier | null;
   guardianRank2025?: number | null;
@@ -36,8 +37,8 @@ function UniversityCardContent({ university }: { university: UniversityCardData 
       </div>
       <div className="assessment-card-details">
         <div className="media-card-title">{university.name}</div>
-        <p className="university-card-conversion-example text-muted">
-          Conditional award estimates appear on your dashboard after you complete activities.
+        <p className="university-card-description text-muted">
+          {university.description?.trim() || 'Partner university on Faralin.'}
         </p>
       </div>
     </>

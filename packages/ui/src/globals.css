@@ -6304,10 +6304,15 @@ button.dashboard-section-link {
   color: var(--faralin-copper);
 }
 
-.university-card-conversion-example {
+.university-card-description {
   margin: 0.15rem 0 0;
   font-size: 0.75rem;
+  line-height: 1.35;
   color: var(--faralin-muted);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
 }
 
 .dashboard-bento-item-conversion {

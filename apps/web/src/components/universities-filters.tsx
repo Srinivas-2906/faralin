@@ -6,9 +6,17 @@ import {
   type CatalogFilterOption,
 } from '@/components/catalog-filter-chips';
 
+const TIER_CHIP_LABELS: Record<string, string> = {
+  ESTABLISHED: 'Established',
+  ACCESSIBLE: 'Accessible',
+};
+
 const TIER_FILTERS: CatalogFilterOption[] = [
-  { value: '', label: 'All partners' },
-  ...Object.entries(PRESTIGE_TIER_LABELS).map(([value, label]) => ({ value, label })),
+  { value: '', label: 'All' },
+  ...Object.entries(PRESTIGE_TIER_LABELS).map(([value, label]) => ({
+    value,
+    label: TIER_CHIP_LABELS[value] ?? label,
+  })),
 ];
 
 export function UniversitiesFilters() {
@@ -16,7 +24,7 @@ export function UniversitiesFilters() {
     <CatalogFilterChips
       options={TIER_FILTERS}
       paramKey="tier"
-      ariaLabel="Filter by partner tier"
+      ariaLabel="Filter by tier"
       basePath="/universities"
     />
   );

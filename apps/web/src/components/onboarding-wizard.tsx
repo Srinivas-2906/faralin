@@ -27,6 +27,7 @@ interface University {
   shortName: string;
   slug: string;
   logoUrl?: string | null;
+  description?: string | null;
   conversionRule?: { faralinsPerGbp: number } | null;
   prestigeTier?: UniversityPrestigeTier | null;
   guardianRank2025?: number | null;
@@ -348,6 +349,7 @@ export function OnboardingWizard() {
                     name: university.name,
                     shortName: university.shortName,
                     logoUrl: university.logoUrl,
+                    description: university.description,
                     conversionRule: university.conversionRule,
                     prestigeTier: university.prestigeTier,
                     guardianRank2025: university.guardianRank2025,
