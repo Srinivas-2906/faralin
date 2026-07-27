@@ -20,6 +20,7 @@ export function ConsentSettingsCard() {
   const load = useCallback(async () => {
     if (!isSignedIn) return;
     const token = await getToken();
+    if (!token) return;
     const rows = await apiFetch<ConsentRow[]>('/students/me/consents', { token });
     setConsents(rows ?? []);
   }, [getToken, isSignedIn]);
@@ -32,6 +33,7 @@ export function ConsentSettingsCard() {
     setSaving(scope);
     try {
       const token = await getToken();
+      if (!token) return;
       await apiFetch('/students/me/consents', {
         token,
         method: 'PATCH',

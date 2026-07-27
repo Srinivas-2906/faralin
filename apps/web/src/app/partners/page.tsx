@@ -2,7 +2,10 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { auth } from '@clerk/nextjs/server';
 import { Card, EmptyState, PageHeader } from '@faralin/ui';
-import { DashboardPartnerCard } from '@/components/dashboard-partner-card';
+import {
+  DashboardPartnerCard,
+  type DashboardPartnerUniversity,
+} from '@/components/dashboard-partner-card';
 import { ConditionalAwardDisclaimer } from '@/components/conditional-award-disclaimer';
 
 export default async function PartnersPage() {
@@ -31,7 +34,7 @@ export default async function PartnersPage() {
   const projections = dashboard?.portfolio.projections ?? [];
   const coreFaralins = dashboard?.portfolio.coreFaralins ?? dashboard?.portfolio.totalFaralins ?? 0;
 
-  const partnerCards = projections.length
+  const partnerCards: DashboardPartnerUniversity[] = projections.length
     ? projections.map(
         (p: {
           universitySlug: string;
