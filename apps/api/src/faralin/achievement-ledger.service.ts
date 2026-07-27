@@ -16,7 +16,8 @@ import {
 
 export function isDualWriteLegacyEnabled(): boolean {
   const flag = process.env.FARALIN_DUAL_WRITE_LEGACY;
-  if (flag === undefined || flag === '') return true;
+  // Production default: ledger-only. Set FARALIN_DUAL_WRITE_LEGACY=true during migration.
+  if (flag === undefined || flag === '') return false;
   return flag !== 'false' && flag !== '0';
 }
 

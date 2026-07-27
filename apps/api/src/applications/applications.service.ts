@@ -76,7 +76,7 @@ export class ApplicationsService {
   }
 
   async listStaffApplications(universityId: string) {
-    const [applications, faralinTotals] = await Promise.all([
+    const [applications, faralinTotals, projectionTotals] = await Promise.all([
       this.prisma.application.findMany({
         where: { universityId },
         include: {
@@ -84,6 +84,7 @@ export class ApplicationsService {
             include: {
               subjects: { include: { subject: true } },
               assessmentAttempts: { where: { completedAt: { not: null }, isVoided: false } },
+              consents: { where: { revokedAt: null } },
             },
           },
         },
@@ -94,22 +95,37 @@ export class ApplicationsService {
         where: { universityId },
         _sum: { amount: true },
       }),
+      this.prisma.universityProjection.findMany({
+        where: { universityId },
+        select: { studentProfileId: true, eligibleCoreFaralins: true },
+      }),
     ]);
 
     const faralinByStudent = Object.fromEntries(
       faralinTotals.map((row) => [row.studentProfileId, row._sum.amount ?? 0]),
     );
+    const projectionByStudent = Object.fromEntries(
+      projectionTotals.map((row) => [row.studentProfileId, row.eligibleCoreFaralins]),
+    );
 
     return applications.map((application) => {
       const profile = application.studentProfile;
-      const totalFaralins = faralinByStudent[profile.id] ?? 0;
+      const totalFaralins =
+        projectionByStudent[profile.id] ?? faralinByStudent[profile.id] ?? 0;
       const assessmentsCompleted = profile.assessmentAttempts.length;
-      const studentView = mapStudentWithProfile(profile, {
-        subjectSlugs: profile.subjects.map((s) => s.subject.slug),
-        assessmentsCompleted,
-        totalFaralins,
-        performanceBand: getPerformanceBand(totalFaralins, assessmentsCompleted),
-      });
+      const studentView = mapStudentWithProfile(
+        profile,
+        {
+          subjectSlugs: profile.subjects.map((s) => s.subject.slug),
+          assessmentsCompleted,
+          totalFaralins,
+          performanceBand: getPerformanceBand(totalFaralins, assessmentsCompleted),
+        },
+        {
+          applicationStatus: application.status,
+          grantedScopes: profile.consents.map((c) => c.scope),
+        },
+      );
 
       return {
         id: application.id,

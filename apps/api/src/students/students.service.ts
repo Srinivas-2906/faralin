@@ -124,6 +124,63 @@ export class StudentsService {
     return this.getProfile(studentProfileId);
   }
 
+  async listConsents(studentProfileId: string) {
+    return this.prisma.studentConsent.findMany({
+      where: { studentProfileId },
+      orderBy: { scope: 'asc' },
+    });
+  }
+
+  async setConsent(
+    studentProfileId: string,
+    scope: string,
+    granted: boolean,
+  ) {
+    if (granted) {
+      return this.prisma.studentConsent.upsert({
+        where: {
+          studentProfileId_scope: {
+            studentProfileId,
+            scope: scope as never,
+          },
+        },
+        create: {
+          studentProfileId,
+          scope: scope as never,
+          grantedAt: new Date(),
+          revokedAt: null,
+        },
+        update: {
+          grantedAt: new Date(),
+          revokedAt: null,
+        },
+      });
+    }
+
+    const existing = await this.prisma.studentConsent.findUnique({
+      where: {
+        studentProfileId_scope: {
+          studentProfileId,
+          scope: scope as never,
+        },
+      },
+    });
+    if (!existing) {
+      return this.prisma.studentConsent.create({
+        data: {
+          studentProfileId,
+          scope: scope as never,
+          grantedAt: new Date(),
+          revokedAt: new Date(),
+        },
+      });
+    }
+    return this.prisma.studentConsent.update({
+      where: { id: existing.id },
+      data: { revokedAt: new Date() },
+    });
+  }
+
   async getDashboard(studentProfileId: string) {
     const [profile, portfolio, portfolioArtifacts, assessments, problemTracks, articles, events] =
       await Promise.all([

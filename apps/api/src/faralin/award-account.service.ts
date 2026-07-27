@@ -202,7 +202,7 @@ export class AwardAccountService {
     });
 
     const now = new Date();
-    await this.prisma.universityAwardAccount.upsert({
+    const account = await this.prisma.universityAwardAccount.upsert({
       where: {
         studentProfileId_universityId: { studentProfileId, universityId },
       },
@@ -224,6 +224,31 @@ export class AwardAccountService {
         forfeitedAt: null,
         expiredAt: null,
         forfeitureReason: null,
+      },
+    });
+
+    const amountGbp = Number(projection?.estimatedAwardGbp ?? account.projectedAwardGbp);
+    const campaign = projection?.campaignId
+      ? await this.prisma.universityCampaign.findUnique({
+          where: { id: projection.campaignId },
+        })
+      : null;
+
+    await this.prisma.awardConversion.upsert({
+      where: { awardAccountId: account.id },
+      create: {
+        awardAccountId: account.id,
+        deliveryType: campaign?.deliveryType ?? 'BURSARY',
+        amountGbp,
+        institutionReference: null,
+        convertedAt: now,
+        appealStatus: 'NONE',
+        notes: 'Created on verified enrolment',
+      },
+      update: {
+        amountGbp,
+        deliveryType: campaign?.deliveryType ?? 'BURSARY',
+        convertedAt: now,
       },
     });
 

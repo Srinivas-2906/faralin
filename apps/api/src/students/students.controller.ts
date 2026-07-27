@@ -85,4 +85,17 @@ export class StudentsController {
   ) {
     return this.students.setSubjects(this.requireProfile(user), body.subjectIds);
   }
+
+  @Get('me/consents')
+  listConsents(@CurrentUser() user: AuthUser) {
+    return this.students.listConsents(this.requireProfile(user));
+  }
+
+  @Patch('me/consents')
+  setConsent(
+    @CurrentUser() user: AuthUser,
+    @Body() body: { scope: string; granted: boolean },
+  ) {
+    return this.students.setConsent(this.requireProfile(user), body.scope, body.granted);
+  }
 }

@@ -104,43 +104,70 @@ export async function buildFaralinDistribution(
     trustLevel: { not: 'PRACTICE' as const },
   };
 
-  const [awardedThisMonthAgg, outstandingAgg, convertedAgg] = await Promise.all([
-    prisma.faralinTransaction.aggregate({
-      where: {
-        ...verifiedFilter,
-        type: 'EARNED',
-        createdAt: { gte: startOfCurrentMonth() },
-      },
-      _sum: { amount: true },
-    }),
-    prisma.faralinTransaction.aggregate({
-      where: {
-        ...verifiedFilter,
-        status: { in: ['CONDITIONAL', 'CONFIRMED'] },
-      },
-      _sum: { amount: true },
-    }),
-    prisma.faralinTransaction.aggregate({
-      where: {
-        universityId,
-        OR: [{ status: 'CONVERTED' }, { type: 'CONVERSION' }],
-      },
-      _sum: { amount: true },
-    }),
-  ]);
+  const [projectionAgg, conversionAgg, awardedThisMonthAgg, outstandingAgg, convertedAgg] =
+    await Promise.all([
+      prisma.universityProjection.aggregate({
+        where: { universityId },
+        _sum: { estimatedAwardGbp: true, eligibleCoreFaralins: true },
+      }),
+      prisma.awardConversion.aggregate({
+        where: { awardAccount: { universityId } },
+        _sum: { amountGbp: true },
+      }),
+      prisma.faralinTransaction.aggregate({
+        where: {
+          ...verifiedFilter,
+          type: 'EARNED',
+          createdAt: { gte: startOfCurrentMonth() },
+        },
+        _sum: { amount: true },
+      }),
+      prisma.faralinTransaction.aggregate({
+        where: {
+          ...verifiedFilter,
+          status: { in: ['CONDITIONAL', 'CONFIRMED'] },
+        },
+        _sum: { amount: true },
+      }),
+      prisma.faralinTransaction.aggregate({
+        where: {
+          universityId,
+          OR: [{ status: 'CONVERTED' }, { type: 'CONVERSION' }],
+        },
+        _sum: { amount: true },
+      }),
+    ]);
 
-  const outstandingFaralins = outstandingAgg._sum.amount ?? 0;
+  const projectionOutstandingCore = projectionAgg._sum.eligibleCoreFaralins ?? 0;
+  const projectionOutstandingGbp = Number(projectionAgg._sum.estimatedAwardGbp ?? 0);
+  const conversionGbp = Number(conversionAgg._sum.amountGbp ?? 0);
+
+  // Prefer ledger/projection layers; fall back to legacy txs when no projection data.
+  const outstandingFaralins =
+    projectionOutstandingCore > 0
+      ? projectionOutstandingCore
+      : (outstandingAgg._sum.amount ?? 0);
+  const convertedFaralins =
+    conversionGbp > 0
+      ? Math.round(conversionGbp * (conversionRule?.faralinsPerGbp ?? 100))
+      : (convertedAgg._sum.amount ?? 0);
+
+  const outstandingBursaryGbp =
+    projectionOutstandingGbp > 0
+      ? roundGbp(projectionOutstandingGbp)
+      : roundGbp(
+          conversionRule && conversionRule.faralinsPerGbp > 0
+            ? outstandingFaralins / conversionRule.faralinsPerGbp
+            : 0,
+        );
+
   const faralinsPerGbp = conversionRule?.faralinsPerGbp ?? null;
-  const outstandingLiabilityGbp =
-    faralinsPerGbp && faralinsPerGbp > 0
-      ? roundGbp(outstandingFaralins / faralinsPerGbp)
-      : 0;
 
   return {
     awardedThisMonth: awardedThisMonthAgg._sum.amount ?? 0,
     outstandingFaralins,
-    outstandingLiabilityGbp,
-    convertedFaralins: convertedAgg._sum.amount ?? 0,
+    outstandingLiabilityGbp: outstandingBursaryGbp,
+    convertedFaralins,
     averagePerStudent:
       followerCount > 0 ? Math.round(outstandingFaralins / followerCount) : 0,
     faralinsPerGbp,

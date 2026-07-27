@@ -11,6 +11,7 @@ import type { ProblemTrackListItem } from '@/components/problem-tracks/track-car
 import { DashboardUpdateItem } from '@/components/dashboard-update-item';
 import { DashboardStatsBar } from '@/components/dashboard-stats-bar';
 import { ConditionalAwardDisclaimer } from '@/components/conditional-award-disclaimer';
+import { ConsentSettingsCard } from '@/components/consent-settings-card';
 import { getUserDisplayName } from '@/lib/user-display-name';
 
 function toAssessmentListItem(a: {
@@ -228,6 +229,10 @@ export default async function DashboardPage() {
                     </div>
                   )}
                 </div>
+              </Card>
+
+              <Card className="dashboard-bento-panel">
+                <ConsentSettingsCard />
               </Card>
 
               <Card className="dashboard-bento-panel">

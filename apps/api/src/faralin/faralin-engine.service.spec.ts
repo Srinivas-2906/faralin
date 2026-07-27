@@ -315,9 +315,9 @@ describe('dual-write orchestration', () => {
 
   it('legacy FaralinEngine fan-out is gated by AchievementLedgerService', () => {
     delete process.env.FARALIN_DUAL_WRITE_LEGACY;
-    expect(isDualWriteLegacyEnabled()).toBe(true);
-
-    process.env.FARALIN_DUAL_WRITE_LEGACY = 'false';
     expect(isDualWriteLegacyEnabled()).toBe(false);
+
+    process.env.FARALIN_DUAL_WRITE_LEGACY = 'true';
+    expect(isDualWriteLegacyEnabled()).toBe(true);
   });
 });

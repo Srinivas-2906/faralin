@@ -27,14 +27,14 @@ describe('isDualWriteLegacyEnabled', () => {
     else process.env.FARALIN_DUAL_WRITE_LEGACY = original;
   });
 
-  it('defaults to true when unset', () => {
+  it('defaults to false when unset (cutover default)', () => {
     delete process.env.FARALIN_DUAL_WRITE_LEGACY;
-    expect(isDualWriteLegacyEnabled()).toBe(true);
+    expect(isDualWriteLegacyEnabled()).toBe(false);
   });
 
-  it('returns false when explicitly disabled', () => {
-    process.env.FARALIN_DUAL_WRITE_LEGACY = 'false';
-    expect(isDualWriteLegacyEnabled()).toBe(false);
+  it('returns true when explicitly enabled', () => {
+    process.env.FARALIN_DUAL_WRITE_LEGACY = 'true';
+    expect(isDualWriteLegacyEnabled()).toBe(true);
   });
 });
 

@@ -20,7 +20,10 @@ describe('AwardAccountService.handleEnrolment', () => {
   let service: AwardAccountService;
 
   beforeEach(() => {
-    awardUpsert = vi.fn().mockResolvedValue({});
+    awardUpsert = vi.fn().mockResolvedValue({
+      id: 'account-1',
+      projectedAwardGbp: 300,
+    });
     awardUpdateMany = vi.fn().mockResolvedValue({ count: 2 });
     txUpdateMany = vi.fn().mockResolvedValue({ count: 1 });
     awardCount = vi.fn().mockResolvedValue(0);
@@ -41,6 +44,8 @@ describe('AwardAccountService.handleEnrolment', () => {
         deleteMany: vi.fn(),
       },
       universityProjection: { findUnique: projectionFind, findMany: vi.fn() },
+      universityCampaign: { findUnique: vi.fn().mockResolvedValue(null) },
+      awardConversion: { upsert: vi.fn().mockResolvedValue({}) },
       faralinTransaction: { updateMany: txUpdateMany },
       application: { count: vi.fn() },
       platformConfig: { findFirst: vi.fn().mockResolvedValue(null) },

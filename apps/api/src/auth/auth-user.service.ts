@@ -209,14 +209,21 @@ export function mapStudentWithProfile(
     totalFaralins: number;
     performanceBand?: string;
   },
+  visibility?: {
+    applicationStatus?: string;
+    grantedScopes?: string[];
+  },
 ) {
-  return toStaffStudentView({
-    anonymousId: profile.anonymousId,
-    revealLevel: profile.revealLevel,
-    firstName: profile.firstName,
-    lastName: profile.lastName,
-    schoolName: profile.schoolName,
-    yearGroup: profile.yearGroup,
-    ...extras,
-  });
+  return toStaffStudentView(
+    {
+      anonymousId: profile.anonymousId,
+      revealLevel: profile.revealLevel,
+      firstName: profile.firstName,
+      lastName: profile.lastName,
+      schoolName: profile.schoolName,
+      yearGroup: profile.yearGroup,
+      ...extras,
+    },
+    visibility,
+  );
 }
