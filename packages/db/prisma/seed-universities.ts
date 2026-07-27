@@ -56,6 +56,34 @@ async function upsertUniversity(def: (typeof universityDefs)[number]) {
     },
   });
 
+  const now = new Date();
+  const year = now.getFullYear();
+  const boost = Math.min(1.5, Math.max(0.5, 100 / conversion.faralinsPerGbp));
+  await prisma.universityCampaign.upsert({
+    where: {
+      universityId_slug: { universityId: university.id, slug: `${year}-main` },
+    },
+    create: {
+      universityId: university.id,
+      name: `${year} main recruitment campaign`,
+      slug: `${year}-main`,
+      isActive: true,
+      budgetGbp: 250000,
+      perStudentCapGbp: 5000,
+      universityBoost: boost,
+      subjectAlignmentBoost: 1,
+      startsAt: new Date(`${year}-01-01`),
+      endsAt: new Date(`${year}-12-31`),
+      deliveryType: 'BURSARY',
+    },
+    update: {
+      isActive: true,
+      universityBoost: boost,
+      budgetGbp: 250000,
+      perStudentCapGbp: 5000,
+    },
+  });
+
   await prisma.faralinRule.deleteMany({
     where: { universityId: university.id, assessmentId: null, subjectId: { not: null } },
   });

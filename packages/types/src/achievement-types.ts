@@ -20,6 +20,8 @@ export interface UniversityProjectionSummary {
   subjectAlignmentBoost: number;
   verificationBoost: number;
   perStudentCapGbp: number | null;
+  campaignId?: string | null;
+  campaignName?: string | null;
   status: UniversityProjectionStatus;
   disclaimer: string;
 }

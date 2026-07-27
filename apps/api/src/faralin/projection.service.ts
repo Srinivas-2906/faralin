@@ -4,6 +4,7 @@ import {
   CONDITIONAL_AWARD_DISCLAIMER,
   CORE_FARALINS_PER_GBP,
   deriveUniversityBoost,
+  isCampaignActiveNow,
   sumEligibleCoreFaralins,
 } from '@faralin/types';
 import { PrismaService } from '../prisma/prisma.service';
@@ -17,7 +18,8 @@ export class ProjectionService {
   ) {}
 
   async recalculateForStudent(studentProfileId: string): Promise<void> {
-    const [selections, achievements, platformConfig] = await Promise.all([
+    const now = new Date();
+    const [selections, achievements, platformConfig, studentSubjects] = await Promise.all([
       this.prisma.studentUniversitySelection.findMany({
         where: { studentProfileId },
         include: {
@@ -35,8 +37,13 @@ export class ProjectionService {
         },
       }),
       this.getPlatformConfig(),
+      this.prisma.studentSubject.findMany({
+        where: { studentProfileId },
+        include: { subject: { select: { slug: true } } },
+      }),
     ]);
 
+    const studentSubjectSlugs = new Set(studentSubjects.map((s) => s.subject.slug));
     const coreFaralinsPerGbp = platformConfig.coreFaralinsPerGbp;
     const followedUniversityIds = new Set(selections.map((s) => s.universityId));
 
@@ -51,12 +58,16 @@ export class ProjectionService {
 
     for (const selection of selections) {
       const universityId = selection.universityId;
-      const [assessmentConfigs, trackConfigs] = await Promise.all([
+      const [assessmentConfigs, trackConfigs, campaigns] = await Promise.all([
         this.prisma.universityAssessmentConfig.findMany({
           where: { universityId, enabled: true },
         }),
         this.prisma.universityProblemTrackConfig.findMany({
           where: { universityId, enabled: true },
+        }),
+        this.prisma.universityCampaign.findMany({
+          where: { universityId, isActive: true },
+          orderBy: { updatedAt: 'desc' },
         }),
       ]);
 
@@ -69,18 +80,37 @@ export class ProjectionService {
         enabledTrackIds,
       );
 
-      const universityBoost = deriveUniversityBoost(
-        selection.university.slug,
-        selection.university.conversionRule?.faralinsPerGbp ?? null,
-        coreFaralinsPerGbp,
-      );
+      const activeCampaign = campaigns.find((campaign) => {
+        if (!isCampaignActiveNow(campaign, now)) return false;
+        const filters = Array.isArray(campaign.subjectFilters)
+          ? (campaign.subjectFilters as string[])
+          : null;
+        if (!filters || filters.length === 0) return true;
+        return filters.some((slug) => studentSubjectSlugs.has(slug));
+      });
+
+      // Prefer campaign economics; fall back to legacy conversion-rule bridge.
+      const universityBoost = activeCampaign
+        ? Number(activeCampaign.universityBoost)
+        : deriveUniversityBoost(
+            selection.university.slug,
+            selection.university.conversionRule?.faralinsPerGbp ?? null,
+            coreFaralinsPerGbp,
+          );
+      const subjectAlignmentBoost = activeCampaign
+        ? Number(activeCampaign.subjectAlignmentBoost)
+        : 1;
+      const perStudentCapGbp = activeCampaign?.perStudentCapGbp
+        ? Number(activeCampaign.perStudentCapGbp)
+        : null;
+
       const estimatedAwardGbp = calculateEstimatedAwardGbp({
         eligibleCoreFaralins,
         coreFaralinsPerGbp,
         universityBoost,
-        subjectAlignmentBoost: 1,
+        subjectAlignmentBoost,
         verificationBoost: 1,
-        perStudentCapGbp: null,
+        perStudentCapGbp,
       });
 
       await this.prisma.universityProjection.upsert({
@@ -95,9 +125,11 @@ export class ProjectionService {
           universityId,
           eligibleCoreFaralins,
           universityBoost,
-          subjectAlignmentBoost: 1,
+          subjectAlignmentBoost,
           verificationBoost: 1,
           estimatedAwardGbp,
+          perStudentCapGbp,
+          campaignId: activeCampaign?.id ?? null,
           status: 'ESTIMATE',
           calculatedAt: new Date(),
           snapshotVersion: 1,
@@ -105,9 +137,11 @@ export class ProjectionService {
         update: {
           eligibleCoreFaralins,
           universityBoost,
-          subjectAlignmentBoost: 1,
+          subjectAlignmentBoost,
           verificationBoost: 1,
           estimatedAwardGbp,
+          perStudentCapGbp,
+          campaignId: activeCampaign?.id ?? null,
           calculatedAt: new Date(),
           snapshotVersion: { increment: 1 },
         },
@@ -133,7 +167,7 @@ export class ProjectionService {
   async getProjectionsForStudent(studentProfileId: string) {
     const projections = await this.prisma.universityProjection.findMany({
       where: { studentProfileId },
-      include: { university: true },
+      include: { university: true, campaign: true },
       orderBy: { estimatedAwardGbp: 'desc' },
     });
 
@@ -147,6 +181,8 @@ export class ProjectionService {
       subjectAlignmentBoost: Number(p.subjectAlignmentBoost),
       verificationBoost: Number(p.verificationBoost),
       perStudentCapGbp: p.perStudentCapGbp ? Number(p.perStudentCapGbp) : null,
+      campaignId: p.campaignId,
+      campaignName: p.campaign?.name ?? null,
       status: p.status as 'ESTIMATE',
       disclaimer: CONDITIONAL_AWARD_DISCLAIMER,
     }));

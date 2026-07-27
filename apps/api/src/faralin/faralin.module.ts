@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AchievementLedgerService } from './achievement-ledger.service';
 import { AwardAccountService } from './award-account.service';
+import { CampaignService } from './campaign.service';
 import { FaralinEngineService, PortfolioService } from './faralin-engine.service';
 import { ProjectionService } from './projection.service';
 
@@ -11,6 +12,7 @@ import { ProjectionService } from './projection.service';
     ProjectionService,
     AchievementLedgerService,
     AwardAccountService,
+    CampaignService,
   ],
   exports: [
     FaralinEngineService,
@@ -18,6 +20,7 @@ import { ProjectionService } from './projection.service';
     ProjectionService,
     AchievementLedgerService,
     AwardAccountService,
+    CampaignService,
   ],
 })
 export class FaralinModule {}

@@ -1,5 +1,6 @@
-import { Controller, Get, Param, Patch, Body, Header } from '@nestjs/common';
+import { Controller, Get, Param, Patch, Body, Header, Post } from '@nestjs/common';
 import { UserRole } from '@faralin/db';
+import type { CreateCampaignInput } from '@faralin/types';
 import { Public } from '../auth/public.decorator';
 import { Roles } from '../auth/roles.decorator';
 import { AuthUser } from '../auth/clerk-auth.guard';
@@ -189,6 +190,41 @@ export class UniversitiesController {
   getStaffHearExport(@CurrentUser() user: AuthUser) {
     this.universities.requireUniversityAccess(user.universityId, user.universityId!);
     return this.universities.getStaffHearExport(user.universityId!);
+  }
+
+  @Get('staff/campaigns')
+  @Roles(UserRole.UNIVERSITY_STAFF)
+  listStaffCampaigns(@CurrentUser() user: AuthUser) {
+    this.universities.requireUniversityAccess(user.universityId, user.universityId!);
+    return this.universities.listStaffCampaigns(user.universityId!);
+  }
+
+  @Post('staff/campaigns')
+  @Roles(UserRole.UNIVERSITY_STAFF)
+  createStaffCampaign(@CurrentUser() user: AuthUser, @Body() body: CreateCampaignInput) {
+    this.universities.requireUniversityAccess(user.universityId, user.universityId!);
+    return this.universities.createStaffCampaign(user.universityId!, body);
+  }
+
+  @Patch('staff/campaigns/:campaignId')
+  @Roles(UserRole.UNIVERSITY_STAFF)
+  updateStaffCampaign(
+    @CurrentUser() user: AuthUser,
+    @Param('campaignId') campaignId: string,
+    @Body() body: Partial<CreateCampaignInput> & { isActive?: boolean },
+  ) {
+    this.universities.requireUniversityAccess(user.universityId, user.universityId!);
+    return this.universities.updateStaffCampaign(user.universityId!, campaignId, body);
+  }
+
+  @Patch('staff/campaigns/:campaignId/deactivate')
+  @Roles(UserRole.UNIVERSITY_STAFF)
+  deactivateStaffCampaign(
+    @CurrentUser() user: AuthUser,
+    @Param('campaignId') campaignId: string,
+  ) {
+    this.universities.requireUniversityAccess(user.universityId, user.universityId!);
+    return this.universities.deactivateStaffCampaign(user.universityId!, campaignId);
   }
 
   @Public()

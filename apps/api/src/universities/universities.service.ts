@@ -1,5 +1,7 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { estimateTypicalAssessmentFaralins, getTierEconomics } from '@faralin/types';
+import type { CreateCampaignInput } from '@faralin/types';
+import { CampaignService } from '../faralin/campaign.service';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   buildStaffStudentRoster,
@@ -38,7 +40,10 @@ import {
 
 @Injectable()
 export class UniversitiesService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private campaigns: CampaignService,
+  ) {}
 
   async getPublicUniversity(slug: string) {
     const university = await this.prisma.university.findUnique({
@@ -62,14 +67,51 @@ export class UniversitiesService {
       throw new NotFoundException('University not found');
     }
 
+    const activeCampaign = await this.campaigns.getActiveCampaignBoost(university.id);
+
+    // Prestige tiers remain discovery labels only; prefer campaign economics when present.
     let exampleEarnRange: { min: number; max: number } | null = null;
-    try {
-      exampleEarnRange = estimateTypicalAssessmentFaralins(getTierEconomics(slug));
-    } catch {
-      exampleEarnRange = null;
+    if (activeCampaign) {
+      const base = 10000;
+      exampleEarnRange = {
+        min: Math.round((base * activeCampaign.universityBoost) / 100),
+        max: Math.round((base * 1.5 * activeCampaign.universityBoost) / 100),
+      };
+    } else {
+      try {
+        /** @deprecated payment formula — use UniversityCampaign when available */
+        exampleEarnRange = estimateTypicalAssessmentFaralins(getTierEconomics(slug));
+      } catch {
+        exampleEarnRange = null;
+      }
     }
 
-    return { ...university, exampleEarnRange };
+    return {
+      ...university,
+      exampleEarnRange,
+      activeCampaign,
+      prestigeTierLabel: university.prestigeTier,
+    };
+  }
+
+  listStaffCampaigns(universityId: string) {
+    return this.campaigns.listForUniversity(universityId);
+  }
+
+  createStaffCampaign(universityId: string, body: CreateCampaignInput) {
+    return this.campaigns.create(universityId, body);
+  }
+
+  updateStaffCampaign(
+    universityId: string,
+    campaignId: string,
+    body: Partial<CreateCampaignInput> & { isActive?: boolean },
+  ) {
+    return this.campaigns.update(universityId, campaignId, body);
+  }
+
+  deactivateStaffCampaign(universityId: string, campaignId: string) {
+    return this.campaigns.deactivate(universityId, campaignId);
   }
 
   async getStaffMe(userId: string) {

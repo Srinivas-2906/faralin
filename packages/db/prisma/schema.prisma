@@ -178,6 +178,35 @@ enum UniversityPrestigeTier {
   ACCESSIBLE
 }
 
+enum UkJurisdiction {
+  ENGLAND
+  SCOTLAND
+  WALES
+  NORTHERN_IRELAND
+}
+
+enum CampaignDeliveryType {
+  BURSARY
+  FEE_WAIVER
+  SCHOLARSHIP
+  OTHER
+}
+
+enum ConsentScope {
+  ANONYMOUS_ANALYTICS
+  ANONYMOUS_SKILL_PROFILE
+  SHARED_PORTFOLIO
+  APPLICATION_EVIDENCE
+  OFFER_VERIFICATION
+  ENROLMENT_RECONCILIATION
+}
+
+enum AwardConversionAppealStatus {
+  NONE
+  OPEN
+  RESOLVED
+}
+
 enum NotificationType {
   FARALIN_EARNED
   ASSESSMENT_REMINDER
@@ -275,6 +304,7 @@ model StudentProfile {
   achievementEvents    AchievementEvent[]
   universityProjections UniversityProjection[]
   universityAwardAccounts UniversityAwardAccount[]
+  consents             StudentConsent[]
   applications         Application[]
   eventRegistrations   EventRegistration[]
   courseLessonProgress   CourseLessonProgress[]
@@ -297,6 +327,7 @@ model University {
   guardianRank2025  Int?
   prestigeTier      UniversityPrestigeTier?
   rankingSource     String?                 @default("Guardian University Guide 2025")
+  jurisdiction      UkJurisdiction?
   createdAt         DateTime                @default(now())
   updatedAt         DateTime                @updatedAt
 
@@ -306,6 +337,7 @@ model University {
   faralinTransactions FaralinTransaction[]
   universityProjections UniversityProjection[]
   universityAwardAccounts UniversityAwardAccount[]
+  campaigns           UniversityCampaign[]
   articles            Article[]
   events              Event[]
   applications        Application[]
@@ -747,11 +779,39 @@ model UniversityProjection {
   calculatedAt          DateTime                   @default(now())
   snapshotVersion       Int                        @default(1)
 
-  studentProfile StudentProfile @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
-  university     University     @relation(fields: [universityId], references: [id], onDelete: Cascade)
+  studentProfile StudentProfile      @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+  university     University          @relation(fields: [universityId], references: [id], onDelete: Cascade)
+  campaign       UniversityCampaign? @relation(fields: [campaignId], references: [id], onDelete: SetNull)
 
   @@unique([studentProfileId, universityId])
   @@index([universityId])
+  @@index([campaignId])
+}
+
+model UniversityCampaign {
+  id                    String               @id @default(cuid())
+  universityId          String
+  name                  String
+  slug                  String
+  isActive              Boolean              @default(true)
+  budgetGbp             Decimal              @db.Decimal(12, 2)
+  perStudentCapGbp      Decimal?             @db.Decimal(10, 2)
+  spentGbp              Decimal              @default(0) @db.Decimal(12, 2)
+  universityBoost       Decimal              @db.Decimal(5, 4)
+  subjectAlignmentBoost Decimal              @default(1.0) @db.Decimal(5, 4)
+  subjectFilters        Json?
+  startsAt              DateTime
+  endsAt                DateTime
+  deliveryType          CampaignDeliveryType @default(BURSARY)
+  createdAt             DateTime             @default(now())
+  updatedAt             DateTime             @updatedAt
+
+  university  University            @relation(fields: [universityId], references: [id], onDelete: Cascade)
+  projections UniversityProjection[]
+
+  @@unique([universityId, slug])
+  @@index([universityId, isActive])
+  @@index([startsAt, endsAt])
 }
 
 model UniversityAwardAccount {
@@ -771,12 +831,43 @@ model UniversityAwardAccount {
   createdAt            DateTime                     @default(now())
   updatedAt            DateTime                     @updatedAt
 
-  studentProfile StudentProfile @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
-  university     University     @relation(fields: [universityId], references: [id], onDelete: Cascade)
+  studentProfile StudentProfile    @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+  university     University        @relation(fields: [universityId], references: [id], onDelete: Cascade)
+  conversion     AwardConversion?
 
   @@unique([studentProfileId, universityId])
   @@index([studentProfileId, status])
   @@index([universityId, status])
+}
+
+model AwardConversion {
+  id                   String                       @id @default(cuid())
+  awardAccountId       String                       @unique
+  deliveryType         CampaignDeliveryType         @default(BURSARY)
+  amountGbp            Decimal                      @db.Decimal(10, 2)
+  institutionReference String?
+  convertedAt          DateTime                     @default(now())
+  appealStatus         AwardConversionAppealStatus  @default(NONE)
+  notes                String?
+  createdAt            DateTime                     @default(now())
+  updatedAt            DateTime                     @updatedAt
+
+  awardAccount UniversityAwardAccount @relation(fields: [awardAccountId], references: [id], onDelete: Cascade)
+}
+
+model StudentConsent {
+  id               String       @id @default(cuid())
+  studentProfileId String
+  scope            ConsentScope
+  grantedAt        DateTime     @default(now())
+  revokedAt        DateTime?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  studentProfile StudentProfile @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([studentProfileId, scope])
+  @@index([studentProfileId])
 }
 
 model PlatformConfig {

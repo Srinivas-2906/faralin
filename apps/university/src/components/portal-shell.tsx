@@ -36,6 +36,7 @@ const navSections = [
     title: 'Rewards',
     links: [
       { href: '/rewards', label: 'Rewards', icon: '◆' },
+      { href: '/campaigns', label: 'Campaigns', icon: '◇' },
       { href: '/recognition', label: 'Recognition Tiers', icon: '★' },
       { href: '/leaderboard', label: 'Leaderboard', icon: '▲' },
     ],

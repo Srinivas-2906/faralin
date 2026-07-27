@@ -136,6 +136,19 @@ export {
   isFaralinActiveApplicationStatus,
   isOfferStageApplicationStatus,
 } from './award-account';
+export {
+  CAMPAIGN_DELIVERY_TYPE_LABELS,
+  CONSENT_SCOPE_LABELS,
+  isCampaignActiveNow,
+  validateCampaignBoosts,
+} from './campaigns';
+export type {
+  CampaignDeliveryType,
+  ConsentScope,
+  CreateCampaignInput,
+  UkJurisdiction,
+  UniversityCampaignSummary,
+} from './campaigns';
 
 import type { UniversityProjectionSummary } from './achievement-types';
 import type { UniversityAwardAccountSummary } from './award-account';
