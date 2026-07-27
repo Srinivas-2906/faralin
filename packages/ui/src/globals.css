@@ -3874,6 +3874,8 @@ a.nav-sign-in {
   display: none;
 }
 
+.info-tooltip:hover .info-tooltip__panel,
+.info-tooltip:focus-within .info-tooltip__panel,
 .info-tooltip--open .info-tooltip__panel {
   display: block;
 }
@@ -7118,6 +7120,24 @@ button.dashboard-section-link {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+}
+
+.catalog-filter-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.catalog-filter-row-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0;
+  font-size: var(--text-2xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgba(0, 33, 71, 0.55);
 }
 
 .catalog-filter-chips-row,

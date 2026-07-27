@@ -26,17 +26,19 @@ export function UniversitiesCatalog({ universities }: { universities: University
   const columns = useCatalogGridColumns(gridRef);
 
   const query = (searchParams.get('q') ?? '').trim().toLowerCase();
+  const tier = searchParams.get('tier') ?? '';
 
   const filtered = useMemo(() => {
-    if (!query) return universities;
     return universities.filter((u) => {
+      if (tier && u.prestigeTier !== tier) return false;
+      if (!query) return true;
       const haystack = [u.name, u.shortName, u.description]
         .filter(Boolean)
         .join(' ')
         .toLowerCase();
       return haystack.includes(query);
     });
-  }, [universities, query]);
+  }, [universities, query, tier]);
 
   const rows = useMemo(() => chunk(filtered, columns), [filtered, columns]);
 

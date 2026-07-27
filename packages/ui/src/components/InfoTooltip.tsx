@@ -21,6 +21,7 @@ export interface InfoTooltipProps {
 
 const VIEWPORT_MARGIN = 8;
 const PANEL_MAX_WIDTH = 256;
+const CLOSE_DELAY_MS = 120;
 
 export function InfoTooltip({
   label,
@@ -34,10 +35,31 @@ export function InfoTooltip({
   const rootRef = useRef<HTMLSpanElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLSpanElement>(null);
+  const closeDelayRef = useRef<number | null>(null);
   const [open, setOpen] = useState(false);
   const [panelStyle, setPanelStyle] = useState<CSSProperties>({});
 
-  const close = useCallback(() => setOpen(false), []);
+  const clearCloseDelay = useCallback(() => {
+    if (closeDelayRef.current !== null) {
+      window.clearTimeout(closeDelayRef.current);
+      closeDelayRef.current = null;
+    }
+  }, []);
+
+  const openTooltip = useCallback(() => {
+    clearCloseDelay();
+    setOpen(true);
+  }, [clearCloseDelay]);
+
+  const scheduleClose = useCallback(() => {
+    clearCloseDelay();
+    closeDelayRef.current = window.setTimeout(() => setOpen(false), CLOSE_DELAY_MS);
+  }, [clearCloseDelay]);
+
+  const close = useCallback(() => {
+    clearCloseDelay();
+    setOpen(false);
+  }, [clearCloseDelay]);
 
   const updatePanelPosition = useCallback(() => {
     const trigger = triggerRef.current;
@@ -106,10 +128,16 @@ export function InfoTooltip({
     };
   }, [close, open]);
 
+  useEffect(() => () => clearCloseDelay(), [clearCloseDelay]);
+
   return (
     <span
       ref={rootRef}
       className={`info-tooltip${open ? ' info-tooltip--open' : ''} ${className}`.trim()}
+      onMouseEnter={openTooltip}
+      onMouseLeave={scheduleClose}
+      onFocusCapture={openTooltip}
+      onBlurCapture={scheduleClose}
     >
       <button
         ref={triggerRef}

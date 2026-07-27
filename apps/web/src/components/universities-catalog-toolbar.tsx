@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { CatalogFilterToolbar } from '@/components/catalog-filter-toolbar';
 import { UniversitiesCatalogInsight } from '@/components/catalog-insight';
+import { UniversitiesFilters } from '@/components/universities-filters';
 
 export function UniversitiesCatalogToolbar() {
   const router = useRouter();
@@ -55,6 +56,8 @@ export function UniversitiesCatalogToolbar() {
           />
         </form>
       }
-    />
+    >
+      <UniversitiesFilters />
+    </CatalogFilterToolbar>
   );
 }
