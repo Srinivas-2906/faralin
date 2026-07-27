@@ -276,6 +276,10 @@ importers:
         version: 5.9.3
 
   packages/utils:
+    dependencies:
+      '@faralin/types':
+        specifier: workspace:*
+        version: link:../types
     devDependencies:
       '@types/node':
         specifier: ^22.15.30

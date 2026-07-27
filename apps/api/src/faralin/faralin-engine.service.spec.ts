@@ -1,4 +1,5 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
+import { isDualWriteLegacyEnabled } from './achievement-ledger.service';
 import {
   FaralinEngineService,
   SECTION_MILESTONE_REASON_PREFIX,
@@ -301,5 +302,22 @@ describe('FaralinEngineService.processAttemptCompletion', () => {
         amount: 90,
       }),
     });
+  });
+});
+
+describe('dual-write orchestration', () => {
+  const original = process.env.FARALIN_DUAL_WRITE_LEGACY;
+
+  afterEach(() => {
+    if (original === undefined) delete process.env.FARALIN_DUAL_WRITE_LEGACY;
+    else process.env.FARALIN_DUAL_WRITE_LEGACY = original;
+  });
+
+  it('legacy FaralinEngine fan-out is gated by AchievementLedgerService', () => {
+    delete process.env.FARALIN_DUAL_WRITE_LEGACY;
+    expect(isDualWriteLegacyEnabled()).toBe(true);
+
+    process.env.FARALIN_DUAL_WRITE_LEGACY = 'false';
+    expect(isDualWriteLegacyEnabled()).toBe(false);
   });
 });

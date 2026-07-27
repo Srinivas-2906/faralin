@@ -6,12 +6,14 @@ import {
 import { MAX_UNIVERSITY_SELECTIONS } from '@faralin/types';
 import { PrismaService } from '../prisma/prisma.service';
 import { PortfolioService } from '../faralin/faralin-engine.service';
+import { ProjectionService } from '../faralin/projection.service';
 
 @Injectable()
 export class StudentsService {
   constructor(
     private prisma: PrismaService,
     private portfolio: PortfolioService,
+    private projectionService: ProjectionService,
   ) {}
 
   async getProfile(studentProfileId: string) {
@@ -94,6 +96,8 @@ export class StudentsService {
         }),
       ),
     ]);
+
+    await this.projectionService.recalculateForStudent(studentProfileId);
 
     return this.getProfile(studentProfileId);
   }

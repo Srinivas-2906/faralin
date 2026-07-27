@@ -1,18 +1,19 @@
 import Link from 'next/link';
 import { MediaImage } from '@faralin/ui';
-import { formatFaralinPerGbp } from '@faralin/utils';
 import { getUniversityImage } from '@/lib/media';
 
 export interface DashboardPartnerUniversity {
   universitySlug: string;
   universityName: string;
-  totalFaralins: number;
+  eligibleCoreFaralins?: number;
+  totalFaralins?: number;
   verifiedFaralins?: number;
   hearEligibleFaralins?: number;
   recognitionTierLabel?: string;
   recognitionProgressPercent?: number;
-  estimatedBursaryGbp: number;
-  faralinsPerGbp?: number | null;
+  estimatedAwardGbp: number;
+  awardStatus?: string;
+  awardStatusLabel?: string;
 }
 
 type DashboardPartnerCardProps = {
@@ -23,13 +24,21 @@ export function DashboardPartnerCard({ university }: DashboardPartnerCardProps) 
   const {
     universitySlug,
     universityName,
+    eligibleCoreFaralins,
     totalFaralins,
     hearEligibleFaralins,
     recognitionTierLabel,
     recognitionProgressPercent,
-    estimatedBursaryGbp,
-    faralinsPerGbp,
+    estimatedAwardGbp,
+    awardStatusLabel,
   } = university;
+
+  const coreDisplay =
+    eligibleCoreFaralins != null
+      ? `${eligibleCoreFaralins.toLocaleString()} Core Faralins eligible`
+      : totalFaralins != null
+        ? `${totalFaralins.toLocaleString()} Faralins (legacy)`
+        : null;
 
   return (
     <article className="dashboard-bento-item">
@@ -47,12 +56,17 @@ export function DashboardPartnerCard({ university }: DashboardPartnerCardProps) 
             View →
           </Link>
         </div>
+        {awardStatusLabel ? (
+          <p className="dashboard-bento-item-meta">
+            <span className="dashboard-bento-item-meta-primary">{awardStatusLabel}</span>
+          </p>
+        ) : null}
         <p className="dashboard-bento-item-meta">
-          <span className="dashboard-bento-item-meta-primary">
-            {totalFaralins.toLocaleString()} Faralins
-          </span>
+          {coreDisplay ? (
+            <span className="dashboard-bento-item-meta-primary">{coreDisplay}</span>
+          ) : null}
           <span className="dashboard-bento-item-meta-secondary">
-            £{estimatedBursaryGbp.toFixed(2)} est.
+            Est. conditional award £{estimatedAwardGbp.toFixed(2)}
           </span>
         </p>
         {recognitionTierLabel ? (
@@ -72,9 +86,6 @@ export function DashboardPartnerCard({ university }: DashboardPartnerCardProps) 
             {hearEligibleFaralins.toLocaleString()} HEAR-eligible verified Faralins
           </p>
         ) : null}
-        {faralinsPerGbp && (
-          <p className="dashboard-bento-item-conversion">{formatFaralinPerGbp(faralinsPerGbp)}</p>
-        )}
       </div>
     </article>
   );

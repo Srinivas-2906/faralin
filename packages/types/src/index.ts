@@ -114,12 +114,48 @@ export interface AwardBand {
   label: string;
 }
 
+export type {
+  AchievementActivityType,
+  AchievementVerificationStatus,
+  AssessmentDifficulty,
+  UniversityProjectionStatus,
+  UniversityProjectionSummary,
+} from './achievement-types';
+
+export type {
+  UniversityAwardAccountStatus,
+  UniversityAwardAccountSummary,
+} from './award-account';
+export {
+  AWARD_ACCOUNT_ACTIVE_STATUSES,
+  FARALIN_ACTIVE_APPLICATION_STATUSES,
+  OFFER_STAGE_APPLICATION_STATUSES,
+  TERMINAL_APPLICATION_STATUSES,
+  UNIVERSITY_AWARD_ACCOUNT_STATUS_LABELS,
+  awardStatusForApplicationStatus,
+  isFaralinActiveApplicationStatus,
+  isOfferStageApplicationStatus,
+} from './award-account';
+
+import type { UniversityProjectionSummary } from './achievement-types';
+import type { UniversityAwardAccountSummary } from './award-account';
+
 export interface PortfolioSummary {
+  /** Portable achievement total (Layer 1 ledger). */
+  coreFaralins: number;
+  coreFaralinsThisMonth: number;
+  /** Conditional university estimates (Layer 2 projections). */
+  projections: UniversityProjectionSummary[];
+  /** Layer 3 award account lifecycle per university. */
+  awardAccounts: UniversityAwardAccountSummary[];
+  /** @deprecated Use coreFaralins during migration. Legacy per-uni transaction sum. */
   totalFaralins: number;
   faralinsThisMonth: number;
   assessmentsCompleted: number;
   tracksCompleted: number;
+  /** @deprecated Sum of projection estimates; use projections[] instead. */
   estimatedBursaryGbp: number;
+  /** @deprecated Legacy per-university transaction balances during dual-write. */
   byUniversity: UniversityBalance[];
 }
 
@@ -160,7 +196,37 @@ export const EVENT_TYPE_LABELS = {
   CHALLENGE: 'Challenge',
 } as const;
 
-export const MAX_UNIVERSITY_SELECTIONS = 10;
+export {
+  calculateEstimatedAwardGbp,
+  clampUniversityBoost,
+  deriveUniversityBoost,
+  legacyVerifiedFaralinsToGbp,
+  sumEligibleCoreFaralins,
+} from './projection-math';
+export type {
+  AchievementForProjection,
+  ProjectionCalculationInput,
+} from './projection-math';
+
+export {
+  ASSESSMENT_BASE_CORE_FARALINS,
+  DIFFICULTY_MULTIPLIERS,
+  IMPROVEMENT_BONUS_CAP,
+  IMPROVEMENT_DELTA_DIVISOR,
+  PROJECTION_BOOST_BOUNDS,
+  TRACK_BASE_CORE_FARALINS,
+  TRUST_MULTIPLIERS,
+} from './achievement-values';
+export {
+  CONDITIONAL_AWARD_DISCLAIMER,
+  CORE_FARALINS_EXPLAINER,
+  CORE_FARALINS_PER_GBP,
+  PLATFORM_LIMITS,
+} from './platform-config';
+import { PLATFORM_LIMITS } from './platform-config';
+
+/** @deprecated Use PLATFORM_LIMITS.maxFollowedUniversities */
+export const MAX_UNIVERSITY_SELECTIONS = PLATFORM_LIMITS.maxFollowedUniversities;
 
 export {
   buildAssessmentRule,

@@ -62,7 +62,7 @@ export default function HomePage() {
               href="/assessments"
               variant="ink"
               title="Take an assessment"
-              subtitle="Verified subject work — earn Faralins with no gimmicks."
+              subtitle="Verified subject work — earn Core Faralins with no gimmicks."
             />
             <MediaCard
               aspect="16x9"
@@ -79,7 +79,7 @@ export default function HomePage() {
               href="/dashboard"
               variant="crimson"
               title="See your dashboard"
-              subtitle="Progress, milestones, and estimated conditional bursary value."
+              subtitle="Progress, milestones, and estimated conditional award value."
             />
           </div>
         </div>

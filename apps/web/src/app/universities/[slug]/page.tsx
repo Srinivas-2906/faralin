@@ -6,10 +6,7 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import {
   apiFetch,
-  exampleGbpAtFaralins,
   FARALIN_CONVERSION_DISCLAIMER,
-  faralinsToGbp,
-  formatFaralinPerGbp,
 } from '@faralin/utils';
 import { PRESTIGE_TIER_LABELS, RANKING_SOURCE, type UniversityPrestigeTier } from '@faralin/types';
 import { Alert, Button, ImageBanner, MediaCard } from '@faralin/ui';
@@ -99,16 +96,9 @@ export default function UniversityDetailPage() {
   }
 
   const cover = getUniversityImage(university.slug ?? slug, university.logoUrl);
-  const faralinsPerGbp = university.conversionRule?.faralinsPerGbp;
   const tierLabel = university.prestigeTier
     ? PRESTIGE_TIER_LABELS[university.prestigeTier]
     : null;
-  const gbpExamples = faralinsPerGbp
-    ? [500, 1000, 5000].map((amount) => ({
-        faralins: amount,
-        gbp: faralinsToGbp(amount, faralinsPerGbp),
-      }))
-    : [];
 
   return (
     <div className="page-section">
@@ -123,14 +113,6 @@ export default function UniversityDetailPage() {
         {error && <Alert>{error}</Alert>}
 
         <div className="uni-toolbar">
-          {university.conversionRule && (
-            <div className="uni-toolbar__stat">
-              <p className="uni-toolbar__stat-value">
-                {formatFaralinPerGbp(university.conversionRule.faralinsPerGbp)}
-              </p>
-              <p className="uni-toolbar__stat-label">Conversion rate</p>
-            </div>
-          )}
           <div className="uni-toolbar__actions">
             <Button loading={applying} onClick={handleApply}>
               {applying ? 'Opening…' : 'Apply on university website'}
@@ -148,10 +130,10 @@ export default function UniversityDetailPage() {
           </div>
         </div>
 
-        {faralinsPerGbp && (
+        {university.prestigeTier && (
           <section className="uni-economics" aria-labelledby="uni-economics-heading">
             <h2 id="uni-economics-heading" className="uni-economics__heading">
-              Recognition economics
+              Partner profile
             </h2>
             <div className="uni-economics__grid">
               <div className="uni-economics__panel">
@@ -169,33 +151,15 @@ export default function UniversityDetailPage() {
                 </p>
               </div>
               <div className="uni-economics__panel">
-                <p className="uni-economics__label">Conversion</p>
-                <p className="uni-economics__value">{formatFaralinPerGbp(faralinsPerGbp)}</p>
-                <p className="uni-economics__meta">{exampleGbpAtFaralins(faralinsPerGbp)}</p>
+                <p className="uni-economics__label">Conditional awards</p>
+                <p className="uni-economics__value">Dashboard estimates</p>
+                <p className="uni-economics__meta">
+                  Complete activities to earn Core Faralins, then view this partner&apos;s
+                  estimated conditional award on your dashboard.
+                </p>
               </div>
-              {university.exampleEarnRange && (
-                <div className="uni-economics__panel">
-                  <p className="uni-economics__label">Typical verified assessment</p>
-                  <p className="uni-economics__value">
-                    {university.exampleEarnRange.min}–{university.exampleEarnRange.max} Faralins
-                  </p>
-                  <p className="uni-economics__meta">Varies by accuracy and improvement</p>
-                </div>
-              )}
             </div>
-            {gbpExamples.length > 0 && (
-              <div className="uni-economics__examples">
-                <p className="uni-economics__examples-title">Faralin to pounds (indicative)</p>
-                <ul className="uni-economics__examples-list">
-                  {gbpExamples.map(({ faralins, gbp }) => (
-                    <li key={faralins}>
-                      {faralins.toLocaleString('en-GB')} Faralins ≈ £{gbp.toFixed(2)}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-            <p className="disclaimer uni-economics__disclaimer">{FARALIN_CONVERSION_DISCLAIMER}</p>
+            <p className="uni-economics__disclaimer">{FARALIN_CONVERSION_DISCLAIMER}</p>
           </section>
         )}
 

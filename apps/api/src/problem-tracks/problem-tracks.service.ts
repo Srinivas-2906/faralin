@@ -11,7 +11,7 @@ import {
 } from '@faralin/db';
 import type { AwardBand, ProblemTrackSection, RubricCategory } from '@faralin/types';
 import { PrismaService } from '../prisma/prisma.service';
-import { FaralinEngineService } from '../faralin/faralin-engine.service';
+import { AchievementLedgerService } from '../faralin/achievement-ledger.service';
 import { AiTutorService } from './ai-tutor.service';
 import { RubricScorerService } from './rubric-scorer.service';
 import { TrustService } from './trust.service';
@@ -36,7 +36,7 @@ function parseAwardBands(json: unknown): AwardBand[] {
 export class ProblemTracksService {
   constructor(
     private prisma: PrismaService,
-    private faralinEngine: FaralinEngineService,
+    private achievementLedger: AchievementLedgerService,
     private aiTutor: AiTutorService,
     private rubricScorer: RubricScorerService,
     private trust: TrustService,
@@ -236,7 +236,7 @@ export class ProblemTracksService {
     });
 
     if (isComplete && section.sectionRewardFaralins && section.sectionRewardFaralins > 0) {
-      await this.faralinEngine.processSectionMilestone(
+      await this.achievementLedger.processSectionMilestone(
         attemptId,
         sectionId,
         section.sectionRewardFaralins,
@@ -526,11 +526,11 @@ export class ProblemTracksService {
     });
 
     if (status === ProblemTrackAttemptStatus.SCORED && scoreResult.faralinsEarned > 0) {
-      await this.faralinEngine.processTrackAttemptCompletion(attemptId);
+      await this.achievementLedger.processTrackCompletion(attemptId);
     }
 
     if (status === ProblemTrackAttemptStatus.SCORED) {
-      await this.faralinEngine.processJourneyMilestoneBonus(
+      await this.achievementLedger.processJourneyMilestoneBonus(
         studentProfileId,
         attempt.problemTrack.slug,
       );
@@ -600,7 +600,7 @@ export class ProblemTracksService {
     });
 
     if (decision === 'approve' && (attempt.faralinsEarned ?? 0) > 0) {
-      await this.faralinEngine.processTrackAttemptCompletion(attemptId);
+      await this.achievementLedger.processTrackCompletion(attemptId);
     }
 
     if (decision === 'approve') {
@@ -609,7 +609,7 @@ export class ProblemTracksService {
         include: { problemTrack: { select: { slug: true } } },
       });
       if (fullAttempt) {
-        await this.faralinEngine.processJourneyMilestoneBonus(
+        await this.achievementLedger.processJourneyMilestoneBonus(
           fullAttempt.studentProfileId,
           fullAttempt.problemTrack.slug,
         );

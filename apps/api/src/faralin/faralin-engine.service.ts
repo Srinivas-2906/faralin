@@ -12,6 +12,8 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import type { BonusRule } from '../universities/staff-assessment-config';
 import { computeRecognitionTier } from '../universities/recognition-tiers';
+import { ProjectionService } from './projection.service';
+import { AwardAccountService } from './award-account.service';
 
 interface RuleMatchContext {
   assessmentId?: string;
@@ -547,7 +549,11 @@ export class FaralinEngineService {
 
 @Injectable()
 export class PortfolioService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private projectionService: ProjectionService,
+    private awardAccountService: AwardAccountService,
+  ) {}
 
   async getPortfolio(studentProfileId: string) {
     const startOfMonth = new Date();
@@ -718,13 +724,47 @@ export class PortfolioService {
     const hearEligibleFaralins = byUniversity.reduce((sum, u) => sum + u.hearEligibleFaralins, 0);
     const estimatedBursaryGbp = byUniversity.reduce((sum, u) => sum + u.estimatedBursaryGbp, 0);
 
+    const [coreTotals, projections, awardAccounts] = await Promise.all([
+      this.prisma.achievementEvent.aggregate({
+        where: { studentProfileId, verificationStatus: 'VERIFIED' },
+        _sum: { coreFaralins: true },
+      }).then(async (verifiedSum) => {
+        const startOfMonth = new Date();
+        startOfMonth.setDate(1);
+        startOfMonth.setHours(0, 0, 0, 0);
+        const monthSum = await this.prisma.achievementEvent.aggregate({
+          where: {
+            studentProfileId,
+            verificationStatus: 'VERIFIED',
+            completedAt: { gte: startOfMonth },
+          },
+          _sum: { coreFaralins: true },
+        });
+        return {
+          coreFaralins: verifiedSum._sum.coreFaralins ?? 0,
+          coreFaralinsThisMonth: monthSum._sum.coreFaralins ?? 0,
+        };
+      }),
+      this.projectionService.getProjectionsForStudent(studentProfileId),
+      this.awardAccountService.getAwardAccountsForStudent(studentProfileId),
+    ]);
+
+    const projectionEstimatedTotal = projections.reduce(
+      (sum, p) => sum + p.estimatedAwardGbp,
+      0,
+    );
+
     return {
+      coreFaralins: coreTotals.coreFaralins,
+      coreFaralinsThisMonth: coreTotals.coreFaralinsThisMonth,
+      projections,
+      awardAccounts,
       totalFaralins,
       hearEligibleFaralins,
       faralinsThisMonth: monthTransactions._sum.amount ?? 0,
       assessmentsCompleted: attempts,
       tracksCompleted: trackAttempts,
-      estimatedBursaryGbp,
+      estimatedBursaryGbp: projectionEstimatedTotal || estimatedBursaryGbp,
       byUniversity,
       recentArtifacts: trackArtifacts.map((a) => ({
         id: a.id,

@@ -107,12 +107,42 @@ enum FaralinTransactionStatus {
   FORFEITED
 }
 
+enum AchievementActivityType {
+  ASSESSMENT
+  PROBLEM_TRACK
+  PROBLEM_TRACK_SECTION
+  JOURNEY_MILESTONE
+}
+
+enum AchievementVerificationStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum UniversityProjectionStatus {
+  ESTIMATE
+}
+
+enum UniversityAwardAccountStatus {
+  PROJECTED
+  ELIGIBLE
+  RESERVED
+  CONFIRMED
+  CONVERTED
+  EXPIRED
+  FORFEITED
+}
+
 enum ApplicationStatus {
   FOLLOWER
+  FARALIN_ACTIVE
   REFERRAL_CLICKED
   APPLIED
   OFFER_RECEIVED
   OFFER_ACCEPTED
+  FIRM
+  INSURANCE
   ENROLLED
   WITHDRAWN
   REJECTED
@@ -242,6 +272,9 @@ model StudentProfile {
   subjects             StudentSubject[]
   assessmentAttempts   AssessmentAttempt[]
   faralinTransactions  FaralinTransaction[]
+  achievementEvents    AchievementEvent[]
+  universityProjections UniversityProjection[]
+  universityAwardAccounts UniversityAwardAccount[]
   applications         Application[]
   eventRegistrations   EventRegistration[]
   courseLessonProgress   CourseLessonProgress[]
@@ -271,6 +304,8 @@ model University {
   faralinRules        FaralinRule[]
   conversionRule      UniversityConversionRule?
   faralinTransactions FaralinTransaction[]
+  universityProjections UniversityProjection[]
+  universityAwardAccounts UniversityAwardAccount[]
   articles            Article[]
   events              Event[]
   applications        Application[]
@@ -309,6 +344,7 @@ model Subject {
   assessments     Assessment[]
   faralinRules    FaralinRule[]
   problemTracks   ProblemTrack[]
+  achievementEvents AchievementEvent[]
 }
 
 model StudentSubject {
@@ -384,6 +420,7 @@ model AssessmentAttempt {
   studentProfile      StudentProfile       @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
   answers             AssessmentAnswer[]
   faralinTransactions FaralinTransaction[]
+  achievementEvents   AchievementEvent[]
 
   @@index([studentProfileId, completedAt])
   @@index([assessmentId])
@@ -469,6 +506,7 @@ model ProblemTrackAttempt {
   stepResponses       ProblemTrackStepResponse[]
   portfolioArtifact   PortfolioArtifact?
   faralinTransactions FaralinTransaction[]
+  achievementEvents   AchievementEvent[]
 
   @@index([studentProfileId, status])
   @@index([problemTrackId])
@@ -663,6 +701,92 @@ model FaralinTransaction {
   @@index([studentProfileId, universityId])
   @@index([studentProfileId, createdAt])
   @@index([universityId, createdAt])
+}
+
+model AchievementEvent {
+  id                    String                        @id @default(cuid())
+  studentProfileId      String
+  activityType          AchievementActivityType
+  idempotencyKey        String                        @unique
+  assessmentAttemptId   String?
+  problemTrackAttemptId String?
+  sectionId             String?
+  subjectId             String?
+  difficulty            AssessmentDifficulty?
+  rawScore              Decimal?                      @db.Decimal(5, 2)
+  normalizedScore       Decimal?                      @db.Decimal(5, 4)
+  trustLevel            FaralinTrustLevel             @default(VERIFIED)
+  verificationStatus    AchievementVerificationStatus @default(VERIFIED)
+  coreFaralins          Int
+  improvementBonus      Int                           @default(0)
+  metadata              Json?
+  completedAt           DateTime
+  createdAt             DateTime                      @default(now())
+
+  studentProfile      StudentProfile       @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+  assessmentAttempt   AssessmentAttempt?   @relation(fields: [assessmentAttemptId], references: [id])
+  problemTrackAttempt ProblemTrackAttempt? @relation(fields: [problemTrackAttemptId], references: [id])
+  subject             Subject?             @relation(fields: [subjectId], references: [id])
+
+  @@index([studentProfileId, completedAt])
+  @@index([studentProfileId, verificationStatus])
+}
+
+model UniversityProjection {
+  id                    String                     @id @default(cuid())
+  studentProfileId      String
+  universityId          String
+  eligibleCoreFaralins  Int                        @default(0)
+  universityBoost       Decimal                    @db.Decimal(5, 4)
+  subjectAlignmentBoost Decimal                    @default(1.0) @db.Decimal(5, 4)
+  verificationBoost     Decimal                    @default(1.0) @db.Decimal(5, 4)
+  estimatedAwardGbp     Decimal                    @db.Decimal(10, 2)
+  perStudentCapGbp      Decimal?                   @db.Decimal(10, 2)
+  campaignId            String?
+  status                UniversityProjectionStatus @default(ESTIMATE)
+  calculatedAt          DateTime                   @default(now())
+  snapshotVersion       Int                        @default(1)
+
+  studentProfile StudentProfile @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+  university     University     @relation(fields: [universityId], references: [id], onDelete: Cascade)
+
+  @@unique([studentProfileId, universityId])
+  @@index([universityId])
+}
+
+model UniversityAwardAccount {
+  id                   String                       @id @default(cuid())
+  studentProfileId     String
+  universityId         String
+  status               UniversityAwardAccountStatus @default(PROJECTED)
+  eligibleCoreFaralins Int                          @default(0)
+  projectedAwardGbp    Decimal                      @db.Decimal(10, 2)
+  reservedAt           DateTime?
+  confirmedAt          DateTime?
+  convertedAt          DateTime?
+  forfeitedAt          DateTime?
+  expiredAt            DateTime?
+  forfeitureReason     String?
+  metadata             Json?
+  createdAt            DateTime                     @default(now())
+  updatedAt            DateTime                     @updatedAt
+
+  studentProfile StudentProfile @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+  university     University     @relation(fields: [universityId], references: [id], onDelete: Cascade)
+
+  @@unique([studentProfileId, universityId])
+  @@index([studentProfileId, status])
+  @@index([universityId, status])
+}
+
+model PlatformConfig {
+  id                        String   @id @default(cuid())
+  coreFaralinsPerGbp        Int      @default(100)
+  maxFollowedUniversities   Int      @default(10)
+  maxFaralinActiveUniversities Int   @default(5)
+  maxOfferStageUniversities Int      @default(2)
+  maxConvertedAwards        Int      @default(1)
+  updatedAt                 DateTime @updatedAt
 }
 
 model UniversityConversionRule {

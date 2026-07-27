@@ -1,4 +1,17 @@
 import { formatCurrency } from './format';
+import { CORE_FARALINS_PER_GBP, CONDITIONAL_AWARD_DISCLAIMER } from '@faralin/types';
+
+export function coreFaralinsToGbp(coreFaralins: number): number {
+  return Math.round((coreFaralins / CORE_FARALINS_PER_GBP) * 100) / 100;
+}
+
+export function formatCoreFaralins(amount: number): string {
+  return `${amount.toLocaleString('en-GB')} Core Faralins`;
+}
+
+export function formatEstimatedAwardGbp(gbp: number): string {
+  return `Est. conditional award ${formatCurrency(gbp)}`;
+}
 
 export function faralinsToGbp(faralins: number, faralinsPerGbp: number): number {
   if (faralinsPerGbp <= 0) return 0;
@@ -21,5 +34,4 @@ export function exampleGbpAtFaralins(
   return `${exampleFaralins.toLocaleString('en-GB')} Faralins ≈ ${formatCurrency(gbp)}`;
 }
 
-export const FARALIN_CONVERSION_DISCLAIMER =
-  'Indicative only. Based on Guardian University Guide 2025 tiers. Subject to admission and university terms.';
+export const FARALIN_CONVERSION_DISCLAIMER = CONDITIONAL_AWARD_DISCLAIMER;

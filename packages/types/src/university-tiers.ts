@@ -1,8 +1,8 @@
 export const PRESTIGE_TIER_LABELS = {
-  ELITE: 'Elite',
-  PREMIER: 'Premier',
-  ESTABLISHED: 'Established',
-  ACCESSIBLE: 'Accessible',
+  ELITE: 'Highly selective',
+  PREMIER: 'Selective',
+  ESTABLISHED: 'Established partner',
+  ACCESSIBLE: 'Accessible partner',
 } as const;
 
 export type UniversityPrestigeTier = keyof typeof PRESTIGE_TIER_LABELS;

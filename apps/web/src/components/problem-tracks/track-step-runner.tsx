@@ -463,7 +463,7 @@ export function TrackResultView({ slug, attemptId }: { slug: string; attemptId: 
         </div>
         <h1>{state.track.title}</h1>
         <Card className="track-result-faralins-card">
-          <p className="track-result-faralins-label">Faralins earned</p>
+          <p className="track-result-faralins-label">Core Faralins</p>
           <p className="track-result-faralins">{result.faralinsEarned.toLocaleString()}</p>
         </Card>
         <p className="text-muted track-result-meta">
@@ -583,11 +583,11 @@ export function TrackHero({
           </div>
           <div className="track-stat-card">
             <span className="track-stat-card__value">{track.maxFaralins.toLocaleString()}</span>
-            <span className="track-stat-card__label">Max Faralins</span>
+            <span className="track-stat-card__label">Max Core Faralins</span>
           </div>
           <div className="track-stat-card">
             <span className="track-stat-card__value">£{track.bursaryValueApproxGbp}</span>
-            <span className="track-stat-card__label">Est. bursary</span>
+            <span className="track-stat-card__label">Est. conditional award</span>
           </div>
           <div className="track-stat-card track-stat-card--wide">
             <span className="track-stat-card__value">{track.yearLevels.join(', ')}</span>

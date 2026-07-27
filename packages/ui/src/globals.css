@@ -437,6 +437,26 @@ select:focus {
   margin-top: 0.5rem;
 }
 
+.conditional-award-disclaimer {
+  font-size: var(--text-sm);
+  color: var(--faralin-muted);
+  line-height: 1.5;
+  margin: 0 0 1.25rem;
+  padding: 0.75rem 1rem;
+  border-left: 3px solid var(--faralin-copper, #b87333);
+  background: var(--faralin-surface-soft, rgba(0, 0, 0, 0.03));
+}
+
+.conditional-award-disclaimer--compact {
+  font-size: var(--text-xs);
+  margin-bottom: 1rem;
+}
+
+.dashboard-disclaimer,
+.partners-page-disclaimer {
+  max-width: 72rem;
+}
+
 .section-title {
   font-size: var(--text-lg);
   font-weight: 600;

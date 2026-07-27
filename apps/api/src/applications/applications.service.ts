@@ -3,8 +3,9 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { ApplicationStatus, FaralinTransactionStatus } from '@faralin/db';
+import { ApplicationStatus } from '@faralin/db';
 import { mapStudentWithProfile } from '../auth/auth-user.service';
+import { AwardAccountService } from '../faralin/award-account.service';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   APPLICATION_STATUS_LABELS,
@@ -13,7 +14,10 @@ import {
 
 @Injectable()
 export class ApplicationsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private awardAccountService: AwardAccountService,
+  ) {}
 
   async trackReferralClick(studentProfileId: string, universitySlug: string) {
     const university = await this.prisma.university.findUnique({
@@ -29,6 +33,12 @@ export class ApplicationsService {
     if (!isFollowing) {
       throw new BadRequestException('You must follow this university before applying');
     }
+
+    await this.awardAccountService.applyApplicationStatus(
+      studentProfileId,
+      university.id,
+      ApplicationStatus.REFERRAL_CLICKED,
+    );
 
     const application = await this.prisma.application.upsert({
       where: {
@@ -137,28 +147,28 @@ export class ApplicationsService {
 
     if (!application) throw new NotFoundException('Application not found');
 
+    // Validate funnel limits / run enrolment forfeiture before persisting status
+    await this.awardAccountService.applyApplicationStatus(
+      studentProfileId,
+      universityId,
+      status,
+    );
+
     const timestamps: Record<string, Date> = { updatedAt: new Date() };
     if (status === ApplicationStatus.APPLIED) timestamps.appliedAt = new Date();
     if (status === ApplicationStatus.OFFER_RECEIVED) timestamps.offerReceivedAt = new Date();
-    if (status === ApplicationStatus.OFFER_ACCEPTED) timestamps.offerAcceptedAt = new Date();
+    if (
+      status === ApplicationStatus.OFFER_ACCEPTED ||
+      status === ApplicationStatus.FIRM ||
+      status === ApplicationStatus.INSURANCE
+    ) {
+      timestamps.offerAcceptedAt = new Date();
+    }
     if (status === ApplicationStatus.ENROLLED) timestamps.enrolledAt = new Date();
 
-    const updated = await this.prisma.application.update({
+    return this.prisma.application.update({
       where: { id: application.id },
       data: { status, ...timestamps },
     });
-
-    if (status === ApplicationStatus.ENROLLED) {
-      await this.prisma.faralinTransaction.updateMany({
-        where: {
-          studentProfileId,
-          universityId,
-          status: FaralinTransactionStatus.CONDITIONAL,
-        },
-        data: { status: FaralinTransactionStatus.CONFIRMED },
-      });
-    }
-
-    return updated;
   }
 }

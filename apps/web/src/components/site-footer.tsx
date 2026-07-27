@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { getLogoImage } from '@/lib/media';
+import { ConditionalAwardDisclaimer } from '@/components/conditional-award-disclaimer';
 
 const quickLinks = {
   platform: [
@@ -27,8 +28,7 @@ export function SiteFooter() {
               <img src={getLogoImage()} alt="Faralin" className="brand-logo" />
             </Link>
             <p className="site-footer-tagline">
-              University-backed recognition that may convert to conditional bursary value when you
-              enrol.
+              University-backed recognition that may convert to a conditional award when you enrol.
             </p>
             <address className="site-footer-address">
               <span>Faralin Ltd</span>
@@ -80,10 +80,7 @@ export function SiteFooter() {
 
         <div className="site-footer-bottom">
           <p>© {new Date().getFullYear()} Faralin Ltd. All rights reserved.</p>
-          <p className="site-footer-disclaimer">
-            Faralins are conditional recognition value, not cash. Conversion to bursary support
-            requires admission and enrolment at a partner university.
-          </p>
+          <ConditionalAwardDisclaimer compact className="site-footer-disclaimer" />
         </div>
       </div>
     </footer>

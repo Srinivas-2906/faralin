@@ -3,18 +3,7 @@ import { redirect } from 'next/navigation';
 import { auth } from '@clerk/nextjs/server';
 import { Card, EmptyState, PageHeader } from '@faralin/ui';
 import { DashboardPartnerCard } from '@/components/dashboard-partner-card';
-
-type PartnerUniversity = {
-  universitySlug: string;
-  universityName: string;
-  totalFaralins: number;
-  verifiedFaralins: number;
-  hearEligibleFaralins: number;
-  recognitionTierLabel: string;
-  recognitionProgressPercent: number;
-  estimatedBursaryGbp: number;
-  faralinsPerGbp?: number | null;
-};
+import { ConditionalAwardDisclaimer } from '@/components/conditional-award-disclaimer';
 
 export default async function PartnersPage() {
   const { userId, getToken } = await auth();
@@ -38,15 +27,58 @@ export default async function PartnersPage() {
     redirect('/onboarding');
   }
 
-  const partnerUniversities: PartnerUniversity[] = dashboard?.portfolio.byUniversity ?? [];
-  const totalFaralins = dashboard?.portfolio.totalFaralins ?? 0;
+  const legacyPartners = dashboard?.portfolio.byUniversity ?? [];
+  const projections = dashboard?.portfolio.projections ?? [];
+  const coreFaralins = dashboard?.portfolio.coreFaralins ?? dashboard?.portfolio.totalFaralins ?? 0;
+
+  const partnerCards = projections.length
+    ? projections.map(
+        (p: {
+          universitySlug: string;
+          universityName: string;
+          eligibleCoreFaralins: number;
+          estimatedAwardGbp: number;
+        }) => {
+          const legacy = legacyPartners.find(
+            (u: { universitySlug: string }) => u.universitySlug === p.universitySlug,
+          );
+          return {
+            universitySlug: p.universitySlug,
+            universityName: p.universityName,
+            eligibleCoreFaralins: p.eligibleCoreFaralins,
+            estimatedAwardGbp: p.estimatedAwardGbp,
+            hearEligibleFaralins: legacy?.hearEligibleFaralins,
+            recognitionTierLabel: legacy?.recognitionTierLabel,
+            recognitionProgressPercent: legacy?.recognitionProgressPercent,
+          };
+        },
+      )
+    : legacyPartners.map(
+        (u: {
+          universitySlug: string;
+          universityName: string;
+          totalFaralins: number;
+          hearEligibleFaralins: number;
+          recognitionTierLabel: string;
+          recognitionProgressPercent: number;
+          estimatedBursaryGbp: number;
+        }) => ({
+          universitySlug: u.universitySlug,
+          universityName: u.universityName,
+          totalFaralins: u.totalFaralins,
+          estimatedAwardGbp: u.estimatedBursaryGbp,
+          hearEligibleFaralins: u.hearEligibleFaralins,
+          recognitionTierLabel: u.recognitionTierLabel,
+          recognitionProgressPercent: u.recognitionProgressPercent,
+        }),
+      );
 
   return (
     <div className="page-section partners-page">
       <div className="container-wide">
         <PageHeader
-          title="Partners you chose"
-          description="Each partner university keeps its own recognition balance. Totals here match your dashboard — they are not shared across universities."
+          title="Partners you follow"
+          description="Each university shows a conditional award estimate based on your Core Faralins and its current rules. These are projections, not separate balances or guaranteed scholarships."
           actions={
             <div className="partners-page-actions">
               <Link href="/dashboard" className="dashboard-section-link">
@@ -59,11 +91,13 @@ export default async function PartnersPage() {
           }
         />
 
+        <ConditionalAwardDisclaimer compact className="partners-page-disclaimer" />
+
         {!dashboard ? (
           <Card>
             <EmptyState message="Connect to the API to load your partners." />
           </Card>
-        ) : partnerUniversities.length === 0 ? (
+        ) : partnerCards.length === 0 ? (
           <Card>
             <EmptyState
               message="You have not chosen any partner universities yet."
@@ -77,27 +111,14 @@ export default async function PartnersPage() {
         ) : (
           <>
             <p className="partners-page-summary">
-              {partnerUniversities.length}{' '}
-              {partnerUniversities.length === 1 ? 'partner' : 'partners'} ·{' '}
-              {totalFaralins.toLocaleString()} total Faralins combined
+              {partnerCards.length}{' '}
+              {partnerCards.length === 1 ? 'partner' : 'partners'} ·{' '}
+              {coreFaralins.toLocaleString()} Core Faralins earned
             </p>
             <Card className="partners-page-card">
               <div className="dashboard-bento-list partners-page-list">
-                {partnerUniversities.map((u) => (
-                  <DashboardPartnerCard
-                    key={u.universitySlug}
-                    university={{
-                      universitySlug: u.universitySlug,
-                      universityName: u.universityName,
-                      totalFaralins: u.totalFaralins,
-                      verifiedFaralins: u.verifiedFaralins,
-                      hearEligibleFaralins: u.hearEligibleFaralins,
-                      recognitionTierLabel: u.recognitionTierLabel,
-                      recognitionProgressPercent: u.recognitionProgressPercent,
-                      estimatedBursaryGbp: u.estimatedBursaryGbp,
-                      faralinsPerGbp: u.faralinsPerGbp,
-                    }}
-                  />
+                {partnerCards.map((u) => (
+                  <DashboardPartnerCard key={u.universitySlug} university={u} />
                 ))}
               </div>
             </Card>

@@ -6,7 +6,8 @@ import {
 } from '@nestjs/common';
 import { AssessmentCategory } from '@faralin/db';
 import { PrismaService } from '../prisma/prisma.service';
-import { FaralinEngineService } from '../faralin/faralin-engine.service';
+import { AchievementLedgerService } from '../faralin/achievement-ledger.service';
+import { ProjectionService } from '../faralin/projection.service';
 import {
   getStudentEnabledUniversityIds,
   isAssessmentEnabledForStudent,
@@ -23,7 +24,8 @@ import {
 export class AssessmentsService {
   constructor(
     private prisma: PrismaService,
-    private faralinEngine: FaralinEngineService,
+    private achievementLedger: AchievementLedgerService,
+    private projectionService: ProjectionService,
   ) {}
 
   async listAssessments(subjectSlug?: string, category?: string) {
@@ -387,7 +389,7 @@ export class AssessmentsService {
       return updated;
     });
 
-    await this.faralinEngine.processAttemptCompletion(attemptId);
+    const achievementResult = await this.achievementLedger.processAssessmentCompletion(attemptId);
 
     const transactions = await this.prisma.faralinTransaction.findMany({
       where: { assessmentAttemptId: attemptId },
@@ -396,8 +398,14 @@ export class AssessmentsService {
       },
     });
 
+    const projectionsUpdated = await this.projectionService.getProjectionsForStudent(
+      studentProfileId,
+    );
+
     return {
       ...completed,
+      coreFaralinsEarned: achievementResult?.coreFaralins ?? 0,
+      projectionsUpdated,
       faralinsEarned: transactions.map((tx) => ({
         universitySlug: tx.university.slug,
         universityName: tx.university.shortName ?? tx.university.name,

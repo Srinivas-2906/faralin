@@ -1,10 +1,6 @@
 import { MediaImage } from '@faralin/ui';
 import type { UniversityPrestigeTier } from '@faralin/types';
 import { PRESTIGE_TIER_LABELS } from '@faralin/types';
-import {
-  exampleGbpAtFaralins,
-  formatFaralinPerGbp,
-} from '@faralin/utils';
 import { getUniversityImage } from '@/lib/media';
 
 export interface UniversityCardData {
@@ -35,7 +31,6 @@ function tierBadgeLabel(university: UniversityCardData): string | null {
 
 function UniversityCardContent({ university }: { university: UniversityCardData }) {
   const tierLabel = tierBadgeLabel(university);
-  const faralinsPerGbp = university.conversionRule?.faralinsPerGbp;
 
   return (
     <>
@@ -58,12 +53,9 @@ function UniversityCardContent({ university }: { university: UniversityCardData 
       </div>
       <div className="assessment-card-details">
         <div className="media-card-title">{university.name}</div>
-        {faralinsPerGbp && (
-          <div className="university-card-conversion">
-            <p className="university-card-conversion-rate">{formatFaralinPerGbp(faralinsPerGbp)}</p>
-            <p className="university-card-conversion-example">{exampleGbpAtFaralins(faralinsPerGbp)}</p>
-          </div>
-        )}
+        <p className="university-card-conversion-example text-muted">
+          Conditional award estimates appear on your dashboard after you complete activities.
+        </p>
       </div>
     </>
   );

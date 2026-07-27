@@ -332,8 +332,9 @@ export function OnboardingWizard() {
               Your universities
             </h2>
             <p className="onboarding-step-desc">
-              Pick up to {MAX_UNIVERSITY_SELECTIONS} partner universities. Faralin conversion rates
-              vary by institution.
+              Pick up to {MAX_UNIVERSITY_SELECTIONS} partner universities to follow and compare
+              conditional award estimates. Following is discovery — not an application or funded
+              scholarship account.
             </p>
             <p className="onboarding-count">
               {selectedUniversities.length} of {MAX_UNIVERSITY_SELECTIONS} selected

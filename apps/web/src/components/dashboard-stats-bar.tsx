@@ -1,41 +1,45 @@
 interface DashboardStatsBarProps {
-  totalFaralins: number;
+  coreFaralins: number;
   estimatedBursaryGbp: number;
   tracksCompleted: number;
   assessmentsCompleted: number;
   verifiedTotal: number;
   hearEligibleFaralins: number;
   partnerUniversityCount: number;
+  projectionCount?: number;
 }
 
 export function DashboardStatsBar({
-  totalFaralins,
+  coreFaralins,
   estimatedBursaryGbp,
   tracksCompleted,
   assessmentsCompleted,
   verifiedTotal,
   hearEligibleFaralins,
   partnerUniversityCount,
+  projectionCount = 0,
 }: DashboardStatsBarProps) {
   const stats = [
     {
-      label: 'Total Faralins',
-      value: totalFaralins.toLocaleString(),
+      label: 'Core Faralins',
+      value: coreFaralins.toLocaleString(),
       hint:
-        partnerUniversityCount > 0
-          ? `Combined across ${partnerUniversityCount} partner ${
-              partnerUniversityCount === 1 ? 'university' : 'universities'
-            } — each keeps its own recognition balance.`
-          : undefined,
+        'Your portable achievement record — independent of which universities you follow.',
     },
     {
-      label: 'Est. bursary',
-      value: `£${estimatedBursaryGbp.toFixed(2)}`,
+      label: 'Est. conditional award',
+      value: projectionCount > 1 ? `Up to £${estimatedBursaryGbp.toFixed(2)}` : `£${estimatedBursaryGbp.toFixed(2)}`,
       accent: true,
+      hint:
+        partnerUniversityCount > 0
+          ? `Based on current rules at ${partnerUniversityCount} followed ${
+              partnerUniversityCount === 1 ? 'university' : 'universities'
+            }. Only your enrolled university can confirm an award.`
+          : undefined,
     },
     { label: 'Problem tracks', value: tracksCompleted.toLocaleString() },
     { label: 'Assessments', value: assessmentsCompleted.toLocaleString() },
-    { label: 'Verified', value: verifiedTotal.toLocaleString() },
+    { label: 'Verified (legacy)', value: verifiedTotal.toLocaleString() },
     { label: 'HEAR eligible', value: hearEligibleFaralins.toLocaleString() },
   ];
 

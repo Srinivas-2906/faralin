@@ -74,6 +74,12 @@ export default function AssessmentDetailPage() {
     accuracyPercent: number;
     score: number;
     maxScore: number;
+    coreFaralinsEarned?: number;
+    projectionsUpdated?: Array<{
+      universitySlug: string;
+      universityName: string;
+      estimatedAwardGbp: number;
+    }>;
     faralinsEarned?: Array<{ universitySlug: string; universityName: string; amount: number }>;
   } | null>(null);
   const [loading, setLoading] = useState(true);
@@ -114,6 +120,12 @@ export default function AssessmentDetailPage() {
         accuracyPercent: number;
         score: number;
         maxScore: number;
+        coreFaralinsEarned?: number;
+        projectionsUpdated?: Array<{
+          universitySlug: string;
+          universityName: string;
+          estimatedAwardGbp: number;
+        }>;
         faralinsEarned?: Array<{ universitySlug: string; universityName: string; amount: number }>;
       }>(`/assessments/attempts/${attemptId}/submit`, {
         method: 'POST',
@@ -130,6 +142,8 @@ export default function AssessmentDetailPage() {
         accuracyPercent: Number(completed.accuracyPercent),
         score: Number(completed.score),
         maxScore: Number(completed.maxScore),
+        coreFaralinsEarned: completed.coreFaralinsEarned,
+        projectionsUpdated: completed.projectionsUpdated,
         faralinsEarned: completed.faralinsEarned,
       });
       setPhase('done');
@@ -417,7 +431,8 @@ export default function AssessmentDetailPage() {
           <Card className="result-panel result-panel-success">
             <h1 className="display-title result-panel-title">Assessment complete</h1>
             <p className="text-muted" style={{ marginBottom: '1.5rem' }}>
-              Your recognition has been recorded across your selected universities.
+              Your achievement has been recorded as Core Faralins. Partner universities may show
+              updated conditional award estimates on your dashboard.
             </p>
             <div className="stat-value copper stat-value--hero" style={{ marginBottom: '0.25rem' }}>
               {result.accuracyPercent.toFixed(0)}%
@@ -425,10 +440,31 @@ export default function AssessmentDetailPage() {
             <p className="text-muted" style={{ marginBottom: '1.5rem' }}>
               {result.score} / {result.maxScore} points
             </p>
-            {result.faralinsEarned && result.faralinsEarned.length > 0 ? (
+            {result.coreFaralinsEarned != null && result.coreFaralinsEarned > 0 ? (
               <div style={{ marginBottom: '1.5rem' }}>
                 <p className="text-muted" style={{ marginBottom: '0.5rem' }}>
-                  Faralins earned
+                  Core Faralins earned
+                </p>
+                <p className="stat-value copper">{result.coreFaralinsEarned.toLocaleString()}</p>
+              </div>
+            ) : null}
+            {result.projectionsUpdated && result.projectionsUpdated.length > 0 ? (
+              <div style={{ marginBottom: '1.5rem' }}>
+                <p className="text-muted" style={{ marginBottom: '0.5rem' }}>
+                  Could qualify for (conditional estimates)
+                </p>
+                <ul>
+                  {result.projectionsUpdated.map((entry) => (
+                    <li key={entry.universitySlug}>
+                      {entry.universityName}: est. £{entry.estimatedAwardGbp.toFixed(2)}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : result.faralinsEarned && result.faralinsEarned.length > 0 ? (
+              <div style={{ marginBottom: '1.5rem' }}>
+                <p className="text-muted" style={{ marginBottom: '0.5rem' }}>
+                  Legacy Faralins recorded
                 </p>
                 <ul>
                   {result.faralinsEarned.map((entry) => (
