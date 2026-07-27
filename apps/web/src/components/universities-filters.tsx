@@ -13,14 +13,11 @@ const TIER_FILTERS: CatalogFilterOption[] = [
 
 export function UniversitiesFilters() {
   return (
-    <div className="catalog-filter-row">
-      <p className="catalog-filter-row-label">Partner tier</p>
-      <CatalogFilterChips
-        options={TIER_FILTERS}
-        paramKey="tier"
-        ariaLabel="Filter by partner tier"
-        basePath="/universities"
-      />
-    </div>
+    <CatalogFilterChips
+      options={TIER_FILTERS}
+      paramKey="tier"
+      ariaLabel="Filter by partner tier"
+      basePath="/universities"
+    />
   );
 }

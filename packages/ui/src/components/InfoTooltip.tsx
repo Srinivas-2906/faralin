@@ -37,6 +37,7 @@ export function InfoTooltip({
   const panelRef = useRef<HTMLSpanElement>(null);
   const closeDelayRef = useRef<number | null>(null);
   const [open, setOpen] = useState(false);
+  const [visible, setVisible] = useState(false);
   const [panelStyle, setPanelStyle] = useState<CSSProperties>({});
 
   const clearCloseDelay = useCallback(() => {
@@ -53,11 +54,15 @@ export function InfoTooltip({
 
   const scheduleClose = useCallback(() => {
     clearCloseDelay();
-    closeDelayRef.current = window.setTimeout(() => setOpen(false), CLOSE_DELAY_MS);
+    closeDelayRef.current = window.setTimeout(() => {
+      setVisible(false);
+      setOpen(false);
+    }, CLOSE_DELAY_MS);
   }, [clearCloseDelay]);
 
   const close = useCallback(() => {
     clearCloseDelay();
+    setVisible(false);
     setOpen(false);
   }, [clearCloseDelay]);
 
@@ -91,7 +96,6 @@ export function InfoTooltip({
     if (top < VIEWPORT_MARGIN) top = VIEWPORT_MARGIN;
 
     setPanelStyle({
-      position: 'fixed',
       top: `${Math.round(top)}px`,
       left: `${Math.round(left)}px`,
       width: `${Math.round(panelWidth)}px`,
@@ -99,8 +103,15 @@ export function InfoTooltip({
   }, [placement]);
 
   useLayoutEffect(() => {
-    if (!open) return;
+    if (!open) {
+      setVisible(false);
+      return;
+    }
+
+    setVisible(false);
     updatePanelPosition();
+    setVisible(true);
+
     window.addEventListener('resize', updatePanelPosition);
     window.addEventListener('scroll', updatePanelPosition, true);
     return () => {
@@ -149,21 +160,26 @@ export function InfoTooltip({
         onClick={(event) => {
           event.preventDefault();
           event.stopPropagation();
-          setOpen((value) => !value);
+          if (open) {
+            close();
+          } else {
+            openTooltip();
+          }
         }}
       >
         <span aria-hidden="true">i</span>
       </button>
-      <span
-        ref={panelRef}
-        id={panelId}
-        role="tooltip"
-        className="info-tooltip__panel"
-        style={open ? panelStyle : undefined}
-        hidden={!open}
-      >
-        {children}
-      </span>
+      {open ? (
+        <span
+          ref={panelRef}
+          id={panelId}
+          role="tooltip"
+          className={`info-tooltip__panel${visible ? ' info-tooltip__panel--visible' : ''}`}
+          style={panelStyle}
+        >
+          {children}
+        </span>
+      ) : null}
     </span>
   );
 }

@@ -10,10 +10,6 @@ export function TracksCatalogInsight() {
       eyebrow="Guided investigations"
       tooltipLabel="About guided investigations"
       tooltipContent={STUDENT_HELP_COPY.guidedInvestigations}
-    >
-      <p className="catalog-insight-line">
-        Guided investigations — learn, solve, and reflect.
-      </p>
-    </CatalogInsight>
+    />
   );
 }

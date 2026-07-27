@@ -9,7 +9,7 @@ type CatalogInsightProps = {
   eyebrow: string;
   tooltipLabel?: string;
   tooltipContent?: ReactNode;
-  children: ReactNode;
+  children?: ReactNode;
 };
 
 export function CatalogInsight({
@@ -27,7 +27,7 @@ export function CatalogInsight({
           <InfoTooltip label={tooltipLabel}>{tooltipContent}</InfoTooltip>
         ) : null}
       </p>
-      <div className="catalog-insight-body">{children}</div>
+      {children ? <div className="catalog-insight-body">{children}</div> : null}
     </div>
   );
 }
@@ -39,11 +39,7 @@ export function AssessmentsCatalogInsight() {
       eyebrow="Assessments"
       tooltipLabel="About assessments"
       tooltipContent={STUDENT_HELP_COPY.assessmentsCatalog}
-    >
-      <p className="catalog-insight-line">
-        Prove what you know and earn Faralins from verified assessments.
-      </p>
-    </CatalogInsight>
+    />
   );
 }
 
@@ -54,10 +50,6 @@ export function UniversitiesCatalogInsight() {
       eyebrow="Partner universities"
       tooltipLabel="About partner universities"
       tooltipContent={STUDENT_HELP_COPY.universitiesCatalog}
-    >
-      <p className="catalog-insight-line">
-        Compare partner universities and their Faralin conversion rates.
-      </p>
-    </CatalogInsight>
+    />
   );
 }

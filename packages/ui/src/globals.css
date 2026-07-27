@@ -3856,6 +3856,7 @@ a.nav-sign-in {
 }
 
 .info-tooltip__panel {
+  position: fixed;
   z-index: 1000;
   width: min(16rem, calc(100vw - 1rem));
   padding: 0.55rem 0.65rem;
@@ -3868,16 +3869,13 @@ a.nav-sign-in {
   font-weight: 400;
   color: rgba(0, 33, 71, 0.82);
   pointer-events: none;
+  visibility: hidden;
+  opacity: 0;
 }
 
-.info-tooltip__panel[hidden] {
-  display: none;
-}
-
-.info-tooltip:hover .info-tooltip__panel,
-.info-tooltip:focus-within .info-tooltip__panel,
-.info-tooltip--open .info-tooltip__panel {
-  display: block;
+.info-tooltip__panel--visible {
+  visibility: visible;
+  opacity: 1;
 }
 
 .catalog-filter-groups {
@@ -7087,10 +7085,11 @@ button.dashboard-section-link {
 
 .catalog-filter-toolbar,
 .tracks-catalog-toolbar {
+  --catalog-section-gap: clamp(1.25rem, 2.5vw, 2rem);
   display: flex;
   flex-direction: column;
   gap: 0.625rem;
-  margin-bottom: var(--tracks-section-gap);
+  margin-bottom: var(--catalog-section-gap);
 }
 
 .catalog-filter-toolbar-head {
@@ -7156,13 +7155,6 @@ button.dashboard-section-link {
   font-weight: 500;
 }
 
-.assessments-page .catalog-filter-toolbar {
-  margin-bottom: var(--assessments-section-gap);
-}
-
-.universities-page .catalog-filter-toolbar {
-  margin-bottom: var(--assessments-section-gap);
-}
 
 @media (max-width: 639px) {
   .catalog-filter-toolbar-head {
