@@ -37,7 +37,7 @@ export function DashboardPartnerCard({ university }: DashboardPartnerCardProps) 
     eligibleCoreFaralins != null
       ? `${eligibleCoreFaralins.toLocaleString()} Core Faralins eligible`
       : totalFaralins != null
-        ? `${totalFaralins.toLocaleString()} Faralins (legacy)`
+        ? `${totalFaralins.toLocaleString()} Faralins at this university`
         : null;
 
   return (

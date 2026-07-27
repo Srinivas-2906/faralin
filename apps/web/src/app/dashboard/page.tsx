@@ -11,7 +11,6 @@ import type { ProblemTrackListItem } from '@/components/problem-tracks/track-car
 import { DashboardUpdateItem } from '@/components/dashboard-update-item';
 import { DashboardStatsBar } from '@/components/dashboard-stats-bar';
 import { ConditionalAwardDisclaimer } from '@/components/conditional-award-disclaimer';
-import { ConsentSettingsCard } from '@/components/consent-settings-card';
 import { getUserDisplayName } from '@/lib/user-display-name';
 
 function toAssessmentListItem(a: {
@@ -232,17 +231,13 @@ export default async function DashboardPage() {
               </Card>
 
               <Card className="dashboard-bento-panel">
-                <ConsentSettingsCard />
-              </Card>
-
-              <Card className="dashboard-bento-panel">
                 <header className="dashboard-section-head">
                   <h2 className="dashboard-section-title">Updates</h2>
-                  {totalArticles > 2 && (
+                  {totalArticles > 2 ? (
                     <Link href="/knowledge-center" className="dashboard-section-link">
                       Read more →
                     </Link>
-                  )}
+                  ) : null}
                 </header>
                 <div className="dashboard-bento-body">
                   {dashboard.articles.length === 0 ? (
@@ -264,6 +259,12 @@ export default async function DashboardPage() {
                 </div>
               </Card>
             </div>
+
+            <p className="text-muted" style={{ marginTop: '1.5rem', fontSize: '0.875rem' }}>
+              <Link href="/settings/privacy" className="dashboard-section-link">
+                Privacy & sharing settings →
+              </Link>
+            </p>
           </>
         ) : (
           <Card>

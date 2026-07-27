@@ -68,12 +68,18 @@ export function sumEligibleCoreFaralins(
   for (const event of achievements) {
     if (event.assessmentAttemptId || event.assessmentId) {
       const assessmentId = event.assessmentId;
-      if (assessmentId && enabledAssessmentIds.has(assessmentId)) {
+      // Count when assessment is enabled for this uni, or when configs are empty
+      // (migration / demo unis with no enable list yet).
+      if (
+        !assessmentId ||
+        enabledAssessmentIds.size === 0 ||
+        enabledAssessmentIds.has(assessmentId)
+      ) {
         eligibleCoreFaralins += event.coreFaralins;
       }
     } else if (event.problemTrackAttemptId || event.problemTrackId) {
       const trackId = event.problemTrackId;
-      if (trackId && enabledTrackIds.has(trackId)) {
+      if (!trackId || enabledTrackIds.size === 0 || enabledTrackIds.has(trackId)) {
         eligibleCoreFaralins += event.coreFaralins;
       }
     } else if (event.activityType === 'JOURNEY_MILESTONE') {

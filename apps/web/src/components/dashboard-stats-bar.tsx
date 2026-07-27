@@ -19,6 +19,8 @@ export function DashboardStatsBar({
   partnerUniversityCount,
   projectionCount = 0,
 }: DashboardStatsBarProps) {
+  const showLegacyVerified = coreFaralins <= 0 && verifiedTotal > 0;
+
   const stats = [
     {
       label: 'Core Faralins',
@@ -28,7 +30,10 @@ export function DashboardStatsBar({
     },
     {
       label: 'Est. conditional award',
-      value: projectionCount > 1 ? `Up to £${estimatedBursaryGbp.toFixed(2)}` : `£${estimatedBursaryGbp.toFixed(2)}`,
+      value:
+        projectionCount > 1
+          ? `Up to £${estimatedBursaryGbp.toFixed(2)}`
+          : `£${estimatedBursaryGbp.toFixed(2)}`,
       accent: true,
       hint:
         partnerUniversityCount > 0
@@ -39,8 +44,19 @@ export function DashboardStatsBar({
     },
     { label: 'Problem tracks', value: tracksCompleted.toLocaleString() },
     { label: 'Assessments', value: assessmentsCompleted.toLocaleString() },
-    { label: 'Verified (legacy)', value: verifiedTotal.toLocaleString() },
-    { label: 'HEAR eligible', value: hearEligibleFaralins.toLocaleString() },
+    ...(showLegacyVerified
+      ? [
+          {
+            label: 'Verified (migrating)',
+            value: verifiedTotal.toLocaleString(),
+            hint: 'Previous per-university totals while Core Faralins are being migrated.',
+          },
+        ]
+      : []),
+    {
+      label: 'HEAR eligible',
+      value: hearEligibleFaralins.toLocaleString(),
+    },
   ];
 
   return (
