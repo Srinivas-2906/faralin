@@ -9,6 +9,7 @@ type CatalogInsightProps = {
   eyebrow: string;
   tooltipLabel?: string;
   tooltipContent?: ReactNode;
+  filters?: ReactNode;
   children?: ReactNode;
 };
 
@@ -17,6 +18,7 @@ export function CatalogInsight({
   eyebrow,
   tooltipLabel,
   tooltipContent,
+  filters,
   children,
 }: CatalogInsightProps) {
   return (
@@ -27,29 +29,32 @@ export function CatalogInsight({
           <InfoTooltip label={tooltipLabel}>{tooltipContent}</InfoTooltip>
         ) : null}
       </p>
+      {filters ? <div className="catalog-insight-filters">{filters}</div> : null}
       {children ? <div className="catalog-insight-body">{children}</div> : null}
     </div>
   );
 }
 
-export function AssessmentsCatalogInsight() {
+export function AssessmentsCatalogInsight({ filters }: { filters?: ReactNode }) {
   return (
     <CatalogInsight
       variant="copper"
       eyebrow="Assessments"
       tooltipLabel="About assessments"
       tooltipContent={STUDENT_HELP_COPY.assessmentsCatalog}
+      filters={filters}
     />
   );
 }
 
-export function UniversitiesCatalogInsight() {
+export function UniversitiesCatalogInsight({ filters }: { filters?: ReactNode }) {
   return (
     <CatalogInsight
       variant="copper"
       eyebrow="Partner universities"
       tooltipLabel="About partner universities"
       tooltipContent={STUDENT_HELP_COPY.universitiesCatalog}
+      filters={filters}
     />
   );
 }

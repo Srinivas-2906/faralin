@@ -42,9 +42,7 @@ export default async function TracksPage({
       <div className="page-section tracks-page-body">
         <div className="container-wide">
           <Suspense fallback={null}>
-            <CatalogFilterToolbar insight={<TracksCatalogInsight />}>
-              <TracksFilters />
-            </CatalogFilterToolbar>
+            <CatalogFilterToolbar insight={<TracksCatalogInsight filters={<TracksFilters />} />} />
           </Suspense>
 
           {tracks.length === 0 ? (

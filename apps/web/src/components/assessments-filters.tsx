@@ -1,7 +1,11 @@
 'use client';
 
+import { AssessmentsCatalogInsight } from '@/components/catalog-insight';
+import { CatalogFilterToolbar } from '@/components/catalog-filter-toolbar';
 import {
-  CatalogFilterGroups,
+  CatalogFilterGroupParents,
+  CatalogFilterGroupsPanel,
+  CatalogFilterGroupsProvider,
   type CatalogFilterGroup,
 } from '@/components/catalog-filter-groups';
 import type { CatalogFilterOption } from '@/components/catalog-filter-chips';
@@ -61,6 +65,13 @@ const ASSESSMENT_GROUPS: CatalogFilterGroup[] = [
   },
 ];
 
-export function AssessmentsFilters() {
-  return <CatalogFilterGroups basePath="/assessments" groups={ASSESSMENT_GROUPS} />;
+export function AssessmentsCatalogToolbar() {
+  return (
+    <CatalogFilterGroupsProvider basePath="/assessments" groups={ASSESSMENT_GROUPS}>
+      <CatalogFilterToolbar
+        insight={<AssessmentsCatalogInsight filters={<CatalogFilterGroupParents />} />}
+        filterPanel={<CatalogFilterGroupsPanel />}
+      />
+    </CatalogFilterGroupsProvider>
+  );
 }

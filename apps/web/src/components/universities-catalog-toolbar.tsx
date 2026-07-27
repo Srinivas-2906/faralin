@@ -30,7 +30,7 @@ export function UniversitiesCatalogToolbar() {
 
   return (
     <CatalogFilterToolbar
-      insight={<UniversitiesCatalogInsight />}
+      insight={<UniversitiesCatalogInsight filters={<UniversitiesFilters />} />}
       actions={
         <form className="universities-search" onSubmit={handleSubmit} role="search">
           <svg
@@ -56,8 +56,6 @@ export function UniversitiesCatalogToolbar() {
           />
         </form>
       }
-    >
-      <UniversitiesFilters />
-    </CatalogFilterToolbar>
+    />
   );
 }

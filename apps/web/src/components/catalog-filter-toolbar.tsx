@@ -1,20 +1,35 @@
 import type { ReactNode } from 'react';
-import { CatalogInsight } from '@/components/catalog-insight';
+import { cloneElement, isValidElement } from 'react';
 
 type CatalogFilterToolbarProps = {
   insight: ReactNode;
-  children?: ReactNode;
+  filters?: ReactNode;
+  filterPanel?: ReactNode;
   actions?: ReactNode;
 };
 
-export function CatalogFilterToolbar({ insight, children, actions }: CatalogFilterToolbarProps) {
+type CatalogInsightLikeProps = {
+  filters?: ReactNode;
+};
+
+function insightWithFilters(insight: ReactNode, filters?: ReactNode) {
+  if (!filters || !isValidElement<CatalogInsightLikeProps>(insight)) return insight;
+  return cloneElement(insight, { filters });
+}
+
+export function CatalogFilterToolbar({
+  insight,
+  filters,
+  filterPanel,
+  actions,
+}: CatalogFilterToolbarProps) {
   return (
     <div className="catalog-filter-toolbar">
       <div className="catalog-filter-toolbar-head">
-        {insight}
+        {insightWithFilters(insight, filters)}
         {actions ? <div className="catalog-filter-toolbar-actions">{actions}</div> : null}
       </div>
-      {children ? <div className="catalog-filter-toolbar-rows">{children}</div> : null}
+      {filterPanel ? <div className="catalog-filter-toolbar-panel">{filterPanel}</div> : null}
     </div>
   );
 }

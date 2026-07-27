@@ -1,10 +1,8 @@
 import { Suspense } from 'react';
-import { AssessmentsCatalogInsight } from '@/components/catalog-insight';
-import { CatalogFilterToolbar } from '@/components/catalog-filter-toolbar';
+import { AssessmentsCatalogToolbar } from '@/components/assessments-filters';
 import { HomeWideBanner } from '@/components/home-wide-banner';
 import { AssessmentsCatalogLoader } from '@/components/assessments-catalog-loader';
 import type { AssessmentListItem } from '@/components/assessments-catalog';
-import { AssessmentsFilters } from '@/components/assessments-filters';
 import { getSubjectImage } from '@/lib/media';
 
 async function getAssessments(): Promise<AssessmentListItem[]> {
@@ -33,9 +31,7 @@ export default async function AssessmentsPage() {
       <div className="page-section assessments-page-body">
         <div className="container-wide">
           <Suspense fallback={null}>
-            <CatalogFilterToolbar insight={<AssessmentsCatalogInsight />}>
-              <AssessmentsFilters />
-            </CatalogFilterToolbar>
+            <AssessmentsCatalogToolbar />
           </Suspense>
 
           <Suspense fallback={null}>
