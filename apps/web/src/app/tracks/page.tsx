@@ -1,6 +1,7 @@
 import { Suspense } from 'react';
 import Link from 'next/link';
 import { HomeWideBanner } from '@/components/home-wide-banner';
+import { CatalogFilterToolbar } from '@/components/catalog-filter-toolbar';
 import { TracksCatalogInsight } from '@/components/tracks-catalog-insight';
 import { TracksFilters } from '@/components/tracks-filters';
 import { ProblemTrackCard, type ProblemTrackListItem } from '@/components/problem-tracks/track-card';
@@ -40,12 +41,11 @@ export default async function TracksPage({
 
       <div className="page-section tracks-page-body">
         <div className="container-wide">
-          <div className="tracks-catalog-toolbar">
-            <TracksCatalogInsight />
-            <Suspense fallback={null}>
+          <Suspense fallback={null}>
+            <CatalogFilterToolbar insight={<TracksCatalogInsight />}>
               <TracksFilters />
-            </Suspense>
-          </div>
+            </CatalogFilterToolbar>
+          </Suspense>
 
           {tracks.length === 0 ? (
             <Card>

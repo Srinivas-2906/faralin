@@ -1,5 +1,6 @@
 import { Suspense } from 'react';
 import { AssessmentsCatalogInsight } from '@/components/catalog-insight';
+import { CatalogFilterToolbar } from '@/components/catalog-filter-toolbar';
 import { HomeWideBanner } from '@/components/home-wide-banner';
 import { AssessmentsCatalogLoader } from '@/components/assessments-catalog-loader';
 import type { AssessmentListItem } from '@/components/assessments-catalog';
@@ -17,19 +18,8 @@ async function getAssessments(): Promise<AssessmentListItem[]> {
   return [];
 }
 
-function getSubjectFilters(assessments: AssessmentListItem[]) {
-  const map = new Map<string, string>();
-  for (const a of assessments) {
-    map.set(a.subject.slug, a.subject.name);
-  }
-  return Array.from(map.entries())
-    .map(([slug, name]) => ({ slug, name }))
-    .sort((a, b) => a.name.localeCompare(b.name));
-}
-
 export default async function AssessmentsPage() {
   const assessments = await getAssessments();
-  const subjects = getSubjectFilters(assessments);
 
   return (
     <div className="assessments-page">
@@ -42,13 +32,11 @@ export default async function AssessmentsPage() {
 
       <div className="page-section assessments-page-body">
         <div className="container-wide">
-          <div className="assessments-stats-row">
-            <AssessmentsCatalogInsight />
-
-            <Suspense fallback={null}>
-              <AssessmentsFilters subjects={subjects} />
-            </Suspense>
-          </div>
+          <Suspense fallback={null}>
+            <CatalogFilterToolbar insight={<AssessmentsCatalogInsight />}>
+              <AssessmentsFilters />
+            </CatalogFilterToolbar>
+          </Suspense>
 
           <Suspense fallback={null}>
             <AssessmentsCatalogLoader initialAssessments={assessments} />

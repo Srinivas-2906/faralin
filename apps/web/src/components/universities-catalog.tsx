@@ -26,17 +26,19 @@ export function UniversitiesCatalog({ universities }: { universities: University
   const columns = useCatalogGridColumns(gridRef);
 
   const query = (searchParams.get('q') ?? '').trim().toLowerCase();
+  const tier = searchParams.get('tier') ?? '';
 
   const filtered = useMemo(() => {
-    if (!query) return universities;
     return universities.filter((u) => {
+      if (tier && u.prestigeTier !== tier) return false;
+      if (!query) return true;
       const haystack = [u.name, u.shortName, u.description]
         .filter(Boolean)
         .join(' ')
         .toLowerCase();
       return haystack.includes(query);
     });
-  }, [universities, query]);
+  }, [universities, query, tier]);
 
   const rows = useMemo(() => chunk(filtered, columns), [filtered, columns]);
 
@@ -47,7 +49,7 @@ export function UniversitiesCatalog({ universities }: { universities: University
   return (
     <div id="catalog" className="universities-catalog">
       {filtered.length === 0 ? (
-        <EmptyState message="No universities match your search. Try a different name or clear the search." />
+        <EmptyState message="No universities match your filters. Try a different search or tier." />
       ) : (
         <div ref={gridRef} className="assessments-catalog-grid">
           {rows.map((row, rowIndex) => (

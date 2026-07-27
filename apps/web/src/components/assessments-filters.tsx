@@ -1,24 +1,28 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { Chip } from '@faralin/ui';
+import type { ReactNode } from 'react';
+import { InfoTooltip } from '@faralin/ui';
+import {
+  CatalogFilterChips,
+  type CatalogFilterOption,
+} from '@/components/catalog-filter-chips';
+import { STUDENT_HELP_COPY } from '@/lib/student-help-copy';
 
-const TRUST_FILTERS = [
-  { value: '', label: 'All trust levels' },
-  { value: 'PRACTICE', label: 'Practice' },
-  { value: 'VERIFIED', label: 'Verified' },
-  { value: 'PARTNER_VERIFIED', label: 'Partner verified' },
-] as const;
-
-const DIFFICULTY_FILTERS = [
+const DIFFICULTY_FILTERS: CatalogFilterOption[] = [
   { value: '', label: 'All levels' },
   { value: 'FOUNDATION', label: 'Foundation' },
   { value: 'STANDARD', label: 'Standard' },
   { value: 'ADVANCED', label: 'Advanced' },
-] as const;
+];
 
-const CATEGORY_FILTERS = [
+const TRUST_FILTERS: CatalogFilterOption[] = [
+  { value: '', label: 'All trust levels' },
+  { value: 'PRACTICE', label: 'Practice' },
+  { value: 'VERIFIED', label: 'Verified' },
+  { value: 'PARTNER_VERIFIED', label: 'Partner verified' },
+];
+
+const CATEGORY_FILTERS: CatalogFilterOption[] = [
   { value: '', label: 'All categories' },
   { value: 'EMPLOYABILITY', label: 'Employability' },
   { value: 'ACADEMIC_SKILLS', label: 'Academic Skills' },
@@ -29,162 +33,71 @@ const CATEGORY_FILTERS = [
   { value: 'DIVERSITY_INCLUSION', label: 'Diversity & Inclusion' },
   { value: 'STUDENT_LIFE', label: 'Student Life' },
   { value: 'ACADEMIC_SUBJECT', label: 'Academic Subject' },
-] as const;
+];
 
-interface AssessmentsFiltersProps {
-  subjects: Array<{ slug: string; name: string }>;
+function FilterRow({
+  label,
+  tooltipLabel,
+  tooltipContent,
+  children,
+}: {
+  label: string;
+  tooltipLabel: string;
+  tooltipContent: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="catalog-filter-row">
+      <p className="catalog-filter-row-label">
+        {label}
+        <InfoTooltip label={tooltipLabel}>{tooltipContent}</InfoTooltip>
+      </p>
+      {children}
+    </div>
+  );
 }
 
-export function AssessmentsFilters({ subjects }: AssessmentsFiltersProps) {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-
-  const trust = searchParams.get('trust') ?? '';
-  const difficulty = searchParams.get('difficulty') ?? '';
-  const subject = searchParams.get('subject') ?? '';
-  const category = searchParams.get('category') ?? '';
-
-  const hasActiveFilters = Boolean(trust || difficulty || subject || category);
-  const activeFilterCount = useMemo(
-    () => [trust, difficulty, subject, category].filter(Boolean).length,
-    [trust, difficulty, subject, category],
-  );
-
-  const [filtersOpen, setFiltersOpen] = useState(false);
-  const filterRef = useRef<HTMLDivElement>(null);
-
-  const setFilter = useCallback(
-    (key: 'trust' | 'difficulty' | 'subject' | 'category', value: string) => {
-      const params = new URLSearchParams(searchParams.toString());
-      if (value) {
-        params.set(key, value);
-      } else {
-        params.delete(key);
-      }
-      const query = params.toString();
-      router.replace(query ? `/assessments?${query}` : '/assessments', { scroll: false });
-    },
-    [router, searchParams],
-  );
-
-  const clearFilters = useCallback(() => {
-    router.replace('/assessments', { scroll: false });
-  }, [router]);
-
-  useEffect(() => {
-    if (!filtersOpen) return;
-
-    const onPointerDown = (event: MouseEvent) => {
-      if (filterRef.current && !filterRef.current.contains(event.target as Node)) {
-        setFiltersOpen(false);
-      }
-    };
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setFiltersOpen(false);
-    };
-
-    document.addEventListener('mousedown', onPointerDown);
-    document.addEventListener('keydown', onKeyDown);
-    return () => {
-      document.removeEventListener('mousedown', onPointerDown);
-      document.removeEventListener('keydown', onKeyDown);
-    };
-  }, [filtersOpen]);
-
+export function AssessmentsFilters() {
   return (
-    <div className="assessments-stats-actions">
-      <div className="assessments-filter-dropdown" ref={filterRef}>
-        <button
-          type="button"
-          className={`assessments-filter-trigger${filtersOpen ? ' assessments-filter-trigger--open' : ''}${activeFilterCount > 0 ? ' assessments-filter-trigger--active' : ''}`}
-          aria-expanded={filtersOpen}
-          aria-haspopup="dialog"
-          onClick={() => setFiltersOpen((open) => !open)}
-        >
-          Filters
-          {activeFilterCount > 0 && (
-            <span className="assessments-filter-badge" aria-label={`${activeFilterCount} active filters`}>
-              {activeFilterCount}
-            </span>
-          )}
-        </button>
+    <>
+      <FilterRow
+        label="Difficulty"
+        tooltipLabel="About difficulty levels"
+        tooltipContent={STUDENT_HELP_COPY.assessmentDifficulty}
+      >
+        <CatalogFilterChips
+          options={DIFFICULTY_FILTERS}
+          paramKey="difficulty"
+          ariaLabel="Filter by difficulty"
+          basePath="/assessments"
+        />
+      </FilterRow>
 
-        {filtersOpen && (
-          <div className="assessments-filter-panel" role="dialog" aria-label="Filter assessments">
-            <div className="assessments-filters-head">
-              <p className="assessments-filters-label">Trust level</p>
-              <div className="cluster-sm assessments-filter-chips" role="group" aria-label="Filter by trust level">
-                {TRUST_FILTERS.map((f) => (
-                  <Chip
-                    key={f.value || 'all-trust'}
-                    selected={trust === f.value}
-                    onClick={() => setFilter('trust', f.value)}
-                  >
-                    {f.label}
-                  </Chip>
-                ))}
-              </div>
-            </div>
+      <FilterRow
+        label="Trust"
+        tooltipLabel="About trust levels"
+        tooltipContent={STUDENT_HELP_COPY.assessmentTrust}
+      >
+        <CatalogFilterChips
+          options={TRUST_FILTERS}
+          paramKey="trust"
+          ariaLabel="Filter by trust level"
+          basePath="/assessments"
+        />
+      </FilterRow>
 
-            <div className="assessments-filters-head">
-              <p className="assessments-filters-label">Difficulty</p>
-              <div className="cluster-sm assessments-filter-chips" role="group" aria-label="Filter by difficulty">
-                {DIFFICULTY_FILTERS.map((f) => (
-                  <Chip
-                    key={f.value || 'all-difficulty'}
-                    selected={difficulty === f.value}
-                    onClick={() => setFilter('difficulty', f.value)}
-                  >
-                    {f.label}
-                  </Chip>
-                ))}
-              </div>
-            </div>
-
-            <div className="assessments-filters-head">
-              <p className="assessments-filters-label">Category</p>
-              <div className="cluster-sm assessments-filter-chips" role="group" aria-label="Filter by category">
-                {CATEGORY_FILTERS.map((f) => (
-                  <Chip
-                    key={f.value || 'all-category'}
-                    selected={category === f.value}
-                    onClick={() => setFilter('category', f.value)}
-                  >
-                    {f.label}
-                  </Chip>
-                ))}
-              </div>
-            </div>
-
-            <div className="assessments-filters-head">
-              <p className="assessments-filters-label">Subject</p>
-              <div className="cluster-sm assessments-filter-chips" role="group" aria-label="Filter by subject">
-                <Chip selected={!subject} onClick={() => setFilter('subject', '')}>
-                  All subjects
-                </Chip>
-                {subjects.map((s) => (
-                  <Chip
-                    key={s.slug}
-                    selected={subject === s.slug}
-                    onClick={() => setFilter('subject', s.slug)}
-                  >
-                    {s.name}
-                  </Chip>
-                ))}
-              </div>
-            </div>
-
-            {hasActiveFilters && (
-              <div className="assessments-filter-panel-footer">
-                <button type="button" className="assessments-clear-filters" onClick={clearFilters}>
-                  Clear all filters
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-    </div>
+      <FilterRow
+        label="Category"
+        tooltipLabel="About categories"
+        tooltipContent={STUDENT_HELP_COPY.assessmentCategory}
+      >
+        <CatalogFilterChips
+          options={CATEGORY_FILTERS}
+          paramKey="category"
+          ariaLabel="Filter by category"
+          basePath="/assessments"
+        />
+      </FilterRow>
+    </>
   );
 }

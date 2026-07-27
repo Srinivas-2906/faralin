@@ -1,15 +1,32 @@
+'use client';
+
 import type { ReactNode } from 'react';
+import { InfoTooltip } from '@faralin/ui';
+import { STUDENT_HELP_COPY } from '@/lib/student-help-copy';
 
 type CatalogInsightProps = {
   variant: 'copper';
   eyebrow: string;
+  tooltipLabel?: string;
+  tooltipContent?: ReactNode;
   children: ReactNode;
 };
 
-export function CatalogInsight({ variant, eyebrow, children }: CatalogInsightProps) {
+export function CatalogInsight({
+  variant,
+  eyebrow,
+  tooltipLabel,
+  tooltipContent,
+  children,
+}: CatalogInsightProps) {
   return (
     <div className={`catalog-insight catalog-insight--${variant}`}>
-      <p className="catalog-insight-eyebrow">{eyebrow}</p>
+      <p className="catalog-insight-eyebrow">
+        {eyebrow}
+        {tooltipLabel && tooltipContent ? (
+          <InfoTooltip label={tooltipLabel}>{tooltipContent}</InfoTooltip>
+        ) : null}
+      </p>
       <div className="catalog-insight-body">{children}</div>
     </div>
   );
@@ -17,10 +34,14 @@ export function CatalogInsight({ variant, eyebrow, children }: CatalogInsightPro
 
 export function AssessmentsCatalogInsight() {
   return (
-    <CatalogInsight variant="copper" eyebrow="Trust levels">
+    <CatalogInsight
+      variant="copper"
+      eyebrow="Assessments"
+      tooltipLabel="About assessments"
+      tooltipContent={STUDENT_HELP_COPY.assessmentsCatalog}
+    >
       <p className="catalog-insight-line">
-        Progress from practice to verified work that partner universities can see.
-        <span className="catalog-insight-hint"> Use filters →</span>
+        Prove what you know and earn Faralins from verified assessments.
       </p>
     </CatalogInsight>
   );
@@ -28,11 +49,14 @@ export function AssessmentsCatalogInsight() {
 
 export function UniversitiesCatalogInsight() {
   return (
-    <CatalogInsight variant="copper" eyebrow="Find your partner">
+    <CatalogInsight
+      variant="copper"
+      eyebrow="Partner universities"
+      tooltipLabel="About partner universities"
+      tooltipContent={STUDENT_HELP_COPY.universitiesCatalog}
+    >
       <p className="catalog-insight-line">
-        Rates range from ~90 Faralins/£1 to ~200 Faralins/£1 depending on university tier.
-        Compare conversion rates and apply when you are ready.
-        <span className="catalog-insight-hint"> Use search →</span>
+        Compare partner universities and their Faralin conversion rates.
       </p>
     </CatalogInsight>
   );

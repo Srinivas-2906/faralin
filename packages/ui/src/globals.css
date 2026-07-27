@@ -2802,6 +2802,9 @@ a.nav-sign-in {
 .catalog-insight-eyebrow {
   flex-shrink: 0;
   margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
   font-size: var(--text-2xs);
   font-weight: 600;
   text-transform: uppercase;
@@ -7050,6 +7053,7 @@ button.dashboard-section-link {
   margin-top: 2rem;
 }
 
+.catalog-filter-toolbar,
 .tracks-catalog-toolbar {
   display: flex;
   flex-direction: column;
@@ -7057,10 +7061,54 @@ button.dashboard-section-link {
   margin-bottom: var(--tracks-section-gap);
 }
 
+.catalog-filter-toolbar-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 0.625rem;
+}
+
+.catalog-filter-toolbar .catalog-insight,
 .tracks-catalog-toolbar .catalog-insight {
+  flex: 1;
+  min-width: min(100%, 18rem);
+}
+
+.catalog-filter-toolbar-actions {
+  display: flex;
+  align-items: center;
+  min-width: min(100%, 16rem);
+}
+
+.catalog-filter-toolbar-actions .universities-search {
   width: 100%;
 }
 
+.catalog-filter-toolbar-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.catalog-filter-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.catalog-filter-row-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0;
+  font-size: var(--text-2xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgba(0, 33, 71, 0.55);
+}
+
+.catalog-filter-chips-row,
 .tracks-filter-chips-row {
   display: flex;
   flex-wrap: wrap;
@@ -7068,11 +7116,30 @@ button.dashboard-section-link {
   align-items: center;
 }
 
+.catalog-filter-chips-row .catalog-filter-chip,
 .tracks-filter-chips-row .tracks-filter-chip {
   padding: 0.25rem 0.625rem;
   font-size: 0.6875rem;
   line-height: 1.3;
   font-weight: 500;
+}
+
+.assessments-page .catalog-filter-toolbar {
+  margin-bottom: var(--assessments-section-gap);
+}
+
+.universities-page .catalog-filter-toolbar {
+  margin-bottom: var(--assessments-section-gap);
+}
+
+@media (max-width: 639px) {
+  .catalog-filter-toolbar-head {
+    flex-direction: column;
+  }
+
+  .catalog-filter-toolbar-actions {
+    width: 100%;
+  }
 }
 
 .track-card--catalog {

@@ -14,4 +14,18 @@ export const STUDENT_HELP_COPY = {
     'Complete more verified activities to unlock a £ estimate at this university.',
   highestEstimate:
     'The highest estimated value across the universities you follow. Only one university can confirm an award after enrolment.',
+  guidedInvestigations:
+    'Problem tracks combine learning, practice, solving, and reflection. Filter by difficulty to find the right starting point.',
+  assessmentsCatalog:
+    'Assessments let you prove skills and earn Faralins. Filter by difficulty, trust level, or category to find the right challenge.',
+  assessmentDifficulty:
+    'Foundation is introductory, Standard is core level, and Advanced expects deeper mastery.',
+  assessmentTrust:
+    'Practice work is for learning. Verified and partner-verified work can count toward university recognition.',
+  assessmentCategory:
+    'Categories group assessments by skill area such as employability, wellbeing, or academic subjects.',
+  universitiesCatalog:
+    'Each partner university sets its own Faralin conversion rate. Tier reflects selectivity and typical conversion economics.',
+  universityTier:
+    'Filter by partner tier. Highly selective partners often have different conversion rates than accessible partners.',
 } as const;

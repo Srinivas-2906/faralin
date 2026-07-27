@@ -4,7 +4,7 @@ import {
   UniversitiesCatalog,
   type UniversityListItem,
 } from '@/components/universities-catalog';
-import { UniversitiesStatsRow } from '@/components/universities-stats-row';
+import { UniversitiesCatalogToolbar } from '@/components/universities-catalog-toolbar';
 import { getUniversitiesBannerImage } from '@/lib/media';
 
 async function getUniversities(): Promise<UniversityListItem[]> {
@@ -33,7 +33,7 @@ export default async function UniversitiesPage() {
       <div className="page-section universities-page-body">
         <div className="container-wide">
           <Suspense fallback={null}>
-            <UniversitiesStatsRow />
+            <UniversitiesCatalogToolbar />
           </Suspense>
 
           <Suspense fallback={null}>

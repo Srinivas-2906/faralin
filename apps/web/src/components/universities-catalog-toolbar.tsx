@@ -2,9 +2,11 @@
 
 import { FormEvent, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { CatalogFilterToolbar } from '@/components/catalog-filter-toolbar';
 import { UniversitiesCatalogInsight } from '@/components/catalog-insight';
+import { UniversitiesFilters } from '@/components/universities-filters';
 
-export function UniversitiesStatsRow() {
+export function UniversitiesCatalogToolbar() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [query, setQuery] = useState('');
@@ -23,14 +25,13 @@ export function UniversitiesStatsRow() {
       params.delete('q');
     }
     const next = params.toString();
-    router.replace(next ? `/universities?${next}` : '/universities');
+    router.replace(next ? `/universities?${next}` : '/universities', { scroll: false });
   }
 
   return (
-    <div className="universities-stats-row">
-      <UniversitiesCatalogInsight />
-
-      <div className="universities-stats-actions">
+    <CatalogFilterToolbar
+      insight={<UniversitiesCatalogInsight />}
+      actions={
         <form className="universities-search" onSubmit={handleSubmit} role="search">
           <svg
             className="universities-search-icon"
@@ -54,7 +55,9 @@ export function UniversitiesStatsRow() {
             aria-label="Search partner universities"
           />
         </form>
-      </div>
-    </div>
+      }
+    >
+      <UniversitiesFilters />
+    </CatalogFilterToolbar>
   );
 }
