@@ -1,6 +1,5 @@
 import { MediaImage } from '@faralin/ui';
 import type { UniversityPrestigeTier } from '@faralin/types';
-import { PRESTIGE_TIER_LABELS } from '@faralin/types';
 import { getUniversityImage } from '@/lib/media';
 
 export interface UniversityCardData {
@@ -20,18 +19,7 @@ type UniversityCardProps = {
   onToggle?: () => void;
 };
 
-function tierBadgeLabel(university: UniversityCardData): string | null {
-  if (!university.prestigeTier) return null;
-  const tier = PRESTIGE_TIER_LABELS[university.prestigeTier];
-  if (university.guardianRank2025) {
-    return `${tier} · #${university.guardianRank2025}`;
-  }
-  return tier;
-}
-
 function UniversityCardContent({ university }: { university: UniversityCardData }) {
-  const tierLabel = tierBadgeLabel(university);
-
   return (
     <>
       <div className="assessment-card-visual">
@@ -45,11 +33,6 @@ function UniversityCardContent({ university }: { university: UniversityCardData 
         <div className="media-card-eyebrow assessment-card-visual-eyebrow">
           {university.shortName ?? 'Partner university'}
         </div>
-        {tierLabel && (
-          <div className={`university-card-tier university-card-tier--${university.prestigeTier?.toLowerCase()}`}>
-            {tierLabel}
-          </div>
-        )}
       </div>
       <div className="assessment-card-details">
         <div className="media-card-title">{university.name}</div>

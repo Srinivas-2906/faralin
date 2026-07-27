@@ -1,21 +1,91 @@
 'use client';
 
-import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from 'react';
 
 export interface InfoTooltipProps {
   label: string;
   children: ReactNode;
   id?: string;
   className?: string;
+  placement?: 'auto' | 'start' | 'end';
 }
 
-export function InfoTooltip({ label, children, id, className = '' }: InfoTooltipProps) {
+const VIEWPORT_MARGIN = 8;
+const PANEL_MAX_WIDTH = 256;
+
+export function InfoTooltip({
+  label,
+  children,
+  id,
+  className = '',
+  placement = 'auto',
+}: InfoTooltipProps) {
   const generatedId = useId();
   const panelId = id ?? generatedId;
   const rootRef = useRef<HTMLSpanElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLSpanElement>(null);
   const [open, setOpen] = useState(false);
+  const [panelStyle, setPanelStyle] = useState<CSSProperties>({});
 
   const close = useCallback(() => setOpen(false), []);
+
+  const updatePanelPosition = useCallback(() => {
+    const trigger = triggerRef.current;
+    const panel = panelRef.current;
+    if (!trigger || !panel) return;
+
+    const triggerRect = trigger.getBoundingClientRect();
+    const panelRect = panel.getBoundingClientRect();
+    const panelWidth = panelRect.width || Math.min(PANEL_MAX_WIDTH, window.innerWidth - VIEWPORT_MARGIN * 2);
+    const panelHeight = panelRect.height || panel.offsetHeight;
+
+    let left =
+      placement === 'end'
+        ? triggerRect.right - panelWidth
+        : placement === 'start'
+          ? triggerRect.left
+          : triggerRect.left + triggerRect.width / 2 - panelWidth / 2;
+
+    let top = triggerRect.bottom + 6;
+
+    if (left < VIEWPORT_MARGIN) left = VIEWPORT_MARGIN;
+    if (left + panelWidth > window.innerWidth - VIEWPORT_MARGIN) {
+      left = window.innerWidth - VIEWPORT_MARGIN - panelWidth;
+    }
+
+    if (top + panelHeight > window.innerHeight - VIEWPORT_MARGIN) {
+      top = triggerRect.top - panelHeight - 6;
+    }
+    if (top < VIEWPORT_MARGIN) top = VIEWPORT_MARGIN;
+
+    setPanelStyle({
+      position: 'fixed',
+      top: `${Math.round(top)}px`,
+      left: `${Math.round(left)}px`,
+      width: `${Math.round(panelWidth)}px`,
+    });
+  }, [placement]);
+
+  useLayoutEffect(() => {
+    if (!open) return;
+    updatePanelPosition();
+    window.addEventListener('resize', updatePanelPosition);
+    window.addEventListener('scroll', updatePanelPosition, true);
+    return () => {
+      window.removeEventListener('resize', updatePanelPosition);
+      window.removeEventListener('scroll', updatePanelPosition, true);
+    };
+  }, [open, updatePanelPosition, children]);
 
   useEffect(() => {
     if (!open) return;
@@ -42,6 +112,7 @@ export function InfoTooltip({ label, children, id, className = '' }: InfoTooltip
       className={`info-tooltip${open ? ' info-tooltip--open' : ''} ${className}`.trim()}
     >
       <button
+        ref={triggerRef}
         type="button"
         className="info-tooltip__trigger"
         aria-label={label}
@@ -56,9 +127,11 @@ export function InfoTooltip({ label, children, id, className = '' }: InfoTooltip
         <span aria-hidden="true">i</span>
       </button>
       <span
+        ref={panelRef}
         id={panelId}
         role="tooltip"
         className="info-tooltip__panel"
+        style={open ? panelStyle : undefined}
         hidden={!open}
       >
         {children}

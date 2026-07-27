@@ -1,11 +1,10 @@
 'use client';
 
-import type { ReactNode } from 'react';
-import { InfoTooltip } from '@faralin/ui';
 import {
-  CatalogFilterChips,
-  type CatalogFilterOption,
-} from '@/components/catalog-filter-chips';
+  CatalogFilterGroups,
+  type CatalogFilterGroup,
+} from '@/components/catalog-filter-groups';
+import type { CatalogFilterOption } from '@/components/catalog-filter-chips';
 import { STUDENT_HELP_COPY } from '@/lib/student-help-copy';
 
 const DIFFICULTY_FILTERS: CatalogFilterOption[] = [
@@ -35,69 +34,33 @@ const CATEGORY_FILTERS: CatalogFilterOption[] = [
   { value: 'ACADEMIC_SUBJECT', label: 'Academic Subject' },
 ];
 
-function FilterRow({
-  label,
-  tooltipLabel,
-  tooltipContent,
-  children,
-}: {
-  label: string;
-  tooltipLabel: string;
-  tooltipContent: string;
-  children: ReactNode;
-}) {
-  return (
-    <div className="catalog-filter-row">
-      <p className="catalog-filter-row-label">
-        {label}
-        <InfoTooltip label={tooltipLabel}>{tooltipContent}</InfoTooltip>
-      </p>
-      {children}
-    </div>
-  );
-}
+const ASSESSMENT_GROUPS: CatalogFilterGroup[] = [
+  {
+    id: 'difficulty',
+    label: 'Difficulty',
+    paramKey: 'difficulty',
+    options: DIFFICULTY_FILTERS,
+    tooltipLabel: 'About difficulty levels',
+    tooltipContent: STUDENT_HELP_COPY.assessmentDifficulty,
+  },
+  {
+    id: 'trust',
+    label: 'Trust',
+    paramKey: 'trust',
+    options: TRUST_FILTERS,
+    tooltipLabel: 'About trust levels',
+    tooltipContent: STUDENT_HELP_COPY.assessmentTrust,
+  },
+  {
+    id: 'category',
+    label: 'Category',
+    paramKey: 'category',
+    options: CATEGORY_FILTERS,
+    tooltipLabel: 'About categories',
+    tooltipContent: STUDENT_HELP_COPY.assessmentCategory,
+  },
+];
 
 export function AssessmentsFilters() {
-  return (
-    <>
-      <FilterRow
-        label="Difficulty"
-        tooltipLabel="About difficulty levels"
-        tooltipContent={STUDENT_HELP_COPY.assessmentDifficulty}
-      >
-        <CatalogFilterChips
-          options={DIFFICULTY_FILTERS}
-          paramKey="difficulty"
-          ariaLabel="Filter by difficulty"
-          basePath="/assessments"
-        />
-      </FilterRow>
-
-      <FilterRow
-        label="Trust"
-        tooltipLabel="About trust levels"
-        tooltipContent={STUDENT_HELP_COPY.assessmentTrust}
-      >
-        <CatalogFilterChips
-          options={TRUST_FILTERS}
-          paramKey="trust"
-          ariaLabel="Filter by trust level"
-          basePath="/assessments"
-        />
-      </FilterRow>
-
-      <FilterRow
-        label="Category"
-        tooltipLabel="About categories"
-        tooltipContent={STUDENT_HELP_COPY.assessmentCategory}
-      >
-        <CatalogFilterChips
-          options={CATEGORY_FILTERS}
-          paramKey="category"
-          ariaLabel="Filter by category"
-          basePath="/assessments"
-        />
-      </FilterRow>
-    </>
-  );
+  return <CatalogFilterGroups basePath="/assessments" groups={ASSESSMENT_GROUPS} />;
 }

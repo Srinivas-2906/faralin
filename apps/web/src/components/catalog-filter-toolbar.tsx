@@ -3,7 +3,7 @@ import { CatalogInsight } from '@/components/catalog-insight';
 
 type CatalogFilterToolbarProps = {
   insight: ReactNode;
-  children: ReactNode;
+  children?: ReactNode;
   actions?: ReactNode;
 };
 
@@ -14,7 +14,7 @@ export function CatalogFilterToolbar({ insight, children, actions }: CatalogFilt
         {insight}
         {actions ? <div className="catalog-filter-toolbar-actions">{actions}</div> : null}
       </div>
-      <div className="catalog-filter-toolbar-rows">{children}</div>
+      {children ? <div className="catalog-filter-toolbar-rows">{children}</div> : null}
     </div>
   );
 }
